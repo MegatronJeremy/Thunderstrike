@@ -19,7 +19,8 @@ MemoryAllocator *MemoryAllocator::getInstance() {
 }
 
 void *MemoryAllocator::malloc(size_t size) {
-    if (size <= 0 || size > freeMemSize) return nullptr;
+    if (size <= 0 || size + MEM_BLOCK_SIZE > freeMemSize) return nullptr;
+    size += MEM_BLOCK_SIZE;
 
     FreeSegDesc *curr = segDescHead, *prev = nullptr;
     while (curr) {
@@ -33,7 +34,7 @@ void *MemoryAllocator::malloc(size_t size) {
 
     (!prev ? segDescHead : prev->next) = curr->next;
 
-    void *addr = (uint8 *) curr + size + sizeof(FreeSegDesc);
+    void *addr = (uint8 *) curr + size;
 
     if (curr->size - size >= MEM_BLOCK_SIZE) {
         FreeSegDesc *elem = (FreeSegDesc *) addr;
@@ -42,11 +43,16 @@ void *MemoryAllocator::malloc(size_t size) {
         (!prev ? segDescHead : prev->next) = elem;
     }
 
-    return curr;
+    *(size_t *) curr = size;
+
+    return (uint8 *) curr + MEM_BLOCK_SIZE;
 }
 
 int MemoryAllocator::free(void *addr) {
-    if (!addr) return -1;
+    if (!addr || (uint8 *)addr < (uint8 *)HEAP_START_ADDR + 2 * MEM_BLOCK_SIZE || addr >= HEAP_END_ADDR) return -1;
+
+    addr = (uint8 *) addr - MEM_BLOCK_SIZE;
+    size_t size = *(size_t *) addr;
 
     FreeSegDesc *curr = segDescHead, *prev = nullptr;
 
@@ -55,14 +61,11 @@ int MemoryAllocator::free(void *addr) {
         curr = curr->next;
     }
 
-    if ((prev && (uint8 *) prev + prev->size > addr) || (!prev && addr < (uint8 *) HEAP_START_ADDR + MEM_BLOCK_SIZE))
+    if ((prev && (uint8 *) prev + prev->size > addr) || (curr && (uint8 *) addr + size > (uint8 *) curr))
         return -2;
 
-    uint8 *start = (!prev ? (uint8 *) HEAP_START_ADDR + MEM_BLOCK_SIZE : (uint8 *) prev);
-    uint8 *end = (!curr ? (uint8 *) HEAP_END_ADDR : (uint8 *) curr);
-
     FreeSegDesc *elem = (FreeSegDesc *) addr;
-    elem->size = end - start;
+    elem->size = size;
     elem->next = curr;
     (!prev ? segDescHead : prev->next) = elem;
 

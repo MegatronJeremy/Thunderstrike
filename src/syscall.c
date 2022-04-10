@@ -1,7 +1,5 @@
 #include "../h/syscall_c.h"
 
-uint64 pc;
-
 void callSupervisorTrap(uint code, void *args) {
     __asm__ volatile ("ecall");
 }

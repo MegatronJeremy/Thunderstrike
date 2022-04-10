@@ -1,0 +1,210 @@
+GAS LISTING /tmp/cccWJXDE.s 			page 1
+
+
+   1              		.file	"main.c"
+   2              		.option nopic
+   3              		.option norelax
+   4              		.text
+   5              	.Ltext0:
+   6              		.cfi_sections	.debug_frame
+   7              		.align	2
+   8              		.globl	main
+  10              	main:
+  11              	.LFB0:
+  12              		.file 1 "src/main.c"
+   1:src/main.c    **** #include "../h/syscall_c.h"
+   2:src/main.c    **** 
+   3:src/main.c    **** void main() {
+  13              		.loc 1 3 13
+  14              		.cfi_startproc
+  15 0000 130101FD 		addi	sp,sp,-48
+  16              		.cfi_def_cfa_offset 48
+  17 0004 23341102 		sd	ra,40(sp)
+  18 0008 23308102 		sd	s0,32(sp)
+  19 000c 233C9100 		sd	s1,24(sp)
+  20 0010 23382101 		sd	s2,16(sp)
+  21 0014 23343101 		sd	s3,8(sp)
+  22              		.cfi_offset 1, -8
+  23              		.cfi_offset 8, -16
+  24              		.cfi_offset 9, -24
+  25              		.cfi_offset 18, -32
+  26              		.cfi_offset 19, -40
+  27 0018 13040103 		addi	s0,sp,48
+  28              		.cfi_def_cfa 8, 0
+   4:src/main.c    ****     __asm__ volatile("csrw stvec, %[vector]" : : [vector] "r" (&supervisorTrap));
+  29              		.loc 1 4 5
+  30 001c 97070000 		lla	a5,supervisorTrap
+  30      93870700 
+  31              	#APP
+  32              	# 4 "src/main.c" 1
+   5              	
+   6:src/main.c    ****     void *a = mem_alloc(100);
+  33              		csrw stvec, a5
+  34              	# 0 "" 2
+  35              		.loc 1 6 5
+  36              		.loc 1 6 15 is_stmt 0
+  37              	#NO_APP
+  38 0028 13054006 		li	a0,100
+  39 002c 97000000 		call	mem_alloc
+  39      E7800000 
+  40              	.LVL0:
+  41 0034 13090500 		mv	s2,a0
+  42              	.LVL1:
+   7:src/main.c    ****     void *b = mem_alloc(1000);
+  43              		.loc 1 7 5 is_stmt 1
+  44              		.loc 1 7 15 is_stmt 0
+  45 0038 1305803E 		li	a0,1000
+  46              	.LVL2:
+  47 003c 97000000 		call	mem_alloc
+  47      E7800000 
+  48              	.LVL3:
+GAS LISTING /tmp/cccWJXDE.s 			page 2
+
+
+  49 0044 93090500 		mv	s3,a0
+  50              	.LVL4:
+   8:src/main.c    ****     void *c = mem_alloc(10000);
+  51              		.loc 1 8 5 is_stmt 1
+  52              		.loc 1 8 15 is_stmt 0
+  53 0048 37250000 		li	a0,8192
+  54              	.LVL5:
+  55 004c 13050571 		addi	a0,a0,1808
+  56 0050 97000000 		call	mem_alloc
+  56      E7800000 
+  57              	.LVL6:
+  58 0058 93040500 		mv	s1,a0
+  59              	.LVL7:
+   9:src/main.c    ****     mem_free(b);
+  60              		.loc 1 9 5 is_stmt 1
+  61 005c 13850900 		mv	a0,s3
+  62 0060 97000000 		call	mem_free
+  62      E7800000 
+  63              	.LVL8:
+  10:src/main.c    ****     mem_free(a);
+  64              		.loc 1 10 5
+  65 0068 13050900 		mv	a0,s2
+  66 006c 97000000 		call	mem_free
+  66      E7800000 
+  67              	.LVL9:
+  11:src/main.c    ****     mem_free(c);
+  68              		.loc 1 11 5
+  69 0074 13850400 		mv	a0,s1
+  70 0078 97000000 		call	mem_free
+  70      E7800000 
+  71              	.LVL10:
+  12:src/main.c    **** }
+  72              		.loc 1 12 1 is_stmt 0
+  73 0080 83308102 		ld	ra,40(sp)
+  74              		.cfi_restore 1
+  75 0084 03340102 		ld	s0,32(sp)
+  76              		.cfi_restore 8
+  77              		.cfi_def_cfa 2, 48
+  78 0088 83348101 		ld	s1,24(sp)
+  79              		.cfi_restore 9
+  80              	.LVL11:
+  81 008c 03390101 		ld	s2,16(sp)
+  82              		.cfi_restore 18
+  83              	.LVL12:
+  84 0090 83398100 		ld	s3,8(sp)
+  85              		.cfi_restore 19
+  86              	.LVL13:
+  87 0094 13010103 		addi	sp,sp,48
+  88              		.cfi_def_cfa_offset 0
+  89 0098 67800000 		jr	ra
+  90              		.cfi_endproc
+  91              	.LFE0:
+  93              	.Letext0:
+  94              		.file 2 "src/../h/../lib/hw.h"
+  95              		.file 3 "src/../h/syscall_c.h"
+GAS LISTING /tmp/cccWJXDE.s 			page 3
+
+
+DEFINED SYMBOLS
+                            *ABS*:0000000000000000 main.c
+     /tmp/cccWJXDE.s:10     .text:0000000000000000 main
+     /tmp/cccWJXDE.s:14     .text:0000000000000000 .L0 
+     /tmp/cccWJXDE.s:15     .text:0000000000000000 .L0 
+     /tmp/cccWJXDE.s:16     .text:0000000000000004 .L0 
+     /tmp/cccWJXDE.s:22     .text:0000000000000018 .L0 
+     /tmp/cccWJXDE.s:23     .text:0000000000000018 .L0 
+     /tmp/cccWJXDE.s:24     .text:0000000000000018 .L0 
+     /tmp/cccWJXDE.s:25     .text:0000000000000018 .L0 
+     /tmp/cccWJXDE.s:26     .text:0000000000000018 .L0 
+     /tmp/cccWJXDE.s:28     .text:000000000000001c .L0 
+     /tmp/cccWJXDE.s:30     .text:000000000000001c .L0 
+     /tmp/cccWJXDE.s:36     .text:0000000000000028 .L0 
+     /tmp/cccWJXDE.s:38     .text:0000000000000028 .L0 
+     /tmp/cccWJXDE.s:44     .text:0000000000000038 .L0 
+     /tmp/cccWJXDE.s:45     .text:0000000000000038 .L0 
+     /tmp/cccWJXDE.s:52     .text:0000000000000048 .L0 
+     /tmp/cccWJXDE.s:53     .text:0000000000000048 .L0 
+     /tmp/cccWJXDE.s:61     .text:000000000000005c .L0 
+     /tmp/cccWJXDE.s:65     .text:0000000000000068 .L0 
+     /tmp/cccWJXDE.s:69     .text:0000000000000074 .L0 
+     /tmp/cccWJXDE.s:73     .text:0000000000000080 .L0 
+     /tmp/cccWJXDE.s:74     .text:0000000000000084 .L0 
+     /tmp/cccWJXDE.s:76     .text:0000000000000088 .L0 
+     /tmp/cccWJXDE.s:77     .text:0000000000000088 .L0 
+     /tmp/cccWJXDE.s:79     .text:000000000000008c .L0 
+     /tmp/cccWJXDE.s:82     .text:0000000000000090 .L0 
+     /tmp/cccWJXDE.s:85     .text:0000000000000094 .L0 
+     /tmp/cccWJXDE.s:88     .text:0000000000000098 .L0 
+     /tmp/cccWJXDE.s:90     .text:000000000000009c .L0 
+     /tmp/cccWJXDE.s:96     .text:000000000000009c .L0 
+                     .debug_frame:0000000000000000 .L0 
+     /tmp/cccWJXDE.s:30     .text:000000000000001c .L0 
+     /tmp/cccWJXDE.s:331    .debug_abbrev:0000000000000000 .Ldebug_abbrev0
+     /tmp/cccWJXDE.s:639    .debug_str:0000000000000161 .LASF19
+     /tmp/cccWJXDE.s:609    .debug_str:0000000000000089 .LASF20
+     /tmp/cccWJXDE.s:603    .debug_str:0000000000000031 .LASF21
+     /tmp/cccWJXDE.s:5      .text:0000000000000000 .Ltext0
+     /tmp/cccWJXDE.s:93     .text:000000000000009c .Letext0
+     /tmp/cccWJXDE.s:593    .debug_line:0000000000000000 .Ldebug_line0
+     /tmp/cccWJXDE.s:595    .debug_str:0000000000000000 .LASF0
+     /tmp/cccWJXDE.s:629    .debug_str:0000000000000115 .LASF1
+     /tmp/cccWJXDE.s:619    .debug_str:00000000000000c3 .LASF2
+     /tmp/cccWJXDE.s:613    .debug_str:00000000000000a7 .LASF4
+     /tmp/cccWJXDE.s:607    .debug_str:0000000000000077 .LASF3
+     /tmp/cccWJXDE.s:601    .debug_str:000000000000002a .LASF5
+     /tmp/cccWJXDE.s:611    .debug_str:0000000000000094 .LASF6
+     /tmp/cccWJXDE.s:627    .debug_str:0000000000000102 .LASF7
+     /tmp/cccWJXDE.s:635    .debug_str:0000000000000147 .LASF8
+     /tmp/cccWJXDE.s:597    .debug_str:000000000000000d .LASF9
+     /tmp/cccWJXDE.s:599    .debug_str:000000000000001b .LASF10
+     /tmp/cccWJXDE.s:633    .debug_str:0000000000000138 .LASF11
+     /tmp/cccWJXDE.s:605    .debug_str:0000000000000067 .LASF12
+     /tmp/cccWJXDE.s:631    .debug_str:0000000000000128 .LASF13
+     /tmp/cccWJXDE.s:617    .debug_str:00000000000000b7 .LASF14
+     /tmp/cccWJXDE.s:625    .debug_str:00000000000000ec .LASF15
+GAS LISTING /tmp/cccWJXDE.s 			page 4
+
+
+     /tmp/cccWJXDE.s:623    .debug_str:00000000000000d6 .LASF16
+     /tmp/cccWJXDE.s:621    .debug_str:00000000000000d1 .LASF22
+     /tmp/cccWJXDE.s:11     .text:0000000000000000 .LFB0
+     /tmp/cccWJXDE.s:91     .text:000000000000009c .LFE0
+     /tmp/cccWJXDE.s:551    .debug_loc:0000000000000000 .LLST0
+     /tmp/cccWJXDE.s:562    .debug_loc:0000000000000036 .LLST1
+     /tmp/cccWJXDE.s:573    .debug_loc:000000000000006c .LLST2
+     /tmp/cccWJXDE.s:40     .text:0000000000000034 .LVL0
+     /tmp/cccWJXDE.s:48     .text:0000000000000044 .LVL3
+     /tmp/cccWJXDE.s:57     .text:0000000000000058 .LVL6
+     /tmp/cccWJXDE.s:63     .text:0000000000000068 .LVL8
+     /tmp/cccWJXDE.s:67     .text:0000000000000074 .LVL9
+     /tmp/cccWJXDE.s:71     .text:0000000000000080 .LVL10
+     /tmp/cccWJXDE.s:637    .debug_str:0000000000000157 .LASF17
+     /tmp/cccWJXDE.s:615    .debug_str:00000000000000ae .LASF18
+     /tmp/cccWJXDE.s:42     .text:0000000000000038 .LVL1
+     /tmp/cccWJXDE.s:46     .text:000000000000003c .LVL2
+     /tmp/cccWJXDE.s:83     .text:0000000000000090 .LVL12
+     /tmp/cccWJXDE.s:50     .text:0000000000000048 .LVL4
+     /tmp/cccWJXDE.s:54     .text:000000000000004c .LVL5
+     /tmp/cccWJXDE.s:86     .text:0000000000000094 .LVL13
+     /tmp/cccWJXDE.s:59     .text:000000000000005c .LVL7
+     /tmp/cccWJXDE.s:80     .text:000000000000008c .LVL11
+     /tmp/cccWJXDE.s:97     .debug_info:0000000000000000 .Ldebug_info0
+
+UNDEFINED SYMBOLS
+supervisorTrap
+mem_alloc
+mem_free

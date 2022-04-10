@@ -9,13 +9,15 @@
 #include "KernelObject.h"
 #include "List.h"
 #include "Mutex.h"
+#include "ThreadNode.h"
+#include "ThreadList.h"
 
 // Thread Control Block
 class TCB : public KernelObject {
 public:
     using Body = void (*)(void *);
 
-    explicit TCB(Body body, void *args, uint64 timeSlice, bool kernelThread = false);
+    explicit TCB(Body body, void *args, uint64 timeSlice, bool privileged = false);
 
     static uint64 offsSP;
 
@@ -71,8 +73,6 @@ public:
         return &mutex;
     }
 
-    int join();
-
     uint64 getSsp() const {
         return ssp;
     }
@@ -84,6 +84,12 @@ public:
     uint64 *getThreadStack() const {
         return threadStack;
     };
+
+    ThreadNode *getNode() {
+        return &node;
+    }
+
+    int join();
 
     static TCB *createThread(Body body, void *args);
 
@@ -115,9 +121,10 @@ private:
     Context context;
     uint64 timeSlice;
     Status status;
-    List<TCB> waitingToJoin;
-    bool kernelThread;
+    ThreadList waitingToJoin;
+    bool privileged;
     Mutex mutex;
+    ThreadNode node;
 
     time_t blockedTime = 0;
 

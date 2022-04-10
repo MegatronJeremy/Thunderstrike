@@ -19,7 +19,7 @@ int mem_free(void *addr) {
 int thread_create(thread_t *handle, void(*start_routine)(void *), void *arg) {
     if (!handle) return -1;
     *handle = new _thread;
-    uint64 args[] = {(uint64) handle, (uint64) start_routine, (uint64) arg};
+    uint64 args[] = {(uint64) *handle, (uint64) start_routine, (uint64) arg};
     return (uint64) callSupervisorTrap(0x11, args);
 }
 

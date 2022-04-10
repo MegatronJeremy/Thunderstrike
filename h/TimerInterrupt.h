@@ -7,6 +7,7 @@
 
 #include "List.h"
 #include "Mutex.h"
+#include "ThreadList.h"
 
 class TCB;
 
@@ -18,6 +19,8 @@ public:
 
     static TimerInterrupt *getInstance();
 
+    ~TimerInterrupt();
+
 private:
     TimerInterrupt() = default;
 
@@ -25,7 +28,7 @@ private:
 
     Mutex mutex;
 
-    List<TCB> blockedThreadList;
+    ThreadList blockedThreadList;
 };
 
 #endif //OS_PROJEKAT_TIMERINTERRUPT_H

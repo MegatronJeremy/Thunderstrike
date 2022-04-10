@@ -18,16 +18,17 @@ int main() {
     kprintString("Created user main thread\n");
 
     Riscv::w_stvec((uint64) &Riscv::supervisorTrap);
+
     Riscv::ms_sstatus(Riscv::SSTATUS_SIE);
 
     uMain->join();
 
     Riscv::mc_sstatus(Riscv::SSTATUS_SIE);
 
-    delete TimerInterrupt::getInstance();
-    delete Scheduler::getInstance();
     delete ThreadCollector::getInstance();
     delete IdleThread::getInstance();
+    delete TimerInterrupt::getInstance();
+    delete Scheduler::getInstance();
 
     kprintString("Main finished\n");
 

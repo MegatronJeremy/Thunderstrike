@@ -14,14 +14,15 @@ TCB *TCB::running = nullptr;
 
 uint64 TCB::timeSliceCounter = 0;
 
-TCB::TCB(Body body, void *args, uint64 timeSlice, bool kernelThread) :
+TCB::TCB(Body body, void *args, uint64 timeSlice, bool privileged) :
         body(body), args(args),
         threadStack(body != nullptr ? (uint64 *) kmalloc(DEFAULT_STACK_SIZE * sizeof(uint64)) : nullptr),
         kernelStack((uint64 *) kmalloc(DEFAULT_STACK_SIZE * sizeof(uint64))),
         context({(uint64) &threadWrapper, threadStack != nullptr ? (uint64) (threadStack + DEFAULT_STACK_SIZE) : 0}),
         timeSlice(timeSlice),
         status(READY),
-        kernelThread(kernelThread) {
+        privileged(privileged),
+        node(this) {
     ssp = (uint64) (kernelStack + DEFAULT_STACK_SIZE);
     if (body != nullptr)
         Scheduler::put(this);
@@ -38,11 +39,16 @@ void TCB::yield() {
 
 void TCB::exit() {
     running->setFinished();
+
+    running->mutex.wait();
     while (!running->waitingToJoin.isEmpty()) {
         TCB *thr = running->waitingToJoin.removeFirst();
         thr->setReady();
+//        kprintString("Returning joined thread...\n");
         Scheduler::put(thr);
     }
+    running->mutex.signal();
+
     ThreadCollector::put(running);
 
     running->dispatch();
@@ -59,6 +65,7 @@ void TCB::dispatch() {
     running = Scheduler::get();
 
     if (!running) {
+//        kprintString("Going idle...\n");
         running = IdleThread::getIdleThread();
     }
 
@@ -70,11 +77,10 @@ void TCB::dispatch() {
 }
 
 void TCB::threadWrapper() {
-    if (!running->kernelThread)
-        Riscv::popSppSpie();
-    else
-        Riscv::enableInterrupts();
+    Riscv::popSppSpie(running->privileged);
     running->body(running->args);
+
+//    kprintString("Ending thread...\n");
 
     __asm__ volatile ("li a0, 0x12");
     __asm__ volatile ("ecall");
@@ -94,7 +100,7 @@ int TCB::join() {
     mutex.wait();
 
     running->setBlocked();
-    waitingToJoin.addLast(running);
+    waitingToJoin.addLast(&running->node);
 
     mutex.signal();
 

@@ -20,12 +20,14 @@ public:
 
     static Scheduler *getInstance();
 
+    ~Scheduler();
+
 private:
     Scheduler() = default;
 
     static Scheduler *instance;
 
-    List<TCB> readyThreadQueue;
+    ThreadList readyThreadQueue;
 
     Mutex mutex;
 

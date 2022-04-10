@@ -19,6 +19,6 @@ void userMain() {
     testSleeping(); // thread_sleep test C API
     //ConsumerProducerCPP::testConsumerProducer(); // zadatak 4. CPP API i asinhrona promena konteksta, kompletan test svega
 
-//    myUserMain(); // additional C API tests - Extreme - Testing every functionality
+    myUserMain(); // additional C API tests - Extreme - Testing every functionality
 
 }

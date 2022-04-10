@@ -1,5 +1,6 @@
 #include "../h/IdleThread.h"
 #include "../h/TCB.h"
+#include "../h/SysPrint.h"
 
 IdleThread *IdleThread::instance = nullptr;
 
@@ -18,6 +19,7 @@ IdleThread::IdleThread() {
 }
 
 IdleThread::~IdleThread() {
+//    kprintString("Idle deleting...\n");
     delete idleThread;
 }
 

@@ -9,6 +9,7 @@
 #include "MemoryAllocator.h"
 #include "List.h"
 #include "KernelObject.h"
+#include "ThreadList.h"
 
 class TCB;
 
@@ -27,7 +28,7 @@ protected:
 
     int val;
 
-    List<TCB> blockedThreadQueue;
+    ThreadList blockedThreadQueue;
 
 };
 

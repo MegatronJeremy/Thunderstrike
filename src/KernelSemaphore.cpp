@@ -9,7 +9,7 @@
 #include "../h/SysPrint.h"
 
 void KernelSemaphore::block() {
-    blockedThreadQueue.addLast(TCB::running);
+    blockedThreadQueue.addLast(TCB::running->getNode());
     // setjmp
     TCB::running->setBlocked();
     TCB::dispatch();

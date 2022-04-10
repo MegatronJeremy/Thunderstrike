@@ -7,13 +7,14 @@
 template<typename T>
 class Queue : public KernelObject {
 public:
-    Queue(uint64 size) {
-        buffer = (T**) kmalloc((this->size = size) * sizeof(T*));
-    }
+    Queue() = default;
+//    Queue(uint64 size) {
+//        buffer = (T**) kmalloc((this->size = size) * sizeof(T*));
+//    }
 
-    Queue() {
-        buffer = (T**) kmalloc((this->size = DEFAULT_SIZE) * sizeof(T*));
-    }
+//    Queue() {
+//        buffer = (T**) kmalloc((this->size = DEFAULT_SIZE) * sizeof(T*));
+//    }
 
     Queue(const Queue<T> &) = delete;
 
@@ -43,15 +44,16 @@ public:
         return cnt;
     }
 
-    ~Queue() {
-        kfree(buffer);
-    }
+//    ~Queue() {
+//        kfree(buffer);
+//    }
 
 private:
-    uint64 front = 0, back = 0, size, cnt = 0;
-    T **buffer;
-
     static constexpr uint64 DEFAULT_SIZE = 1024;
+
+    uint64 front = 0, back = 0, size = DEFAULT_SIZE, cnt = 0;
+    T *buffer[DEFAULT_SIZE];
+
 
 };
 

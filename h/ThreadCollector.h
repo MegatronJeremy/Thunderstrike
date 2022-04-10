@@ -9,6 +9,7 @@ class TCB;
 
 #include "List.h"
 #include "Mutex.h"
+#include "ThreadList.h"
 
 class ThreadCollector : public KernelObject {
 public:
@@ -29,7 +30,7 @@ private:
 
     TCB *threadCollector = nullptr;
 
-    List<TCB> finishedThreads;
+    ThreadList finishedThreads;
 
     Mutex mutex;
 

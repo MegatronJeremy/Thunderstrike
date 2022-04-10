@@ -5,6 +5,8 @@
 #include "../h/TimerInterrupt.h"
 #include "../h/TCB.h"
 #include "../h/Scheduler.h"
+#include "../h/ThreadCollector.h"
+#include "../h/SysPrint.h"
 
 TimerInterrupt *TimerInterrupt::instance = nullptr;
 
@@ -14,7 +16,7 @@ TimerInterrupt *TimerInterrupt::getInstance() {
 }
 
 void TimerInterrupt::block(TCB *tcb, time_t time) {
-    List<TCB> *blockedThreads = &getInstance()->blockedThreadList;
+    ThreadList *blockedThreads = &getInstance()->blockedThreadList;
 
     instance->mutex.wait();
 
@@ -23,13 +25,13 @@ void TimerInterrupt::block(TCB *tcb, time_t time) {
         if (time >= currTime) {
             time -= currTime;
         } else {
-            blockedThreads->insertBeforeCurr(tcb);
+            blockedThreads->insertBeforeCurr(tcb->getNode());
             break;
         }
     }
 
     // insert at end
-    if (!blockedThreads->hasCurr()) blockedThreads->addLast(tcb);
+    if (!blockedThreads->hasCurr()) blockedThreads->addLast(tcb->getNode());
 
     // updating relative time for blocked threads after currently inserted
     while (blockedThreads->hasCurr()) {
@@ -45,7 +47,7 @@ void TimerInterrupt::block(TCB *tcb, time_t time) {
 }
 
 void TimerInterrupt::tick() {
-    List<TCB> *blockedThreads = &getInstance()->blockedThreadList;
+    ThreadList *blockedThreads = &getInstance()->blockedThreadList;
 
     TCB *tcb;
 
@@ -60,5 +62,12 @@ void TimerInterrupt::tick() {
 
     if (!tcb) return;
     tcb->decBlockedTime();
+}
+
+TimerInterrupt::~TimerInterrupt() {
+    while (!blockedThreadList.isEmpty()) {
+//        kprintString("Timer deleting...\n");
+        delete blockedThreadList.removeFirst();
+    }
 }
 

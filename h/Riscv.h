@@ -25,7 +25,7 @@ public:
     static void enableInterrupts();
 
     // pop sstatus.spp and sstatus.spie bits (has to be a non inline function)
-    static void popSppSpie();
+    static void popSppSpie(bool prMode);
 
     // push x3..x31 registers on stack
 //    static void pushRegisters();

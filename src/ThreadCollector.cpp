@@ -16,7 +16,7 @@ void ThreadCollector::signal() {
 
 void ThreadCollector::put(TCB *tcb) {
     getInstance()->mutex.wait();
-    getInstance()->finishedThreads.addLast(tcb);
+    getInstance()->finishedThreads.addLast(tcb->getNode());
     getInstance()->mutex.signal();
 }
 
@@ -26,16 +26,18 @@ ThreadCollector::ThreadCollector() : readyToDelete(0) {
 
 [[noreturn]] void ThreadCollector::run() {
     while (true) {
-        ThreadCollector::getInstance()->readyToDelete.wait();
+        getInstance()->readyToDelete.wait();
+//        if (getInstance()->finishedThreads.getCount() == 0) continue;
         getInstance()->mutex.wait();
-        delete ThreadCollector::getInstance()->finishedThreads.removeFirst();
+//        kprintString("Deleting thread...\n");
+        delete getInstance()->finishedThreads.removeFirst();
         getInstance()->mutex.signal();
     }
 }
 
 ThreadCollector::~ThreadCollector() {
-    while (finishedThreads.getCount() != 0) {
-//        kprintString("Deleting thread...\n");
+    while (!finishedThreads.isEmpty()) {
+//        kprintString("Collector deleting...\n");
         delete finishedThreads.removeFirst();
     }
     delete threadCollector;

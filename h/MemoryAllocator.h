@@ -3,33 +3,37 @@
 
 #include "../lib/hw.h"
 
+class Mutex;
+
 class MemoryAllocator {
-
 public:
-    MemoryAllocator(const MemoryAllocator &) = delete;
-    void operator=(const MemoryAllocator &) = delete;
-
     static MemoryAllocator *getInstance();
 
     void *malloc(size_t size);
     int free(void *addr);
 
 private:
-    struct FreeSegDesc {
-        size_t size;
+    MemoryAllocator() = default;
 
-        FreeSegDesc *next;
+    struct BlockHeader {
+        size_t size;
+        bool free;
+        BlockHeader *next;
     };
 
-    size_t freeMemSize;
-    FreeSegDesc *segDescHead;
+    BlockHeader *freeMemHead;
+//    BlockHeader *allocMemHead;
+    Mutex *mutex;
 
     static MemoryAllocator *instance;
 
     static void initMemoryAllocator();
 
-    static int tryToJoin(FreeSegDesc *curr);
+    static int tryToJoin(BlockHeader *curr);
+
 };
 
+void *kmalloc(size_t size);
+int kfree(void *addr);
 
 #endif

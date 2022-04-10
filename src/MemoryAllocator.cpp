@@ -1,15 +1,26 @@
 #include "../h/MemoryAllocator.h"
+#include "../h/SysPrint.h"
+#include "../h/Mutex.h"
 
 MemoryAllocator *MemoryAllocator::instance = nullptr;
 
 void MemoryAllocator::initMemoryAllocator() {
     instance = (MemoryAllocator *) HEAP_START_ADDR;
 
-    instance->freeMemSize = (uint8 *) HEAP_END_ADDR - (uint8 *) HEAP_START_ADDR - MEM_BLOCK_SIZE;
+    instance->mutex = (Mutex *) ((uint8 *) HEAP_START_ADDR + sizeof(MemoryAllocator));
+    instance->mutex->val = 1;
+    instance->freeMemHead = (BlockHeader *) ((uint8 *) HEAP_START_ADDR + sizeof(MemoryAllocator) + sizeof(Mutex));
+    instance->freeMemHead->size = (size_t) ((uint8 *) HEAP_END_ADDR - (uint8 *) HEAP_START_ADDR -
+                                  sizeof(MemoryAllocator) - sizeof(BlockHeader) - sizeof(Mutex));
+    instance->freeMemHead->free = true;
+    instance->freeMemHead->next = nullptr;
 
-    instance->segDescHead = (FreeSegDesc *) ((uint8 *) HEAP_START_ADDR + MEM_BLOCK_SIZE);
-    instance->segDescHead->size = instance->freeMemSize;
-    instance->segDescHead->next = nullptr;
+//    instance->allocMemHead = nullptr;
+
+//    kprintString("Initializing memory allocator: ");
+//    kprintUnsigned(instance->freeMemHead->size);
+//    kprintString("\n");
+
 }
 
 MemoryAllocator *MemoryAllocator::getInstance() {
@@ -19,73 +30,130 @@ MemoryAllocator *MemoryAllocator::getInstance() {
 }
 
 void *MemoryAllocator::malloc(size_t size) {
-    if (size <= 0 || size + MEM_BLOCK_SIZE > freeMemSize) return nullptr;
-    size += MEM_BLOCK_SIZE;
+    // Initial check
+    if (!size) return 0;
 
-    FreeSegDesc *curr = segDescHead, *prev = nullptr;
-    while (curr) {
-        if (size <= curr->size) break;
-        prev = curr;
-        curr = curr->next;
+    // Rounding and aligning size to size of memory blocks
+    size = ((size - 1) / MEM_BLOCK_SIZE + 1) * MEM_BLOCK_SIZE;
+
+    mutex->wait();
+    // Finding suitable free memory block using first fit algorithm
+    BlockHeader *curr = freeMemHead, *prev = nullptr;
+    int i = 0;
+    while (curr && curr->size < size)
+        prev = curr, curr = curr->next, i++;
+    if (!curr)  {
+//        kprintString("Failed allocation\n");
+        mutex->signal();
+        return nullptr;
     }
-    if (!curr) return nullptr;
 
-    freeMemSize -= size;
-
-    (!prev ? segDescHead : prev->next) = curr->next;
-
-    void *addr = (uint8 *) curr + size;
-
-    if (curr->size - size >= MEM_BLOCK_SIZE) {
-        FreeSegDesc *elem = (FreeSegDesc *) addr;
-        elem->size = curr->size - size;
+    size_t remainingSize = curr->size - size;
+    curr->size = size;
+    curr->free = false;
+    // Allocating new free memory block if enough size is left over
+    if (remainingSize >= MEM_BLOCK_SIZE + sizeof(BlockHeader)) {
+        BlockHeader *elem = (BlockHeader *) ((uint8 *) curr + sizeof(BlockHeader) + size);
+        elem->size = remainingSize - sizeof(BlockHeader);
+        elem->free = true;
         elem->next = curr->next;
-        (!prev ? segDescHead : prev->next) = elem;
+        (!prev ? freeMemHead : prev->next) = elem;
+    } else {
+        // Removing whole free memory block from free memory list
+        (!prev ? freeMemHead : prev->next) = curr->next;
+        curr->size += remainingSize;
     }
+    curr->next = nullptr;
 
-    *(size_t *) curr = size;
+    // Free memory start address after segment descriptor of allocated memory block
+    void *addr = (uint8 *) curr + sizeof(BlockHeader);
 
-    return (uint8 *) curr + MEM_BLOCK_SIZE;
+    //
+//    prev = nullptr;
+//    BlockHeader *next = allocMemHead;
+//    while (next && next <= curr)
+//        prev = next, next = next->next;
+//
+//    (!prev ? allocMemHead : prev->next) = curr;
+//    curr->next = next;
+    //
+
+    mutex->signal();
+
+    return addr;
 }
 
 int MemoryAllocator::free(void *addr) {
-    if (!addr || (uint8 *)addr < (uint8 *)HEAP_START_ADDR + 2 * MEM_BLOCK_SIZE || addr >= HEAP_END_ADDR) return -1;
-
-    addr = (uint8 *) addr - MEM_BLOCK_SIZE;
-    size_t size = *(size_t *) addr;
-
-    FreeSegDesc *curr = segDescHead, *prev = nullptr;
-
-    while (curr && curr < addr) {
-        prev = curr;
-        curr = curr->next;
+    if (!addr
+        || (uint8 *) addr < (uint8 *) HEAP_START_ADDR + sizeof(MemoryAllocator) + sizeof(BlockHeader) + sizeof(Mutex)
+        || addr >= HEAP_END_ADDR) {
+//        kprintString("failed1\n");
+        return -1;
     }
 
-    if ((prev && (uint8 *) prev + prev->size > addr) || (curr && (uint8 *) addr + size > (uint8 *) curr))
+    BlockHeader *elem = (BlockHeader *) ((uint8 *) addr - sizeof(BlockHeader));
+
+    if (!elem || elem->free || elem->next) {
+//        kprintString("failed2\n");
         return -2;
+    }
 
-    FreeSegDesc *elem = (FreeSegDesc *) addr;
-    elem->size = size;
+    mutex->wait();
+
+    //
+//    BlockHeader *curr = allocMemHead, *prev = nullptr;
+//    while (curr && curr < elem)
+//        prev = curr, curr = curr->next;
+//
+//    if (curr != elem) {
+//        mutex->signal();
+//        kprintString("failed3\n");
+//        return -3;
+//    }
+
+//    (!prev ? allocMemHead : prev->next) = elem->next;
+    //
+
+    BlockHeader *curr = freeMemHead, *prev = nullptr;
+    while (curr && curr < elem)
+        prev = curr, curr = curr->next;
+
+    if ((prev && (uint8 *) prev + prev->size + sizeof(BlockHeader) > addr)
+        || (curr && (uint8 *) addr + elem->size  > (uint8 *) curr)) {
+//        if (prev && (uint8 *) prev + prev->size + sizeof(BlockHeader) > addr)  kprintString("Failed4\n");
+//        if (curr && (uint8 *) addr + elem->size > (uint8 *) curr)  kprintString("Failed5\n");
+        return -2;
+    }
+
     elem->next = curr;
-    (!prev ? segDescHead : prev->next) = elem;
-
-    freeMemSize += elem->size;
+    elem->free = true;
+    (!prev ? freeMemHead : prev->next) = elem;
 
     tryToJoin(elem);
     tryToJoin(prev);
 
+    mutex->signal();
+
     return 0;
 }
 
-int MemoryAllocator::tryToJoin(MemoryAllocator::FreeSegDesc *curr) {
+int MemoryAllocator::tryToJoin(MemoryAllocator::BlockHeader *curr) {
     if (!curr || !curr->next) return -1;
 
-    if ((uint8 *) curr + curr->size != (uint8 *) curr->next) return -1;
+    if ((uint8 *) curr + sizeof(BlockHeader) + curr->size != (uint8 *) curr->next) return -2;
 
-    curr->size += curr->next->size;
+    curr->size += curr->next->size + sizeof(BlockHeader);
     curr->next = curr->next->next;
 
     return 0;
+}
+
+void *kmalloc(size_t size) {
+    return MemoryAllocator::getInstance()->malloc(size);
+}
+
+int kfree(void *addr) {
+    return MemoryAllocator::getInstance()->free(addr);
 }
 
 

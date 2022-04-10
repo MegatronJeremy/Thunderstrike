@@ -32,11 +32,6 @@ TCB *TCB::createThread(TCB::Body body, void *args) {
     return new TCB(body, args, DEFAULT_TIME_SLICE);
 }
 
-void TCB::yield() {
-    __asm__ volatile ("li a0, 0x13");
-    __asm__ volatile ("ecall");
-}
-
 void TCB::exit() {
     running->setFinished();
 
@@ -103,8 +98,6 @@ int TCB::join() {
     waitingToJoin.addLast(&running->node);
 
     mutex.signal();
-
-    yield();
 
     return 0;
 }

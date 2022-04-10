@@ -93,7 +93,9 @@ public:
 
     static TCB *createThread(Body body, void *args);
 
-    static void yield();
+    static void yield() {
+        __asm__ volatile ("ecall");
+    }
 
     static void dispatch();
 

@@ -19,11 +19,8 @@ int main() {
 
     Riscv::w_stvec((uint64) &Riscv::supervisorTrap);
 
-    Riscv::ms_sstatus(Riscv::SSTATUS_SIE);
-
     uMain->join();
-
-    Riscv::mc_sstatus(Riscv::SSTATUS_SIE);
+    TCB::yield();
 
     delete ThreadCollector::getInstance();
     delete IdleThread::getInstance();

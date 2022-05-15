@@ -17,9 +17,23 @@ class TCB : public KernelObject {
 public:
     using Body = void (*)(void *);
 
-    explicit TCB(Body body, void *args, uint64 timeSlice, bool privileged = false);
+    static TCB *createKernelThread(Body body, void *args);
 
-    static uint64 offsSP;
+    static TCB *createKernelThread(Body body, void *args, uint64 *threadStack);
+
+    static TCB *createUserThread(Body body, void *args);
+
+    static TCB *createUserThread(Body body, void *args, uint64 *threadStack);
+
+    int join();
+
+    static void yield() {
+        __asm__ volatile ("ecall");
+    }
+
+    static void dispatch();
+
+    static void exit();
 
     bool isBlocked() const {
         return status == BLOCKED;
@@ -89,23 +103,19 @@ public:
         return &node;
     }
 
-    int join();
-
-    static TCB *createThread(Body body, void *args);
-
-    static void yield() {
-        __asm__ volatile ("ecall");
+    static TCB *createKernelThread() {
+        return new TCB();
     }
-
-    static void dispatch();
-
-    static void exit();
 
     static TCB *running;
 
     ~TCB();
 
 private:
+    TCB();
+
+    explicit TCB(Body body, void *args, uint64 *threadStack, bool privileged);
+
     enum Status {
         READY, FINISHED, BLOCKED, IDLE
     };
@@ -115,18 +125,18 @@ private:
         uint64 sp;
     };
 
-    uint64 ssp;
-    Body body;
-    void *args;
-    uint64 *threadStack;
-    uint64 *kernelStack;
-    Context context;
-    uint64 timeSlice;
-    Status status;
+    uint64 ssp = 0;
+    Body body = nullptr;
+    void *args = nullptr;
+    uint64 *threadStack = nullptr;
+    uint64 *kernelStack = (uint64 *) kmalloc(DEFAULT_STACK_SIZE);
+    bool privileged = true;
+    Context context = {0, 0};
+    uint64 timeSlice = DEFAULT_TIME_SLICE;
+    Status status = READY;
     ThreadList waitingToJoin;
-    bool privileged;
     Mutex mutex;
-    ThreadNode node;
+    ThreadNode node = this;
 
     time_t blockedTime = 0;
 

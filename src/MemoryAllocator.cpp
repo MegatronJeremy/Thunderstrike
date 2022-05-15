@@ -34,7 +34,7 @@ void *MemoryAllocator::malloc(size_t size) {
     if (!size) return 0;
 
     // Rounding and aligning size to size of memory blocks
-    size = ((size - 1) / MEM_BLOCK_SIZE + 1) * MEM_BLOCK_SIZE;
+    size *= MEM_BLOCK_SIZE;
 
     mutex->wait();
     // Finding suitable free memory block using first fit algorithm

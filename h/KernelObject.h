@@ -6,10 +6,12 @@
 class KernelObject {
 public:
     static void *operator new(size_t size) {
+        size = (size - 1) / MEM_BLOCK_SIZE + 1;
         return kmalloc(size);
     }
 
     static void *operator new[](size_t size) {
+        size = (size - 1) / MEM_BLOCK_SIZE + 1;
         return kmalloc(size);
     }
 

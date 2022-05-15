@@ -15,7 +15,7 @@ void ThreadCollector::put(TCB *tcb) {
 }
 
 ThreadCollector::ThreadCollector() : readyToDelete(0) {
-    threadCollector = new TCB([](void *){ThreadCollector::run();}, nullptr, DEFAULT_TIME_SLICE, true);
+    threadCollector = TCB::createKernelThread([](void *){ThreadCollector::run();}, nullptr);
 }
 
 [[noreturn]] void ThreadCollector::run() {

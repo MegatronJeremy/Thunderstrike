@@ -82,6 +82,7 @@ void Riscv::handleSupervisorTrap() {
             kprintString("\nStval: ");
             kprintUnsigned(r_stval());
             kprintString("\n");
+            w_sepc(r_sepc() + 4);
         }
     }
 }

@@ -9,7 +9,7 @@ IdleThread *IdleThread::getInstance() {
 }
 
 IdleThread::IdleThread() {
-    idleThread = new TCB([](void *){IdleThread::getInstance()->run();}, nullptr, DEFAULT_TIME_SLICE);
+    idleThread = TCB::createKernelThread([](void *){IdleThread::getInstance()->run();}, nullptr);
     idleThread->setIdle();
 }
 

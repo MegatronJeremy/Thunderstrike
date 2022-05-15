@@ -10,11 +10,11 @@ void userMain();
 
 int main() {
     kprintString("Starting main\n");
-    TCB *main = TCB::createThread(nullptr, nullptr);
+    TCB *main = TCB::createKernelThread();
     kprintString("Created main thread\n");
     TCB::running = main;
 
-    TCB *uMain = TCB::createThread([](void *){userMain();}, nullptr);
+    TCB *uMain = TCB::createUserThread([](void *){userMain();}, nullptr);
     kprintString("Created user main thread\n");
 
     Riscv::w_stvec((uint64) &Riscv::supervisorTrap);

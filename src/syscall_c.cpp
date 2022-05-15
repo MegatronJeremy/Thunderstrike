@@ -14,6 +14,8 @@ _sem::~_sem() {
 }
 
 void *mem_alloc(size_t size) {
+    if (!size) return nullptr;
+    size = (size - 1) / MEM_BLOCK_SIZE + 1;
     return callSupervisorTrap(0x01, (void *) size);
 }
 
@@ -23,8 +25,14 @@ int mem_free(void *addr) {
 
 int thread_create(thread_t *handle, void(*start_routine)(void *), void *arg) {
     if (!handle) return -1;
+
     *handle = new _thread;
-    uint64 args[] = {(uint64) *handle, (uint64) start_routine, (uint64) arg};
+    if (!*handle) return -1;
+
+    void *stack = new uint64[DEFAULT_STACK_SIZE];
+    if (!stack) return -1;
+
+    uint64 args[] = {(uint64) *handle, (uint64) start_routine, (uint64) arg, (uint64) stack};
     return (uint64) callSupervisorTrap(0x11, args);
 }
 

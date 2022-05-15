@@ -8,22 +8,39 @@ TCB *TCB::running = nullptr;
 
 uint64 TCB::timeSliceCounter = 0;
 
-TCB::TCB(Body body, void *args, uint64 timeSlice, bool privileged) :
-        body(body), args(args),
-        threadStack(body != nullptr ? (uint64 *) kmalloc(DEFAULT_STACK_SIZE * sizeof(uint64)) : nullptr),
-        kernelStack((uint64 *) kmalloc(DEFAULT_STACK_SIZE * sizeof(uint64))),
-        context({(uint64) &threadWrapper, threadStack != nullptr ? (uint64) (threadStack + DEFAULT_STACK_SIZE) : 0}),
-        timeSlice(timeSlice),
-        status(READY),
-        privileged(privileged),
-        node(this) {
+TCB::TCB() {
     ssp = (uint64) (kernelStack + DEFAULT_STACK_SIZE);
-    if (body != nullptr)
-        Scheduler::put(this);
 }
 
-TCB *TCB::createThread(TCB::Body body, void *args) {
-    return new TCB(body, args, DEFAULT_TIME_SLICE);
+TCB::TCB(TCB::Body body, void *args, uint64 *threadStack, bool privileged) :
+        body(body), args(args),
+        threadStack(threadStack),
+        privileged(privileged),
+        context({(uint64) threadWrapper, (uint64) (threadStack + DEFAULT_STACK_SIZE)}) {
+    ssp = (uint64) (kernelStack + DEFAULT_STACK_SIZE);
+    Scheduler::put(this);
+}
+
+TCB *TCB::createKernelThread(TCB::Body body, void *args) {
+    if (!body) return nullptr;
+    uint64 *threadStack = (uint64 *) kmalloc(DEFAULT_STACK_SIZE * sizeof(uint64));
+    return createKernelThread(body, args, threadStack);
+}
+
+TCB *TCB::createUserThread(TCB::Body body, void *args) {
+    if (!body) return nullptr;
+    uint64 *threadStack = (uint64 *) kmalloc(DEFAULT_STACK_SIZE * sizeof(uint64));
+    return createUserThread(body, args, threadStack);
+}
+
+TCB *TCB::createKernelThread(TCB::Body body, void *args, uint64 *threadStack) {
+    if (!body) return nullptr;
+    return new TCB(body, args, threadStack, true);
+}
+
+TCB *TCB::createUserThread(TCB::Body body, void *args, uint64 *threadStack) {
+    if (!body) return nullptr;
+    return new TCB(body, args, threadStack, false);
 }
 
 void TCB::exit() {
@@ -88,3 +105,5 @@ TCB::~TCB() {
     kfree(kernelStack);
     kfree(threadStack);
 }
+
+

@@ -16,7 +16,7 @@ void ThreadCollector::signal() {
 void ThreadCollector::put(TCB *tcb) {
     ThreadCollector *tc = getInstance();
     tc->mutex.wait();
-    tc->finishedThreads.addLast(tcb->getNode());
+    tc->finishedThreads.addLast(tcb->getListNode());
     tc->mutex.signal();
 }
 

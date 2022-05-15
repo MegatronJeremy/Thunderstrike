@@ -3,12 +3,14 @@
 
 #include "../lib/hw.h"
 
+constexpr int INT_MAX = ((uint) ~0 >> 1);
+
 #define lock()                  \
     volatile uint64 sstatus = Riscv::r_sstatus(); \
-    Riscv::disableInterrupts(); \
+    Riscv::disableInterrupts();
 
 #define unlock()                \
-    Riscv::w_sstatus(sstatus);  \
+    Riscv::w_sstatus(sstatus);
 
 
 class Riscv {

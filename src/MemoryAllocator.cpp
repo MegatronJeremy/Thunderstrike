@@ -2,13 +2,6 @@
 
 MemoryAllocator *MemoryAllocator::instance = nullptr;
 
-void *kmalloc(size_t size) {
-    return MemoryAllocator::getInstance()->malloc(size);
-}
-
-int kfree(void *addr) {
-    return MemoryAllocator::getInstance()->free(addr);
-}
 
 void *MemoryAllocator::operator new(size_t) {
     return (void *) HEAP_START_ADDR;

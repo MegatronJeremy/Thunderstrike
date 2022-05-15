@@ -4,11 +4,9 @@
 #include "../lib/hw.h"
 
 typedef struct _sem {
-    const uint64 id;
 } _sem;
 
 typedef struct _thread {
-    const uint64 id;
 } _thread;
 
 typedef _sem* sem_t;

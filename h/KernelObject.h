@@ -4,7 +4,10 @@
 #include "../lib/hw.h"
 
 void *kmalloc(size_t);
+
 int kfree(void *);
+
+static constexpr uint64 DEFAULT_BUFFER_SIZE = 1024;
 
 class KernelObject {
 public:

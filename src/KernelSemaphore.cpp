@@ -3,8 +3,15 @@
 #include "../h/TCB.h"
 #include "../h/Scheduler.h"
 
+uint64 KernelSemaphore::ID = 0;
+
+
+KernelSemaphore::KernelSemaphore(int val) :
+    val(val),
+    hashNode(this, id) {}
+
 void KernelSemaphore::block() {
-    blockedThreadQueue.addLast(TCB::running->getNode());
+    blockedThreadQueue.addLast(TCB::running->getListNode());
     TCB::running->setBlocked();
     TCB::dispatch();
 }
@@ -16,22 +23,35 @@ void KernelSemaphore::deblock() {
     Scheduler::put(tcb);
 }
 
-void KernelSemaphore::wait() {
+int KernelSemaphore::wait() {
     lock()
     if (--val < 0) block();
     unlock()
+    if (TCB::running->isInterrupted()) {
+        TCB::running->setReady();
+        return -1;
+    }
+    return 0;
 }
 
-void KernelSemaphore::signal() {
+int KernelSemaphore::signal() {
+    if (val == INT_MAX) return -1;
     lock()
     if (val++ < 0) deblock();
     unlock()
+    return 0;
 }
 
 KernelSemaphore::~KernelSemaphore() {
     lock()
-    while (!blockedThreadQueue.isEmpty())
-        deblock();
+    while (!blockedThreadQueue.isEmpty()) {
+        TCB *tcb = blockedThreadQueue.removeFirst();
+        tcb->setInterrupted();
+        Scheduler::put(tcb);
+    }
     unlock()
-    val = 0;
+
+    val = INT_MAX;
 }
+
+

@@ -12,7 +12,7 @@ TCB *Scheduler::get() {
 
 void Scheduler::put(TCB *tcb) {
     getInstance()->mutex.wait();
-    getInstance()->readyThreadQueue.addLast(tcb->getNode());
+    getInstance()->readyThreadQueue.addLast(tcb->getListNode());
     getInstance()->mutex.signal();
 }
 

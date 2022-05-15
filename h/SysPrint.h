@@ -3,6 +3,7 @@
 
 #include "../lib/hw.h"
 #include "Mutex.h"
+#include "KernelConsole.h"
 
 class PrintMutex : public KernelObject {
 public:

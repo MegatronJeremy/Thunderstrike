@@ -4,7 +4,7 @@
 #include "../h/TCB.h"
 #include "../h/TimerInterrupt.h"
 #include "../h/SysPrint.h"
-#include "../lib/console.h"
+#include "../h/LinkedHashTable.h"
 
 void Kernel::handleSystemCall() {
     uint64 context = TCB::running->getSavedContext();
@@ -37,15 +37,15 @@ void Kernel::handleSystemCall() {
             Riscv::pushRegisterA0(context);
             break;
         case(0x22):
-            sem_close((KernelSemaphore **) args);
+            sem_close((uint64) args);
             Riscv::pushRegisterA0(context);
             break;
         case(0x23):
-            sem_wait((KernelSemaphore **) args);
+            sem_wait((uint64) args);
             Riscv::pushRegisterA0(context);
             break;
         case(0x24):
-            sem_signal((KernelSemaphore **) args);
+            sem_signal((uint64) args);
             Riscv::pushRegisterA0(context);
             break;
         case(0x31):
@@ -77,19 +77,29 @@ int Kernel::mem_free(void *addr) {
 
 int Kernel::thread_create(uint64 *args) {
     TCB **handle = (TCB **) args[0];
-    if (!handle) return -1;
+    if (!handle) return -2;
 
     auto body = (TCB::Body) args[1];
+    if (!body) return -3;
+
     void *arg = (void *) args[2];
     auto *stack = (uint64 *) args[3];
 
-    *handle = TCB::createUserThread(body, arg, stack);
-    return *handle != nullptr;
+    TCB *thr = TCB::createUserThread(body, arg, stack);
+    if (!thr) return -4;
+
+    if (LinkedHashTable<TCB>::insert(thr->getHashNode()) < 0)
+        return -5;
+
+    return 0;
 }
 
 int Kernel::thread_exit() {
+    LinkedHashTable<TCB>::remove(TCB::running->getId());
+
     TCB::exit();
-    return -1;
+
+    return -2;
 }
 
 void Kernel::thread_dispatch() {
@@ -97,46 +107,65 @@ void Kernel::thread_dispatch() {
 }
 
 int Kernel::sem_open(uint64 *args) {
-    auto **handle = (KernelSemaphore **) args[0];
+    auto **handle = (uint64 **) args[0];
     if (!handle) return -1;
 
-    auto init = (unsigned int) args[1];
+    int init = (int) args[1];
 
-    *handle = new KernelSemaphore(init);
-    return *handle != nullptr;
-}
+    auto *sem = new KernelSemaphore(init);
+    if (!sem) return -2;
 
-int Kernel::sem_close(KernelSemaphore **sem) {
-    if (!sem || !*sem) return -1;
-    delete *sem;
-    *sem = nullptr;
+    if (LinkedHashTable<KernelSemaphore>::insert(sem->getHashNode()) < 0)
+        return -3;
+
+    *handle = (uint64 *) sem->getId();
 
     return 0;
 }
 
-int Kernel::sem_wait(KernelSemaphore **sem) {
-    if (!sem || !*sem) return -1;
-    (*sem)->wait();
+int Kernel::sem_close(uint64 id) {
+    KernelSemaphore *sem = LinkedHashTable<KernelSemaphore>::get(id);
+    if (!sem) return -1;
+
+    if (LinkedHashTable<KernelSemaphore>::remove(id) < 0)
+        return -2;
+
+    delete sem;
+
     return 0;
 }
 
-int Kernel::sem_signal(KernelSemaphore **sem) {
-    if (!sem || !*sem) return -1;
-    (*sem)->signal();
+int Kernel::sem_wait(uint64 id) {
+    KernelSemaphore *sem = LinkedHashTable<KernelSemaphore>::get(id);
+    if (!sem) return -1;
+
+    if (sem->wait() < 0)
+        return -2;
+
+    return 0;
+}
+
+int Kernel::sem_signal(uint64 id) {
+    KernelSemaphore *sem = LinkedHashTable<KernelSemaphore>::get(id);
+    if (!sem) return -1;
+
+    if (sem->signal() < 0)
+        return -2;
+
     return 0;
 }
 
 int Kernel::time_sleep(time_t time) {
-    if (time < 0) return -1;
-    TimerInterrupt::block(TCB::running, time);
+    if (time == 0) TCB::dispatch();
+    else TimerInterrupt::getInstance()->block(TCB::running, time);
     return 0;
 }
 
 char Kernel::getc() {
-    return __getc();
+    return KernelConsole::getc();
 }
 
-void Kernel::putc(char c) {
-    __putc(c);
+void Kernel::putc(char chr) {
+    KernelConsole::putc(chr);
 }
 

@@ -1,12 +1,12 @@
 #include "../h/SysPrint.h"
-#include "../lib/console.h"
+#include "../h/KernelConsole.h"
 
 PrintMutex *PrintMutex::instance = nullptr;
 
 void kprintString(char const *string) {
     PrintMutex::wait();
     while (*string != '\0') {
-        __putc(*string);
+        KernelConsole::putc(*string);
         string++;
     }
     PrintMutex::signal();
@@ -34,7 +34,7 @@ void kprintInteger(int integer) {
     if (neg) buf[i++] = '-';
 
     while (--i >= 0)
-        __putc(buf[i]);
+        KernelConsole::putc(buf[i]);
     PrintMutex::signal();
 }
 
@@ -49,6 +49,6 @@ void kprintUnsigned(uint64 x) {
     } while ((x /= 10) != 0);
 
     while (--i >= 0)
-        __putc(buf[i]);
+        KernelConsole::putc(buf[i]);
     PrintMutex::signal();
 }

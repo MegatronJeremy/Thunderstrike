@@ -11,11 +11,6 @@ TimerInterrupt *TimerInterrupt::getInstance() {
 }
 
 void TimerInterrupt::block(TCB *tcb, time_t time) {
-    if (!tcb) return;
-    getInstance()->update(tcb, time);
-}
-
-void TimerInterrupt::update(TCB *tcb, time_t time) {
     mutex.wait();
 
     for (blockedThreads.toHead(); blockedThreads.hasCurr(); blockedThreads.toNext()) {
@@ -23,45 +18,38 @@ void TimerInterrupt::update(TCB *tcb, time_t time) {
         if (time >= currTime) {
             time -= currTime;
         } else {
-            blockedThreads.insertBeforeCurr(tcb->getNode());
+            // insert before current and update current relative wait tiem
+            blockedThreads.insertBeforeCurr(tcb->getListNode());
+            blockedThreads.getCurr()->decBlockedTime(time);
             break;
         }
     }
 
     // insert at end
-    if (!blockedThreads.hasCurr()) blockedThreads.addLast(tcb->getNode());
-
-    // updating relative time for blocked threads after currently inserted
-    while (blockedThreads.hasCurr()) {
-        blockedThreads.getCurr()->decBlockedTime(time);
-        blockedThreads.toNext();
-    }
-
-    mutex.signal();
+    if (!blockedThreads.hasCurr()) blockedThreads.addLast(tcb->getListNode());
 
     tcb->setBlockedTime(time);
     tcb->setBlocked();
+
+    mutex.signal();
+
     TCB::dispatch();
 }
 
 void TimerInterrupt::tick() {
-    getInstance()->tickAll();
-}
-
-void TimerInterrupt::tickAll() {
-    TCB *tcb;
+    if (blockedThreads.isEmpty()) return;
 
     mutex.wait();
+    TCB *tcb = blockedThreads.getFirst();
+    tcb->decBlockedTime();
 
-    while ((tcb = blockedThreads.getFirst()) && tcb->getBlockedTime() == 0) {
+    while (tcb && tcb->getBlockedTime() == 0) {
         tcb->setReady();
         Scheduler::put(blockedThreads.removeFirst());
+        tcb = blockedThreads.getFirst();
     }
 
     mutex.signal();
-
-    if (!tcb) return;
-    tcb->decBlockedTime();
 }
 
 TimerInterrupt::~TimerInterrupt() {

@@ -3,8 +3,13 @@
 #include "../h/ThreadCollector.h"
 #include "../h/Scheduler.h"
 #include "../h/IdleThread.h"
+#include "../h/syscall_c.h"
 
 TCB *TCB::running = nullptr;
+
+uint64 TCB::ID = 0;
+
+uint64 TCB::offsSSP = OFFSETOF(TCB, ssp);
 
 uint64 TCB::timeSliceCounter = 0;
 
@@ -18,8 +23,8 @@ TCB::TCB(TCB::Body body, void *args, uint64 *threadStack, bool privileged) :
         body(body), args(args),
         threadStack(threadStack),
         privileged(privileged),
-        context({(uint64) threadWrapper, (uint64) (threadStack + DEFAULT_STACK_SIZE)}) {
-    ssp = (uint64) (kernelStack + DEFAULT_STACK_SIZE);
+        context({(uint64) threadWrapper, (uint64) (threadStack + DEFAULT_STACK_SIZE)}),
+        ssp((uint64) (kernelStack + DEFAULT_STACK_SIZE)) {
     Scheduler::put(this);
 }
 
@@ -86,8 +91,7 @@ void TCB::threadWrapper() {
     Riscv::popSppSpie(running->privileged);
     running->body(running->args);
 
-    __asm__ volatile ("li a0, 0x12");
-    __asm__ volatile ("ecall");
+    thread_exit();
 }
 
 int TCB::join() {
@@ -96,7 +100,7 @@ int TCB::join() {
     mutex.wait();
 
     running->setBlocked();
-    waitingToJoin.addLast(&running->node);
+    waitingToJoin.addLast(&running->listNode);
 
     mutex.signal();
 

@@ -17,15 +17,10 @@ int mem_free(void *addr) {
 }
 
 int thread_create(thread_t *handle, void(*start_routine)(void *), void *arg) {
-    if (!handle) return -1;
-
-    *handle = (_thread *) mem_alloc(sizeof(_thread));
-    if (!*handle) return -1;
-
     void *stack = mem_alloc(sizeof(uint64) * DEFAULT_STACK_SIZE);
     if (!stack) return -1;
 
-    uint64 args[] = {(uint64) *handle, (uint64) start_routine, (uint64) arg, (uint64) stack};
+    uint64 args[] = {(uint64) handle, (uint64) start_routine, (uint64) arg, (uint64) stack};
     return (uint64) callSupervisorTrap(0x11, args);
 }
 
@@ -38,10 +33,7 @@ void thread_dispatch() {
 }
 
 int sem_open(sem_t *handle, unsigned init) {
-    if (!handle) return -1;
-
-    *handle = (_sem *) mem_alloc(sizeof(_sem));
-    uint64 args[] = {(uint64) *handle, (uint64) init};
+    uint64 args[] = {(uint64) handle, (uint64) init};
 
     return (uint64) callSupervisorTrap(0x21, args);
 }

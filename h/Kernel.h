@@ -21,11 +21,11 @@ public:
 
     static int sem_open(uint64 *args);
 
-    static int sem_close(KernelSemaphore **handle);
+    static int sem_close(uint64 id);
 
-    static int sem_wait(KernelSemaphore **sem);
+    static int sem_wait(uint64 id);
 
-    static int sem_signal(KernelSemaphore **sem);
+    static int sem_signal(uint64 id);
 
     static int time_sleep(time_t);
 

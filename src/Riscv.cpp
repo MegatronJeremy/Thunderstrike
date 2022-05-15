@@ -1,9 +1,9 @@
 #include "../h/Riscv.h"
-#include "../lib/console.h"
 #include "../h/SysPrint.h"
 #include "../h/TCB.h"
 #include "../h/Kernel.h"
 #include "../h/TimerInterrupt.h"
+#include "../h/KernelConsole.h"
 
 void Riscv::popSppSpie(bool prMode) {
     if(prMode) ms_sstatus(SSTATUS_SPP);
@@ -46,12 +46,12 @@ void Riscv::handleSupervisorTrap() {
             // interrupt: yes, cause code: supervisor software interrupt (timer)
             volatile uint64 sepc = r_sepc();
             volatile uint64 sstatus = r_sstatus();
-            mc_sip(SIP_SSIP);
             TCB::timeSliceCounter++;
+            mc_sip(SIP_SSIP);
 
             Riscv::enableInterrupts();
 
-            TimerInterrupt::tick();
+            TimerInterrupt::getInstance()->tick();
 
             Riscv::disableInterrupts();
 
@@ -65,7 +65,23 @@ void Riscv::handleSupervisorTrap() {
         }
         case 0x8000000000000009UL: {
             // interrupt: yes, cause code: supervisor external interrupt (console)
-            console_handler();
+            volatile uint64 sepc = r_sepc();
+            volatile uint64 sstatus = r_sstatus();
+
+            int dev = plic_claim();
+
+            if (dev == CONSOLE_IRQ) {
+                Riscv::enableInterrupts();
+
+                KernelConsole::consoleHandler();
+
+                Riscv::disableInterrupts();
+            }
+
+            plic_complete(dev);
+
+            w_sstatus(sstatus);
+            w_sepc(sepc);
             break;
         }
         default: {

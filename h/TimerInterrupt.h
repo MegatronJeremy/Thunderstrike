@@ -8,9 +8,9 @@ class TCB;
 
 class TimerInterrupt : public KernelObject {
 public:
-    static void block(TCB *tcb, time_t time);
+    void block(TCB *tcb, time_t time);
 
-    static void tick();
+    void tick();
 
     static TimerInterrupt *getInstance();
 

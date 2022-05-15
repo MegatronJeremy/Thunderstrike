@@ -9,10 +9,11 @@
 void userMain();
 
 int main() {
-    kprintString("Starting main\n");
+    KernelConsole::getInstance();
+    ThreadCollector::getInstance();
     TCB *main = TCB::createKernelThread();
-    kprintString("Created main thread\n");
     TCB::running = main;
+    kprintString("Created main thread\n");
 
     TCB *uMain = TCB::createUserThread([](void *){userMain();}, nullptr);
     kprintString("Created user main thread\n");

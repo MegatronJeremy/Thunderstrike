@@ -19,10 +19,7 @@ void operator delete[](void *addr) {
 Thread::Thread(Body body, void *arg) : body(body), arg(arg) {
 }
 
-Thread::~Thread() {
-    delete myHandle;
-    myHandle = nullptr;
-}
+Thread::~Thread() = default;
 
 int Thread::start() {
     return thread_create(&myHandle, body, arg);
@@ -47,8 +44,6 @@ Semaphore::Semaphore(unsigned int init) {
 
 Semaphore::~Semaphore() {
     sem_close(myHandle);
-    delete myHandle;
-    myHandle = nullptr;
 }
 
 int Semaphore::wait() {

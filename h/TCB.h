@@ -6,6 +6,7 @@
 #include "Mutex.h"
 #include "ThreadNode.h"
 #include "ThreadList.h"
+#include "LinkedHashNode.h"
 
 #define OFFSETOF(TYPE, ELEMENT) ((size_t)&(((TYPE *)0)->ELEMENT))
 
@@ -13,6 +14,10 @@
 class TCB : public KernelObject {
 public:
     using Body = void (*)(void *);
+
+    static TCB *createKernelThread() {
+        return new TCB();
+    }
 
     static TCB *createKernelThread(Body body, void *args);
 
@@ -31,6 +36,10 @@ public:
     static void dispatch();
 
     static void exit();
+
+    int getId() const {
+        return id;
+    }
 
     bool isBlocked() const {
         return status == BLOCKED;
@@ -64,6 +73,14 @@ public:
         status = IDLE;
     }
 
+    bool isInterrupted() const {
+        return status == INTERRUPTED;
+    }
+
+    void setInterrupted() {
+        status = INTERRUPTED;
+    }
+
     uint64 getTimeSlice() const {
         return timeSlice;
     }
@@ -77,7 +94,8 @@ public:
     }
 
     void decBlockedTime(time_t time = 1) {
-        this->blockedTime -= time;
+        if (blockedTime - time > blockedTime) return;
+        blockedTime -= time;
     }
 
     const Mutex *getMutex() const {
@@ -96,17 +114,17 @@ public:
         return threadStack;
     };
 
-    ThreadNode *getNode() {
-        return &node;
+    ThreadNode *getListNode() {
+        return &listNode;
     }
 
-    static TCB *createKernelThread() {
-        return new TCB();
+    LinkedHashNode<TCB> *getHashNode() {
+        return &hashNode;
     }
-
-    static TCB *running;
 
     ~TCB() override;
+
+    static TCB *running;
 
 private:
     TCB();
@@ -114,7 +132,7 @@ private:
     explicit TCB(Body body, void *args, uint64 *threadStack, bool privileged);
 
     enum Status {
-        READY, FINISHED, BLOCKED, IDLE
+        READY, FINISHED, BLOCKED, IDLE, INTERRUPTED
     };
 
     struct Context {
@@ -122,17 +140,27 @@ private:
         uint64 sp;
     };
 
+    static uint64 ID;
+    uint64 id = ID++;
+
     Body body = nullptr;
     void *args = nullptr;
+
     uint64 *threadStack = nullptr;
     uint64 *kernelStack = (uint64 *) kmalloc(DEFAULT_STACK_SIZE);
     bool privileged = true;
+
     Context context = {0, 0};
+
     uint64 timeSlice = DEFAULT_TIME_SLICE;
+
     Status status = READY;
+
     ThreadList waitingToJoin;
     Mutex mutex;
-    ThreadNode node = ThreadNode(this);
+
+    ThreadNode listNode = ThreadNode(this);
+    LinkedHashNode<TCB> hashNode = LinkedHashNode<TCB>(this, id);
 
     static uint64 offsSSP;
     uint64 ssp = 0;

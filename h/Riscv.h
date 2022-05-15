@@ -272,4 +272,4 @@ inline void Riscv::pushRegisterA1(uint64 context) {
     __asm__ volatile ("sd a1, 11 * 8(%[context])" : : [context] "r"(context));
 }
 
-#endif //OS1_VEZBE07_RISCV_CONTEXT_SWITCH_1_SYNCHRONOUS_RISCV_H
+#endif

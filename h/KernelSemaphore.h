@@ -8,13 +8,13 @@ class TCB;
 
 class KernelSemaphore : public KernelObject {
 public:
-    KernelSemaphore(int val = 1) : val(val) {}
+    explicit KernelSemaphore(int val = 1) : val(val) {}
 
     virtual void wait();
 
     virtual void signal();
 
-    virtual ~KernelSemaphore();
+    ~KernelSemaphore() override;
 
 protected:
     void block();

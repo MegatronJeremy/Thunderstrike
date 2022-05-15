@@ -9,8 +9,12 @@ IdleThread *IdleThread::getInstance() {
 }
 
 IdleThread::IdleThread() {
-    idleThread = TCB::createKernelThread([](void *){IdleThread::getInstance()->run();}, nullptr);
+    idleThread = TCB::createUserThread([](void *){IdleThread::run();}, nullptr);
     idleThread->setIdle();
+}
+
+TCB *IdleThread::getIdleThread() {
+    return getInstance()->idleThread;
 }
 
 [[noreturn]] void IdleThread::run() {
@@ -21,6 +25,4 @@ IdleThread::~IdleThread() {
     delete idleThread;
 }
 
-TCB *IdleThread::getIdleThread() {
-    return getInstance()->idleThread;
-}
+

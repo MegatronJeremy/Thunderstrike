@@ -8,6 +8,8 @@ TCB *TCB::running = nullptr;
 
 uint64 TCB::timeSliceCounter = 0;
 
+uint64 TCB::offsSSP = OFFSETOF(TCB, ssp);
+
 TCB::TCB() {
     ssp = (uint64) (kernelStack + DEFAULT_STACK_SIZE);
 }
@@ -23,13 +25,13 @@ TCB::TCB(TCB::Body body, void *args, uint64 *threadStack, bool privileged) :
 
 TCB *TCB::createKernelThread(TCB::Body body, void *args) {
     if (!body) return nullptr;
-    uint64 *threadStack = (uint64 *) kmalloc(DEFAULT_STACK_SIZE * sizeof(uint64));
+    auto *threadStack = (uint64 *) kmalloc(DEFAULT_STACK_SIZE);
     return createKernelThread(body, args, threadStack);
 }
 
 TCB *TCB::createUserThread(TCB::Body body, void *args) {
     if (!body) return nullptr;
-    uint64 *threadStack = (uint64 *) kmalloc(DEFAULT_STACK_SIZE * sizeof(uint64));
+    auto *threadStack = (uint64 *) kmalloc(DEFAULT_STACK_SIZE);
     return createUserThread(body, args, threadStack);
 }
 

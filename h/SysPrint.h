@@ -19,11 +19,13 @@ public:
         getInstance()->mutex.signal();
     }
 
-    ~PrintMutex() {
+    ~PrintMutex() override {
         delete instance;
     }
 
 private:
+    PrintMutex() = default;
+
     static PrintMutex *instance;
     Mutex mutex;
 };

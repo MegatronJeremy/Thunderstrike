@@ -7,7 +7,11 @@ class TCB;
 
 class ThreadNode : public KernelObject {
 public:
-    ThreadNode(TCB *data, ThreadNode *next = nullptr, ThreadNode *prev = nullptr) : data(data), next(next), prev(prev) {}
+    explicit ThreadNode(TCB *data, ThreadNode *next = nullptr, ThreadNode *prev = nullptr) :
+            data(data),
+            next(next),
+            prev(prev) {}
+
 private:
     friend class ThreadList;
 

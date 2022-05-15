@@ -22,8 +22,8 @@ int main() {
     uMain->join();
     TCB::yield();
 
-    delete ThreadCollector::getInstance();
     delete IdleThread::getInstance();
+    delete ThreadCollector::getInstance();
     delete TimerInterrupt::getInstance();
     delete Scheduler::getInstance();
 

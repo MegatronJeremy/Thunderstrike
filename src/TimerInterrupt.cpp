@@ -1,6 +1,7 @@
 #include "../h/TimerInterrupt.h"
 #include "../h/TCB.h"
 #include "../h/Scheduler.h"
+#include "../h/SysPrint.h"
 
 TimerInterrupt *TimerInterrupt::instance = nullptr;
 
@@ -10,30 +11,33 @@ TimerInterrupt *TimerInterrupt::getInstance() {
 }
 
 void TimerInterrupt::block(TCB *tcb, time_t time) {
-    ThreadList *blockedThreads = &getInstance()->blockedThreadList;
+    if (!tcb) return;
+    getInstance()->update(tcb, time);
+}
 
-    getInstance()->mutex.wait();
+void TimerInterrupt::update(TCB *tcb, time_t time) {
+    mutex.wait();
 
-    for (blockedThreads->toHead(); blockedThreads->hasCurr(); blockedThreads->toNext()) {
-        time_t currTime = blockedThreads->getCurr()->getBlockedTime();
+    for (blockedThreads.toHead(); blockedThreads.hasCurr(); blockedThreads.toNext()) {
+        time_t currTime = blockedThreads.getCurr()->getBlockedTime();
         if (time >= currTime) {
             time -= currTime;
         } else {
-            blockedThreads->insertBeforeCurr(tcb->getNode());
+            blockedThreads.insertBeforeCurr(tcb->getNode());
             break;
         }
     }
 
     // insert at end
-    if (!blockedThreads->hasCurr()) blockedThreads->addLast(tcb->getNode());
+    if (!blockedThreads.hasCurr()) blockedThreads.addLast(tcb->getNode());
 
     // updating relative time for blocked threads after currently inserted
-    while (blockedThreads->hasCurr()) {
-        blockedThreads->getCurr()->decBlockedTime(time);
-        blockedThreads->toNext();
+    while (blockedThreads.hasCurr()) {
+        blockedThreads.getCurr()->decBlockedTime(time);
+        blockedThreads.toNext();
     }
 
-    getInstance()->mutex.signal();
+    mutex.signal();
 
     tcb->setBlockedTime(time);
     tcb->setBlocked();
@@ -41,26 +45,29 @@ void TimerInterrupt::block(TCB *tcb, time_t time) {
 }
 
 void TimerInterrupt::tick() {
-    ThreadList *blockedThreads = &getInstance()->blockedThreadList;
+    getInstance()->tickAll();
+}
 
+void TimerInterrupt::tickAll() {
     TCB *tcb;
 
-    getInstance()->mutex.wait();
+    mutex.wait();
 
-    while ((tcb = blockedThreads->getFirst()) && !tcb->getBlockedTime()) {
+    while ((tcb = blockedThreads.getFirst()) && tcb->getBlockedTime() == 0) {
         tcb->setReady();
-        Scheduler::put(blockedThreads->removeFirst());
+        Scheduler::put(blockedThreads.removeFirst());
     }
 
-    getInstance()->mutex.signal();
+    mutex.signal();
 
     if (!tcb) return;
     tcb->decBlockedTime();
 }
 
 TimerInterrupt::~TimerInterrupt() {
-    while (!blockedThreadList.isEmpty()) {
-        delete blockedThreadList.removeFirst();
+    while (!blockedThreads.isEmpty()) {
+        delete blockedThreads.removeFirst();
     }
 }
+
 

@@ -14,6 +14,10 @@ void *MemoryAllocator::operator new(size_t) {
     return (void *) HEAP_START_ADDR;
 }
 
+void MemoryAllocator::operator delete(void *) {
+    instance = nullptr;
+}
+
 MemoryAllocator::MemoryAllocator() {
     freeMemHead = (BlockHeader *) ((uint8 *) HEAP_START_ADDR + sizeof(MemoryAllocator));
     freeMemHead->size = (size_t) ((uint8 *) HEAP_END_ADDR - (uint8 *) HEAP_START_ADDR -
@@ -30,7 +34,7 @@ MemoryAllocator *MemoryAllocator::getInstance() {
 
 void *MemoryAllocator::malloc(size_t size) {
     // Initial check
-    if (!size) return 0;
+    if (!size) return nullptr;
 
     // Rounding and aligning size to size of memory blocks
     size *= MEM_BLOCK_SIZE;
@@ -52,7 +56,7 @@ void *MemoryAllocator::malloc(size_t size) {
 
     // Allocating new free memory block if enough size is left over
     if (remainingSize >= MEM_BLOCK_SIZE + sizeof(BlockHeader)) {
-        BlockHeader *elem = (BlockHeader *) ((uint8 *) curr + sizeof(BlockHeader) + size);
+        auto *elem = (BlockHeader *) ((uint8 *) curr + sizeof(BlockHeader) + size);
         elem->size = remainingSize - sizeof(BlockHeader);
         elem->free = true;
         elem->next = curr->next;
@@ -79,7 +83,7 @@ int MemoryAllocator::free(void *addr) {
         return -1;
     }
 
-    BlockHeader *elem = (BlockHeader *) ((uint8 *) addr - sizeof(BlockHeader));
+    auto *elem = (BlockHeader *) ((uint8 *) addr - sizeof(BlockHeader));
 
     if (!elem || elem->free || elem->next) {
         return -2;
@@ -118,8 +122,6 @@ int MemoryAllocator::tryToJoin(MemoryAllocator::BlockHeader *curr) {
 
     return 0;
 }
-
-
 
 
 

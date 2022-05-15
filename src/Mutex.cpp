@@ -1,6 +1,3 @@
-//
-// Created by xparh on 5/9/2022.
-//
 #include "../h/Mutex.h"
 #include "../h/TCB.h"
 #include "../h/Riscv.h"

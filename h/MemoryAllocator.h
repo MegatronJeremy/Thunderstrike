@@ -4,9 +4,6 @@
 #include "../lib/hw.h"
 #include "Mutex.h"
 
-void *kmalloc(size_t size);
-int kfree(void *addr);
-
 class MemoryAllocator {
 public:
     static MemoryAllocator *getInstance();
@@ -15,6 +12,7 @@ public:
     int free(void *addr);
 
     void *operator new(size_t);
+    void operator delete(void *);
 
 private:
     MemoryAllocator();

@@ -79,9 +79,9 @@ int Kernel::thread_create(uint64 *args) {
     TCB **handle = (TCB **) args[0];
     if (!handle) return -1;
 
-    TCB::Body body = (TCB::Body) args[1];
+    auto body = (TCB::Body) args[1];
     void *arg = (void *) args[2];
-    uint64 *stack = (uint64 *) args[3];
+    auto *stack = (uint64 *) args[3];
 
     *handle = TCB::createUserThread(body, arg, stack);
     return *handle != nullptr;
@@ -93,14 +93,14 @@ int Kernel::thread_exit() {
 }
 
 void Kernel::thread_dispatch() {
-    TCB::running->dispatch();
+    TCB::dispatch();
 }
 
 int Kernel::sem_open(uint64 *args) {
-    KernelSemaphore **handle = (KernelSemaphore **) args[0];
+    auto **handle = (KernelSemaphore **) args[0];
     if (!handle) return -1;
 
-    unsigned int init = (unsigned int) args[1];
+    auto init = (unsigned int) args[1];
 
     *handle = new KernelSemaphore(init);
     return *handle != nullptr;

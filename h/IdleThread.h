@@ -1,7 +1,7 @@
 #ifndef _IDLE_THREAD_H
 #define _IDLE_THREAD_H
 
-#include "KernelObject.h"
+#include "../h/KernelObject.h"
 
 class TCB;
 
@@ -11,16 +11,16 @@ public:
 
     static IdleThread *getInstance();
 
-    ~IdleThread();
+    ~IdleThread() override;
 
 private:
     IdleThread();
 
-    [[noreturn]] void run();
+    [[noreturn]] static void run();
 
     static IdleThread *instance;
 
-    TCB *idleThread = nullptr;
+    TCB *idleThread;
 
 };
 

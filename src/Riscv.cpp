@@ -1,7 +1,3 @@
-//
-// Created by xparh on 4/24/2022.
-//
-
 #include "../h/Riscv.h"
 #include "../lib/console.h"
 #include "../h/SysPrint.h"

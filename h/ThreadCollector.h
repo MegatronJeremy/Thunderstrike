@@ -14,7 +14,7 @@ public:
 
     static void signal();
 
-    ~ThreadCollector();
+    ~ThreadCollector() override;
 
 private:
     ThreadCollector();

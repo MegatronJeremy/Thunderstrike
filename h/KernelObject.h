@@ -26,7 +26,7 @@ public:
         kfree(addr);
     }
 
-//    virtual ~KernelObject();
+    virtual ~KernelObject() = 0;
 };
 
 #endif

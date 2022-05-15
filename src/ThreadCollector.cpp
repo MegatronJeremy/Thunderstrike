@@ -4,14 +4,20 @@
 
 ThreadCollector *ThreadCollector::instance = nullptr;
 
+ThreadCollector *ThreadCollector::getInstance() {
+    if (!instance) instance = new ThreadCollector;
+    return instance;
+}
+
 void ThreadCollector::signal() {
     getInstance()->readyToDelete.signal();
 }
 
 void ThreadCollector::put(TCB *tcb) {
-    getInstance()->mutex.wait();
-    getInstance()->finishedThreads.addLast(tcb->getNode());
-    getInstance()->mutex.signal();
+    ThreadCollector *tc = getInstance();
+    tc->mutex.wait();
+    tc->finishedThreads.addLast(tcb->getNode());
+    tc->mutex.signal();
 }
 
 ThreadCollector::ThreadCollector() : readyToDelete(0) {
@@ -32,10 +38,5 @@ ThreadCollector::~ThreadCollector() {
         delete finishedThreads.removeFirst();
     }
     delete threadCollector;
-}
-
-ThreadCollector *ThreadCollector::getInstance() {
-    if (!instance) instance = new ThreadCollector;
-    return instance;
 }
 

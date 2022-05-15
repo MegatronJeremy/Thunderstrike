@@ -14,7 +14,7 @@ public:
 
     static Scheduler *getInstance();
 
-    ~Scheduler();
+    ~Scheduler() override;
 
 private:
     Scheduler() = default;

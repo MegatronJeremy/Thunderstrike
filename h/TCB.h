@@ -1,16 +1,13 @@
-//
-// Created by xparh on 4/24/2022.
-//
-
-#ifndef OS1_VEZBE07_RISCV_CONTEXT_SWITCH_1_SYNCHRONOUS_TCB_H
-#define OS1_VEZBE07_RISCV_CONTEXT_SWITCH_1_SYNCHRONOUS_TCB_H
+#ifndef _TCB_H
+#define _TCB_H
 
 #include "../lib/hw.h"
 #include "KernelObject.h"
-#include "List.h"
 #include "Mutex.h"
 #include "ThreadNode.h"
 #include "ThreadList.h"
+
+#define OFFSETOF(TYPE, ELEMENT) ((size_t)&(((TYPE *)0)->ELEMENT))
 
 // Thread Control Block
 class TCB : public KernelObject {
@@ -75,8 +72,8 @@ public:
         return blockedTime;
     }
 
-    void setBlockedTime(time_t blockedTime) {
-        this->blockedTime = blockedTime;
+    void setBlockedTime(time_t time) {
+        this->blockedTime = time;
     }
 
     void decBlockedTime(time_t time = 1) {
@@ -109,7 +106,7 @@ public:
 
     static TCB *running;
 
-    ~TCB();
+    ~TCB() override;
 
 private:
     TCB();
@@ -125,7 +122,6 @@ private:
         uint64 sp;
     };
 
-    uint64 ssp = 0;
     Body body = nullptr;
     void *args = nullptr;
     uint64 *threadStack = nullptr;
@@ -136,9 +132,14 @@ private:
     Status status = READY;
     ThreadList waitingToJoin;
     Mutex mutex;
-    ThreadNode node = this;
+    ThreadNode node = ThreadNode(this);
+
+    static uint64 offsSSP;
+    uint64 ssp = 0;
 
     time_t blockedTime = 0;
+
+    static uint64 timeSliceCounter;
 
     friend class Riscv;
 
@@ -146,10 +147,7 @@ private:
 
     static void contextSwitch(Context *oldContext, Context *runningContext);
 
-    static uint64 timeSliceCounter;
-
-
 };
 
 
-#endif //OS1_VEZBE07_RISCV_CONTEXT_SWITCH_1_SYNCHRONOUS_TCB_H
+#endif

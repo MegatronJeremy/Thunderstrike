@@ -28,7 +28,7 @@ protected:
     virtual void run() {}
 
 private:
-    thread_t  myHandle;
+    thread_t  myHandle = nullptr;
     Body body;
     void *arg;
 
@@ -45,7 +45,7 @@ public:
     int signal();
 
 private:
-    sem_t myHandle;
+    sem_t myHandle = nullptr;
 };
 
 class PeriodicThread : public Thread {

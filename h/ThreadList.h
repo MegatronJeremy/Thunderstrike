@@ -50,11 +50,11 @@ public:
         if (curr) curr = curr->prev;
     }
 
-    bool hasCurr() {
+    bool hasCurr() const {
         return curr != nullptr;
     }
 
-    bool isEmpty() {
+    bool isEmpty() const {
         return size == 0;
     }
 
@@ -69,7 +69,7 @@ public:
 
     void insertBeforeCurr(ThreadNode *elem);
 
-    ~ThreadList();
+    ~ThreadList() override;
 
 private:
     ThreadNode *head = nullptr, *tail = nullptr, *curr = nullptr;

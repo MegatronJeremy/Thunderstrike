@@ -1,9 +1,9 @@
 #ifndef _MUTEX_H
 #define _MUTEX_H
 
-class TCB;
-
 #include "KernelSemaphore.h"
+
+class TCB;
 
 class Mutex : public KernelSemaphore {
 public:

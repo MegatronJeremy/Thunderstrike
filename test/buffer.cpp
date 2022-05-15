@@ -1,7 +1,4 @@
 #include "buffer.hpp"
-#include "../h/syscall_c.h"
-//#include "../h/std.h"
-
 
 Buffer::Buffer(int _cap) : cap(_cap), head(0), tail(0) {
     buffer = (int *)mem_alloc(sizeof(int) * cap);
@@ -13,9 +10,10 @@ Buffer::Buffer(int _cap) : cap(_cap), head(0), tail(0) {
 
 Buffer::~Buffer() {
     putc('\n');
-//    printf("Buffer deleted!\n");
+    printString("Buffer deleted!\n");
     while (head != tail) {
-//        printf("%c ", buffer[head]);
+        char ch = buffer[head];
+        putc(ch);
         head = (head + 1) % cap;
     }
     putc('!');

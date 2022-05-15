@@ -1,5 +1,6 @@
 .extern _ZN5Riscv20handleSupervisorTrapEv
 .extern _ZN3TCB7runningE
+.extern _ZN3TCB7offsSSPE
 
 .align 4
 .global _ZN5Riscv14supervisorTrapEv
@@ -7,14 +8,18 @@
 _ZN5Riscv14supervisorTrapEv:
 
     sd t0, -1 * 8(sp)
+    csrw sscratch, a0
+
+    ld a0, _ZN3TCB7runningE
+    ld t0, _ZN3TCB7offsSSPE
+    add a0, a0, t0
+
     mv t0, sp
 
-    csrw sscratch, a0
-    ld a0, _ZN3TCB7runningE
     ld sp, 0(a0)
     sd t0, 0(a0)
-    csrr a0, sscratch
 
+    csrr a0, sscratch
     ld t0, -1 * 8(t0)
 
     addi sp, sp, -256
@@ -30,14 +35,18 @@ _ZN5Riscv14supervisorTrapEv:
     addi sp, sp, 256
 
     sd t0, -1 * 8(sp)
+    csrw sscratch, a0
+
+    ld a0, _ZN3TCB7runningE
+    ld t0, _ZN3TCB7offsSSPE
+    add a0, a0, t0
+
     mv t0, sp
 
-    csrw sscratch, a0
-    ld a0, _ZN3TCB7runningE
     ld sp, 0(a0)
     sd t0, 0(a0)
-    csrr a0, sscratch
 
+    csrr a0, sscratch
     ld t0, -1 * 8(t0)
 
     sret

@@ -6,15 +6,8 @@ void *callSupervisorTrap(uint64 param, void *args) {
     return (void *) param;
 }
 
-_thread::_thread(_thread::Body body, void *arg) : id(0), body(body), arg(arg) {
-}
-
-_sem::~_sem() {
-    sem_close(this);
-}
-
 void *mem_alloc(size_t size) {
-    if (!size) return nullptr;
+    if (!size) return 0;
     size = (size - 1) / MEM_BLOCK_SIZE + 1;
     return callSupervisorTrap(0x01, (void *) size);
 }
@@ -26,10 +19,10 @@ int mem_free(void *addr) {
 int thread_create(thread_t *handle, void(*start_routine)(void *), void *arg) {
     if (!handle) return -1;
 
-    *handle = new _thread;
+    *handle = (_thread *) mem_alloc(sizeof(_thread));
     if (!*handle) return -1;
 
-    void *stack = new uint64[DEFAULT_STACK_SIZE];
+    void *stack = mem_alloc(sizeof(uint64) * DEFAULT_STACK_SIZE);
     if (!stack) return -1;
 
     uint64 args[] = {(uint64) *handle, (uint64) start_routine, (uint64) arg, (uint64) stack};
@@ -46,8 +39,10 @@ void thread_dispatch() {
 
 int sem_open(sem_t *handle, unsigned init) {
     if (!handle) return -1;
-    *handle = new _sem;
+
+    *handle = (_sem *) mem_alloc(sizeof(_sem));
     uint64 args[] = {(uint64) *handle, (uint64) init};
+
     return (uint64) callSupervisorTrap(0x21, args);
 }
 
@@ -68,7 +63,7 @@ int time_sleep(time_t time) {
 }
 
 char getc() {
-    return (uint64) callSupervisorTrap(0x41, nullptr);
+    return (uint64) callSupervisorTrap(0x41, 0);
 }
 
 void putc(char chr) {

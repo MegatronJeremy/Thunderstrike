@@ -1,3 +1,3 @@
 #include "../h/KernelObject.h"
 
-//KernelObject::~KernelObject() {}
+KernelObject::~KernelObject() = default;

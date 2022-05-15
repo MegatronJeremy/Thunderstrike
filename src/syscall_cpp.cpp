@@ -37,7 +37,7 @@ int Thread::sleep(time_t time) {
 }
 
 Thread::Thread() {
-    body = [](void *arg) { ((Thread *) arg)->run(); };
+    body = [](void *obj) { ((Thread *) obj)->run(); };
     arg = this;
 };
 

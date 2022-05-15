@@ -1,11 +1,16 @@
 #include "../h/syscall_c.h"
-#include "../h/SysPrint.h"
-
 
 void *callSupervisorTrap(uint64 param, void *args) {
     __asm__ volatile ("ecall");
 
     return (void *) param;
+}
+
+_thread::_thread(_thread::Body body, void *arg) : id(0), body(body), arg(arg) {
+}
+
+_sem::~_sem() {
+    sem_close(this);
 }
 
 void *mem_alloc(size_t size) {
@@ -34,13 +39,6 @@ void thread_dispatch() {
 int sem_open(sem_t *handle, unsigned init) {
     if (!handle) return -1;
     *handle = new _sem;
-//    kprintString("Handle val: ");
-//    kprintUnsigned((uint64) (*handle)->id);
-//    kprintString("\n");
-//    kprintString("Handle address: ");
-//    kprintUnsigned((uint64) *handle);
-//    kprintString("\n");
-
     uint64 args[] = {(uint64) *handle, (uint64) init};
     return (uint64) callSupervisorTrap(0x21, args);
 }

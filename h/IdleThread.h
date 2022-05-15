@@ -1,9 +1,5 @@
-//
-// Created by xparh on 5/10/2022.
-//
-
-#ifndef OS_PROJEKAT_IDLETHREAD_H
-#define OS_PROJEKAT_IDLETHREAD_H
+#ifndef _IDLE_THREAD_H
+#define _IDLE_THREAD_H
 
 #include "KernelObject.h"
 
@@ -20,7 +16,7 @@ public:
 private:
     IdleThread();
 
-    void run();
+    [[noreturn]] void run();
 
     static IdleThread *instance;
 
@@ -28,4 +24,4 @@ private:
 
 };
 
-#endif //OS_PROJEKAT_IDLETHREAD_H
+#endif

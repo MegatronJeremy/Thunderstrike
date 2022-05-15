@@ -1,13 +1,8 @@
-//
-// Created by xparh on 5/9/2022.
-//
-
-#ifndef OS_PROJEKAT_THREADCOLLECTOR_H
-#define OS_PROJEKAT_THREADCOLLECTOR_H
+#ifndef _THREAD_COLLECTOR_H
+#define _THREAD_COLLECTOR_H
 
 class TCB;
 
-#include "List.h"
 #include "Mutex.h"
 #include "ThreadList.h"
 
@@ -24,7 +19,7 @@ public:
 private:
     ThreadCollector();
 
-    static void run();
+    [[noreturn]] static void run();
 
     static ThreadCollector *instance;
 
@@ -37,4 +32,4 @@ private:
     KernelSemaphore readyToDelete;
 };
 
-#endif //OS_PROJEKAT_THREADCOLLECTOR_H
+#endif

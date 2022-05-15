@@ -1,6 +1,5 @@
 #include "../h/Scheduler.h"
 #include "../h/TCB.h"
-#include "../h/SysPrint.h"
 
 Scheduler *Scheduler::instance = nullptr;
 
@@ -24,7 +23,6 @@ Scheduler *Scheduler::getInstance() {
 
 Scheduler::~Scheduler() {
     while (!readyThreadQueue.isEmpty()) {
-//        kprintString("Scheduler deleting...\n");
         delete readyThreadQueue.removeFirst();
     }
 }

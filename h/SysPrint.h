@@ -1,16 +1,37 @@
-//
-// Created by xparh on 4/24/2022.
-//
-
-#ifndef OS1_VEZBE07_RISCV_CONTEXT_SWITCH_1_SYNCHRONOUS_PRINT_H
-#define OS1_VEZBE07_RISCV_CONTEXT_SWITCH_1_SYNCHRONOUS_PRINT_H
+#ifndef _SYS_PRINT_H
+#define _SYS_PRINT_H
 
 #include "../lib/hw.h"
+#include "Mutex.h"
 
-extern void kprintString(char const *string);
+class PrintMutex : public KernelObject {
+public:
+    static PrintMutex* getInstance() {
+        if (!instance) instance = new PrintMutex;
+        return instance;
+    }
 
-extern void kprintInteger(int integer);
+    static void wait() {
+        getInstance()->mutex.wait();
+    }
 
-extern void kprintUnsigned(uint64 uint);
+    static void signal() {
+        getInstance()->mutex.signal();
+    }
 
-#endif //OS1_VEZBE07_RISCV_CONTEXT_SWITCH_1_SYNCHRONOUS_PRINT_H
+    ~PrintMutex() {
+        delete instance;
+    }
+
+private:
+    static PrintMutex *instance;
+    Mutex mutex;
+};
+
+void kprintString(char const *string);
+
+void kprintInteger(int integer);
+
+void kprintUnsigned(uint64 uint);
+
+#endif

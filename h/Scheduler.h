@@ -1,14 +1,8 @@
-//
-// Created by xparh on 4/25/2022.
-//
+#ifndef _SCHEDULER_H
+#define _SCHEDULER_H
 
-#ifndef RECITE_GLASOVIMA_DA_PRESTANU_SCHEDULER_H
-#define RECITE_GLASOVIMA_DA_PRESTANU_SCHEDULER_H
-
-#include "Queue.h"
-#include "List.h"
-#include "MemoryAllocator.h"
 #include "Mutex.h"
+#include "ThreadList.h"
 
 class TCB;
 
@@ -34,4 +28,4 @@ private:
 };
 
 
-#endif //RECITE_GLASOVIMA_DA_PRESTANU_SCHEDULER_H
+#endif

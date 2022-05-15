@@ -1,7 +1,3 @@
-//
-// Created by xparh on 5/13/2022.
-//
-
 #include "../h/ThreadList.h"
 
 void ThreadList::addFirst(ThreadNode *elem) {

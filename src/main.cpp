@@ -6,7 +6,7 @@
 #include "../h/ThreadCollector.h"
 #include "../h/IdleThread.h"
 
-extern void userMain();
+void userMain();
 
 int main() {
     kprintString("Starting main\n");

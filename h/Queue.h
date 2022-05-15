@@ -1,5 +1,5 @@
-#ifndef _queue_h
-#define _queue_h
+#ifndef _QUEUE_H
+#define _QUEUE_H
 
 #include "../lib/hw.h"
 #include "KernelObject.h"
@@ -8,13 +8,6 @@ template<typename T>
 class Queue : public KernelObject {
 public:
     Queue() = default;
-//    Queue(uint64 size) {
-//        buffer = (T**) kmalloc((this->size = size) * sizeof(T*));
-//    }
-
-//    Queue() {
-//        buffer = (T**) kmalloc((this->size = DEFAULT_SIZE) * sizeof(T*));
-//    }
 
     Queue(const Queue<T> &) = delete;
 

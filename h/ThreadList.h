@@ -1,9 +1,5 @@
-//
-// Created by xparh on 5/13/2022.
-//
-
-#ifndef OS_PROJEKAT_THREADLIST_H
-#define OS_PROJEKAT_THREADLIST_H
+#ifndef _THREADLIST_H
+#define _THREADLIST_H
 
 #include "KernelObject.h"
 #include "ThreadNode.h"

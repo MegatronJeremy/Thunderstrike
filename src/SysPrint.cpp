@@ -1,27 +1,19 @@
-//
-// Created by xparh on 4/24/2022.
-//
-
 #include "../h/SysPrint.h"
 #include "../lib/console.h"
-#include "../h/Riscv.h"
+
+PrintMutex *PrintMutex::instance = nullptr;
 
 void kprintString(char const *string) {
-//    uint64 sstatus;
-//    Riscv::lock(sstatus);
-
+    PrintMutex::wait();
     while (*string != '\0') {
         __putc(*string);
         string++;
     }
-
-//    Riscv::unlock(sstatus);
+    PrintMutex::signal();
 }
 
 void kprintInteger(int integer) {
-//    uint64 sstatus;
-//    Riscv::lock(sstatus);
-
+    PrintMutex::wait();
     static char digits[] = "0123456789";
     char buf[16];
     int i, neg;
@@ -43,14 +35,11 @@ void kprintInteger(int integer) {
 
     while (--i >= 0)
         __putc(buf[i]);
-
-//    Riscv::unlock(sstatus);
+    PrintMutex::signal();
 }
 
 void kprintUnsigned(uint64 x) {
-//    uint64 sstatus;
-//    Riscv::lock(sstatus);
-
+    PrintMutex::wait();
     static char digits[] = "0123456789";
     char buf[16];
 
@@ -61,6 +50,5 @@ void kprintUnsigned(uint64 x) {
 
     while (--i >= 0)
         __putc(buf[i]);
-
-//    Riscv::unlock(sstatus);
+    PrintMutex::signal();
 }

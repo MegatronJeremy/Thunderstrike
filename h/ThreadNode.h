@@ -1,9 +1,5 @@
-//
-// Created by xparh on 5/13/2022.
-//
-
-#ifndef OS_PROJEKAT_THREADNODE_H
-#define OS_PROJEKAT_THREADNODE_H
+#ifndef _THREADNODE_H
+#define _THREADNODE_H
 
 #include "KernelObject.h"
 
@@ -20,4 +16,4 @@ private:
 
 };
 
-#endif //OS_PROJEKAT_THREADNODE_H
+#endif

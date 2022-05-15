@@ -1,9 +1,5 @@
-//
-// Created by xparh on 4/25/2022.
-//
-
-#ifndef _myUserMain_h
-#define _myUserMain_h
+#ifndef _MY_USER_MAIN_H
+#define _MY_USER_MAIN_H
 
 #include "Workers.h"
 #include "../h/syscall_c.h"
@@ -50,7 +46,7 @@ void myUserMain() {
     printString("\n");
 
     printString("Mem free called again with ret value ");
-    printInt(mem_free(mem));
+    printInt(mem_free(mem), 10, 1);
     printString("\n");
 
     delete obj;

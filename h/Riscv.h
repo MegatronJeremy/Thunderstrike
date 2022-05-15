@@ -1,9 +1,5 @@
-//
-// Created by xparh on 4/24/2022.
-//
-
-#ifndef OS1_VEZBE07_RISCV_CONTEXT_SWITCH_1_SYNCHRONOUS_RISCV_H
-#define OS1_VEZBE07_RISCV_CONTEXT_SWITCH_1_SYNCHRONOUS_RISCV_H
+#ifndef _RISCV_H
+#define _RISCV_H
 
 #include "../lib/hw.h"
 
@@ -27,16 +23,10 @@ public:
     // pop sstatus.spp and sstatus.spie bits (has to be a non inline function)
     static void popSppSpie(bool prMode);
 
-    // push x3..x31 registers on stack
-//    static void pushRegisters();
-
-    // pop x3..x31 registers on stack
-//    static void popRegisters();
-
-    // push a0 on saved contex
+    // push a0 to saved contex
     static void pushRegisterA0(uint64 context);
 
-    // push a1 on saved contex
+    // push a1 to saved contex
     static void pushRegisterA1(uint64 context);
 
     // read register sp

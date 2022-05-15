@@ -1,6 +1,4 @@
 .extern _ZN5Riscv20handleSupervisorTrapEv
-.extern _ZN3TCB14readSavedStackEv
-.extern _ZN3TCB15writeSavedStackEv
 .extern _ZN3TCB7runningE
 
 .align 4

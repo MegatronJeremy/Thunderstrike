@@ -1,9 +1,5 @@
-//
-// Created by xparh on 5/10/2022.
-//
-
-#ifndef OS_PROJEKAT_KERNELOBJECT_H
-#define OS_PROJEKAT_KERNELOBJECT_H
+#ifndef _KERNEL_OBJECT_H
+#define _KERNEL_OBJECT_H
 
 #include "MemoryAllocator.h"
 
@@ -26,4 +22,4 @@ public:
     }
 };
 
-#endif //OS_PROJEKAT_KERNELOBJECT_H
+#endif

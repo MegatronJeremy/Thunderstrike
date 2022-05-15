@@ -134,10 +134,6 @@ private:
 
     static void threadWrapper();
 
-    static void readSavedStack();
-
-    static void writeSavedStack();
-
     static void contextSwitch(Context *oldContext, Context *runningContext);
 
     static uint64 timeSliceCounter;

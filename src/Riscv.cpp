@@ -39,9 +39,6 @@ void Riscv::handleSupervisorTrap() {
             // interrupt: no, cause code: environment call from S-mode (9)
             volatile uint64 sepc = r_sepc() + 4;
             volatile uint64 sstatus = r_sstatus();
-//            kprintString("Ecall from S-mode for thread: ");
-//            kprintUnsigned((uint64) TCB::running->getID());
-//            kprintString("\n");
 
             TCB::dispatch();
 
@@ -61,13 +58,8 @@ void Riscv::handleSupervisorTrap() {
             TimerInterrupt::tick();
 
             Riscv::disableInterrupts();
-//            kprintString("Interrupt timer for thread: ");
-//            kprintUnsigned(TCB::running->getID());
-//            kprintString("\n");
+
             if (TCB::timeSliceCounter >= TCB::running->timeSlice) {
-//                kprintString("Timeout for thread: ");
-//                kprintUnsigned(TCB::running->getID());
-//                kprintString("\n");
                 TCB::dispatch();
             }
 

@@ -2,7 +2,6 @@
 #include "../h/MemoryAllocator.h"
 #include "../h/Riscv.h"
 #include "../h/TCB.h"
-#include "../h/KernelSemaphore.h"
 #include "../h/TimerInterrupt.h"
 #include "../h/SysPrint.h"
 #include "../lib/console.h"
@@ -12,13 +11,6 @@ void Kernel::handleSystemCall() {
 
     uint64 code = Riscv::r_a0();
     void *args = (void *) Riscv::r_a1();
-
-//    uint64 takenUp = (uint64) (TCB::running->getThreadStack() + DEFAULT_STACK_SIZE) - TCB::running->getSsp();
-//    if (takenUp > 1500) {
-//        kprintString("User stack taken up (in bytes): ");
-//        kprintUnsigned(takenUp);
-//        kprintString("\n");
-//    }
 
     switch (code) {
         case (0x01):
@@ -106,12 +98,6 @@ int Kernel::sem_open(uint64 *args) {
     if (!handle) return -1;
     unsigned int init = (unsigned int) args[1];
     *handle = new KernelSemaphore(init);
-//    kprintString("Handle val: ");
-//    kprintUnsigned((uint64) *handle);
-//    kprintString("\n");
-//    kprintString("Handle address: ");
-//    kprintUnsigned((uint64) handle);
-//    kprintString("\n");
     return *handle != nullptr;
 }
 

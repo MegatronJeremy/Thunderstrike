@@ -1,11 +1,6 @@
-//
-// Created by xparh on 4/28/2022.
-//
+#ifndef _TIMERINTERRUPT_H
+#define _TIMERINTERRUPT_H
 
-#ifndef OS_PROJEKAT_TIMERINTERRUPT_H
-#define OS_PROJEKAT_TIMERINTERRUPT_H
-
-#include "List.h"
 #include "Mutex.h"
 #include "ThreadList.h"
 
@@ -31,4 +26,4 @@ private:
     ThreadList blockedThreadList;
 };
 
-#endif //OS_PROJEKAT_TIMERINTERRUPT_H
+#endif

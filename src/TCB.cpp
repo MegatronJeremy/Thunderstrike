@@ -1,13 +1,7 @@
-//
-// Created by xparh on 4/24/2022.
-//
-
 #include "../h/TCB.h"
 #include "../h/Riscv.h"
 #include "../h/ThreadCollector.h"
 #include "../h/Scheduler.h"
-#include "../h/SysPrint.h"
-#include "../h/MemoryAllocator.h"
 #include "../h/IdleThread.h"
 
 TCB *TCB::running = nullptr;
@@ -39,14 +33,13 @@ void TCB::exit() {
     while (!running->waitingToJoin.isEmpty()) {
         TCB *thr = running->waitingToJoin.removeFirst();
         thr->setReady();
-//        kprintString("Returning joined thread...\n");
         Scheduler::put(thr);
     }
     running->mutex.signal();
 
     ThreadCollector::put(running);
 
-    running->dispatch();
+    dispatch();
 }
 
 void TCB::dispatch() {
@@ -60,7 +53,6 @@ void TCB::dispatch() {
     running = Scheduler::get();
 
     if (!running) {
-//        kprintString("Going idle...\n");
         running = IdleThread::getIdleThread();
     }
 
@@ -75,18 +67,8 @@ void TCB::threadWrapper() {
     Riscv::popSppSpie(running->privileged);
     running->body(running->args);
 
-//    kprintString("Ending thread...\n");
-
     __asm__ volatile ("li a0, 0x12");
     __asm__ volatile ("ecall");
-}
-
-void TCB::readSavedStack() {
-    __asm__ volatile ("csrw sscratch, %[ssp]" : : [ssp] "r"(TCB::running->ssp));
-}
-
-void TCB::writeSavedStack() {
-    __asm__ volatile ("csrr %[ssp], sscratch" : [ssp] "=r"(TCB::running->ssp));
 }
 
 int TCB::join() {

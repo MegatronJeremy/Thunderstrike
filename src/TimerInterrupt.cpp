@@ -1,12 +1,6 @@
-//
-// Created by xparh on 4/28/2022.
-//
-
 #include "../h/TimerInterrupt.h"
 #include "../h/TCB.h"
 #include "../h/Scheduler.h"
-#include "../h/ThreadCollector.h"
-#include "../h/SysPrint.h"
 
 TimerInterrupt *TimerInterrupt::instance = nullptr;
 
@@ -18,7 +12,7 @@ TimerInterrupt *TimerInterrupt::getInstance() {
 void TimerInterrupt::block(TCB *tcb, time_t time) {
     ThreadList *blockedThreads = &getInstance()->blockedThreadList;
 
-    instance->mutex.wait();
+    getInstance()->mutex.wait();
 
     for (blockedThreads->toHead(); blockedThreads->hasCurr(); blockedThreads->toNext()) {
         time_t currTime = blockedThreads->getCurr()->getBlockedTime();
@@ -39,11 +33,11 @@ void TimerInterrupt::block(TCB *tcb, time_t time) {
         blockedThreads->toNext();
     }
 
-    instance->mutex.signal();
+    getInstance()->mutex.signal();
 
     tcb->setBlockedTime(time);
     tcb->setBlocked();
-    tcb->dispatch();
+    TCB::dispatch();
 }
 
 void TimerInterrupt::tick() {
@@ -51,14 +45,14 @@ void TimerInterrupt::tick() {
 
     TCB *tcb;
 
-    instance->mutex.wait();
+    getInstance()->mutex.wait();
 
     while ((tcb = blockedThreads->getFirst()) && !tcb->getBlockedTime()) {
         tcb->setReady();
         Scheduler::put(blockedThreads->removeFirst());
     }
 
-    instance->mutex.signal();
+    getInstance()->mutex.signal();
 
     if (!tcb) return;
     tcb->decBlockedTime();
@@ -66,7 +60,6 @@ void TimerInterrupt::tick() {
 
 TimerInterrupt::~TimerInterrupt() {
     while (!blockedThreadList.isEmpty()) {
-//        kprintString("Timer deleting...\n");
         delete blockedThreadList.removeFirst();
     }
 }

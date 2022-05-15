@@ -1,5 +1,5 @@
-#ifndef _Kernel_h
-#define _Kernel_h
+#ifndef _KERNEL_H
+#define _KERNEL_H
 
 #include "../lib/hw.h"
 

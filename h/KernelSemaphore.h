@@ -1,13 +1,7 @@
-//
-// Created by xparh on 4/27/2022.
-//
+#ifndef _KERNEL_SEMAPHORE_H
+#define _KERNEL_SEMAPHORE_H
 
-#ifndef RECITE_GLASOVIMA_DA_PRESTANU_SEMAPHORE_H
-#define RECITE_GLASOVIMA_DA_PRESTANU_SEMAPHORE_H
-
-#include "Queue.h"
 #include "MemoryAllocator.h"
-#include "List.h"
 #include "KernelObject.h"
 #include "ThreadList.h"
 
@@ -26,10 +20,11 @@ protected:
     void block();
     void deblock();
 
+private:
     int val;
 
     ThreadList blockedThreadQueue;
 
 };
 
-#endif //RECITE_GLASOVIMA_DA_PRESTANU_SEMAPHORE_H
+#endif

@@ -1,9 +1,5 @@
-//
-// Created by xparh on 4/24/2022.
-//
-
-#ifndef OS1_VEZBE07_RISCV_CONTEXT_SWITCH_1_SYNCHRONOUS_LIST_H
-#define OS1_VEZBE07_RISCV_CONTEXT_SWITCH_1_SYNCHRONOUS_LIST_H
+#ifndef _LIST_H
+#define _LIST_H
 
 #include "KernelObject.h"
 
@@ -166,4 +162,4 @@ private:
 
 };
 
-#endif //OS1_VEZBE07_RISCV_CONTEXT_SWITCH_1_SYNCHRONOUS_LIST_H
+#endif

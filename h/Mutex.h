@@ -1,15 +1,9 @@
-//
-// Created by xparh on 5/9/2022.
-//
-
-#ifndef OS_PROJEKAT_MUTEX_H
-#define OS_PROJEKAT_MUTEX_H
+#ifndef _MUTEX_H
+#define _MUTEX_H
 
 class TCB;
 
 #include "KernelSemaphore.h"
-#include "MemoryAllocator.h"
-
 
 class Mutex : public KernelSemaphore {
 public:
@@ -23,4 +17,4 @@ private:
 
 };
 
-#endif //OS_PROJEKAT_MUTEX_H
+#endif

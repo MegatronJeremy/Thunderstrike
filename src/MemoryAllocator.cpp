@@ -1,5 +1,4 @@
 #include "../h/MemoryAllocator.h"
-#include "../h/Mutex.h"
 
 MemoryAllocator *MemoryAllocator::instance = nullptr;
 
@@ -11,20 +10,20 @@ int kfree(void *addr) {
     return MemoryAllocator::getInstance()->free(addr);
 }
 
-void MemoryAllocator::initMemoryAllocator() {
-    instance = (MemoryAllocator *) HEAP_START_ADDR;
+void *MemoryAllocator::operator new(size_t) {
+    return (void *) HEAP_START_ADDR;
+}
 
-    instance->mutex = (Mutex *) ((uint8 *) HEAP_START_ADDR + sizeof(MemoryAllocator));
-    instance->mutex->holder = nullptr;
-    instance->freeMemHead = (BlockHeader *) ((uint8 *) HEAP_START_ADDR + sizeof(MemoryAllocator) + sizeof(Mutex));
-    instance->freeMemHead->size = (size_t) ((uint8 *) HEAP_END_ADDR - (uint8 *) HEAP_START_ADDR -
-                                  sizeof(MemoryAllocator) - sizeof(BlockHeader) - sizeof(Mutex));
-    instance->freeMemHead->free = true;
-    instance->freeMemHead->next = nullptr;
+MemoryAllocator::MemoryAllocator() {
+    freeMemHead = (BlockHeader *) ((uint8 *) HEAP_START_ADDR + sizeof(MemoryAllocator));
+    freeMemHead->size = (size_t) ((uint8 *) HEAP_END_ADDR - (uint8 *) HEAP_START_ADDR -
+                                            sizeof(MemoryAllocator) - sizeof(BlockHeader));
+    freeMemHead->free = true;
+    freeMemHead->next = nullptr;
 }
 
 MemoryAllocator *MemoryAllocator::getInstance() {
-    if (!instance) initMemoryAllocator();
+    if (!instance) instance = new MemoryAllocator;
 
     return instance;
 }
@@ -36,14 +35,14 @@ void *MemoryAllocator::malloc(size_t size) {
     // Rounding and aligning size to size of memory blocks
     size *= MEM_BLOCK_SIZE;
 
-    mutex->wait();
+    mutex.wait();
     // Finding suitable free memory block using first fit algorithm
     BlockHeader *curr = freeMemHead, *prev = nullptr;
     int i = 0;
     while (curr && curr->size < size)
         prev = curr, curr = curr->next, i++;
     if (!curr)  {
-        mutex->signal();
+        mutex.signal();
         return nullptr;
     }
 
@@ -68,7 +67,7 @@ void *MemoryAllocator::malloc(size_t size) {
     // Free memory start address after segment descriptor of allocated memory block
     void *addr = (uint8 *) curr + sizeof(BlockHeader);
 
-    mutex->signal();
+    mutex.signal();
 
     return addr;
 }
@@ -86,7 +85,7 @@ int MemoryAllocator::free(void *addr) {
         return -2;
     }
 
-    mutex->wait();
+    mutex.wait();
 
     BlockHeader *curr = freeMemHead, *prev = nullptr;
     while (curr && curr < elem)
@@ -104,7 +103,7 @@ int MemoryAllocator::free(void *addr) {
     tryToJoin(elem);
     tryToJoin(prev);
 
-    mutex->signal();
+    mutex.signal();
 
     return 0;
 }
@@ -119,5 +118,8 @@ int MemoryAllocator::tryToJoin(MemoryAllocator::BlockHeader *curr) {
 
     return 0;
 }
+
+
+
 
 

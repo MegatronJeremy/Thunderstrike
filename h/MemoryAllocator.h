@@ -2,8 +2,7 @@
 #define _MEMORYALLOCATOR_H
 
 #include "../lib/hw.h"
-
-class Mutex;
+#include "Mutex.h"
 
 void *kmalloc(size_t size);
 int kfree(void *addr);
@@ -15,8 +14,10 @@ public:
     void *malloc(size_t size);
     int free(void *addr);
 
+    void *operator new(size_t);
+
 private:
-    MemoryAllocator() = default;
+    MemoryAllocator();
 
     struct BlockHeader {
         size_t size;
@@ -25,11 +26,9 @@ private:
     };
 
     BlockHeader *freeMemHead;
-    Mutex *mutex;
+    Mutex mutex;
 
     static MemoryAllocator *instance;
-
-    static void initMemoryAllocator();
 
     static int tryToJoin(BlockHeader *curr);
 

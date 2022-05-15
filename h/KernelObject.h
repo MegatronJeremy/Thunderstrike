@@ -1,7 +1,10 @@
 #ifndef _KERNEL_OBJECT_H
 #define _KERNEL_OBJECT_H
 
-#include "MemoryAllocator.h"
+#include "../lib/hw.h"
+
+void *kmalloc(size_t);
+int kfree(void *);
 
 class KernelObject {
 public:
@@ -22,6 +25,8 @@ public:
     static void operator delete[](void *addr) {
         kfree(addr);
     }
+
+//    virtual ~KernelObject();
 };
 
 #endif

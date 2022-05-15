@@ -8,9 +8,9 @@ class ThreadList : public KernelObject {
 public:
     explicit ThreadList() = default;
 
-    ThreadList(const ThreadList &) = delete;
+//    ThreadList(const ThreadList &) = delete;
 
-    ThreadList &operator=(const ThreadList &) = delete;
+//    ThreadList &operator=(const ThreadList &) = delete;
 
     int getCount() const {
         return size;
@@ -78,4 +78,4 @@ private:
 
 };
 
-#endif //OS_PROJEKAT_THREADLIST_H
+#endif

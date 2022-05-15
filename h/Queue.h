@@ -37,10 +37,6 @@ public:
         return cnt;
     }
 
-//    ~Queue() {
-//        kfree(buffer);
-//    }
-
 private:
     static constexpr uint64 DEFAULT_SIZE = 1024;
 

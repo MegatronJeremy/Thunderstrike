@@ -1,7 +1,6 @@
 #ifndef _KERNEL_SEMAPHORE_H
 #define _KERNEL_SEMAPHORE_H
 
-#include "MemoryAllocator.h"
 #include "KernelObject.h"
 #include "ThreadList.h"
 
@@ -11,10 +10,11 @@ class KernelSemaphore : public KernelObject {
 public:
     KernelSemaphore(int val = 1) : val(val) {}
 
-    void wait();
-    void signal();
+    virtual void wait();
 
-    ~KernelSemaphore();
+    virtual void signal();
+
+    virtual ~KernelSemaphore();
 
 protected:
     void block();

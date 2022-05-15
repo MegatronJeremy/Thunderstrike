@@ -7,12 +7,10 @@ class TCB;
 
 class Mutex : public KernelSemaphore {
 public:
-    void wait();
-    void signal();
+    void wait() override;
+    void signal() override;
 
 private:
-    friend class MemoryAllocator;
-
     TCB *holder = nullptr;
 
 };

@@ -14,7 +14,7 @@ _sem::~_sem() {
 }
 
 void *mem_alloc(size_t size) {
-    return callSupervisorTrap(0x01, &size);
+    return callSupervisorTrap(0x01, (void *) size);
 }
 
 int mem_free(void *addr) {

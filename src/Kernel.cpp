@@ -14,7 +14,7 @@ void Kernel::handleSystemCall() {
 
     switch (code) {
         case (0x01):
-            mem_alloc(*(size_t *) args);
+            mem_alloc((size_t) args);
             Riscv::pushRegisterA0(context);
             break;
         case (0x02):

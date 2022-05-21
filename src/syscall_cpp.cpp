@@ -16,13 +16,16 @@ void operator delete[](void *addr) {
     mem_free(addr);
 }
 
-Thread::Thread(Body body, void *arg) : body(body), arg(arg) {
+Thread::Thread(void (*body)(void *), void *arg) {
+    thread_create_suspended(&myHandle, body, arg);
 }
 
-Thread::~Thread() = default;
+Thread::~Thread() {
+    myHandle = nullptr;
+};
 
 int Thread::start() {
-    return thread_create(&myHandle, body, arg);
+    return thread_start(myHandle);
 }
 
 void Thread::dispatch() {
@@ -34,8 +37,7 @@ int Thread::sleep(time_t time) {
 }
 
 Thread::Thread() {
-    body = [](void *obj) { ((Thread *) obj)->run(); };
-    arg = this;
+    thread_create_suspended(&myHandle, [](void *obj) { ((Thread *) obj)->run(); }, this);
 };
 
 Semaphore::Semaphore(unsigned int init) {
@@ -54,14 +56,18 @@ int Semaphore::signal() {
     return sem_signal(myHandle);
 }
 
-PeriodicThread::PeriodicThread(time_t period) : period(period) {
-}
+PeriodicThread::PeriodicThread(time_t period) :
+        Thread([](void *arg) {
+            auto *args = (uint64 *) arg;
+            auto *obj = (PeriodicThread *) args[0];
+            auto period = (time_t) args[1];
+            delete args;
 
-[[noreturn]] void PeriodicThread::run() {
-    while (true) {
-        sleep(period);
-        periodicActivation();
-    }
+            while (true) {
+                time_sleep(period);
+                obj->periodicActivation();
+            }
+        }, new uint64[2]{(uint64) this, period}) {
 }
 
 char Console::getc() {

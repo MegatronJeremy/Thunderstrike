@@ -25,6 +25,11 @@ void myUserMain() {
     thread_t t8;
 
     thread_create(&t1, &workerBodyE, nullptr);
+
+    printString("Nit t1: ");
+    printInt((uint64) t1);
+    printString("\n");
+
     thread_create(&t2, &workerBodyF, nullptr);
     thread_create(&t3, &workerBodyG, nullptr);
     thread_create(&t4, &workerBodyH, nullptr);
@@ -34,6 +39,8 @@ void myUserMain() {
     thread_create(&t8, &ProducerConsumer::consumeWrapper, obj);
 
     time_sleep(50);
+
+
 
     printString("Nit t2: ");
     printInt((uint64) t2);

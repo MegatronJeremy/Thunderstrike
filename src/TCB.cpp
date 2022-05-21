@@ -13,41 +13,49 @@ uint64 TCB::offsSSP = OFFSETOF(TCB, ssp);
 
 uint64 TCB::timeSliceCounter = 0;
 
-uint64 TCB::offsSSP = OFFSETOF(TCB, ssp);
-
 TCB::TCB() {
     ssp = (uint64) (kernelStack + DEFAULT_STACK_SIZE);
 }
 
-TCB::TCB(TCB::Body body, void *args, uint64 *threadStack, bool privileged) :
+TCB::TCB(TCB::Body body, void *args, uint64 *threadStack, bool privileged, bool start) :
         body(body), args(args),
         threadStack(threadStack),
         privileged(privileged),
         context({(uint64) threadWrapper, (uint64) (threadStack + DEFAULT_STACK_SIZE)}),
+        status(start ? READY : WAITING),
         ssp((uint64) (kernelStack + DEFAULT_STACK_SIZE)) {
-    Scheduler::put(this);
+    if (start) Scheduler::put(this);
 }
 
-TCB *TCB::createKernelThread(TCB::Body body, void *args) {
+TCB *TCB::createKernelThread(TCB::Body body, void *args, bool start) {
     if (!body) return nullptr;
     auto *threadStack = (uint64 *) kmalloc(DEFAULT_STACK_SIZE);
-    return createKernelThread(body, args, threadStack);
+    return createKernelThread(body, args, threadStack, start);
 }
 
-TCB *TCB::createUserThread(TCB::Body body, void *args) {
+TCB *TCB::createUserThread(TCB::Body body, void *args, bool start) {
     if (!body) return nullptr;
     auto *threadStack = (uint64 *) kmalloc(DEFAULT_STACK_SIZE);
-    return createUserThread(body, args, threadStack);
+    return createUserThread(body, args, threadStack, start);
 }
 
-TCB *TCB::createKernelThread(TCB::Body body, void *args, uint64 *threadStack) {
+TCB *TCB::createKernelThread(TCB::Body body, void *args, uint64 *threadStack, bool start) {
     if (!body) return nullptr;
-    return new TCB(body, args, threadStack, true);
+    return new TCB(body, args, threadStack, true, start);
 }
 
-TCB *TCB::createUserThread(TCB::Body body, void *args, uint64 *threadStack) {
+TCB *TCB::createUserThread(TCB::Body body, void *args, uint64 *threadStack, bool start) {
     if (!body) return nullptr;
-    return new TCB(body, args, threadStack, false);
+    return new TCB(body, args, threadStack, false, start);
+}
+
+int TCB::start(TCB *tcb) {
+    if (!tcb->isWaiting()) return -1;
+
+    tcb->setReady();
+    Scheduler::put(tcb);
+
+    return 0;
 }
 
 void TCB::exit() {
@@ -111,5 +119,4 @@ TCB::~TCB() {
     kfree(kernelStack);
     kfree(threadStack);
 }
-
 

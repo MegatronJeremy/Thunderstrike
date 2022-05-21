@@ -5,6 +5,7 @@
 #include "../h/Scheduler.h"
 #include "../h/ThreadCollector.h"
 #include "../h/IdleThread.h"
+#include "../h/KernelConsole.h"
 
 void userMain();
 

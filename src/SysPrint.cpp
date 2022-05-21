@@ -1,7 +1,7 @@
 #include "../h/SysPrint.h"
 #include "../h/KernelConsole.h"
 
-PrintMutex *PrintMutex::instance = nullptr;
+Mutex *PrintMutex::mutex = nullptr;
 
 void kprintString(char const *string) {
     PrintMutex::wait();

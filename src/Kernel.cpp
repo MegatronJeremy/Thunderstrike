@@ -5,6 +5,8 @@
 #include "../h/TimerInterrupt.h"
 #include "../h/SysPrint.h"
 #include "../h/LinkedHashTable.h"
+#include "../h/KernelConsole.h"
+#include "../h/syscall_c.h"
 
 void Kernel::handleSystemCall() {
     uint64 context = TCB::running->getSavedContext();
@@ -13,50 +15,58 @@ void Kernel::handleSystemCall() {
     void *args = (void *) Riscv::r_a1();
 
     switch (code) {
-        case (0x01):
+        case (MEM_ALLOC):
             mem_alloc((size_t) args);
             Riscv::pushRegisterA0(context);
             break;
-        case (0x02):
+        case (MEM_FREE):
             mem_free(args);
             Riscv::pushRegisterA0(context);
             break;
-        case (0x11):
+        case (THREAD_CREATE):
             thread_create((uint64 *) args);
             Riscv::pushRegisterA0(context);
             break;
-        case (0x12):
+        case (THREAD_EXIT):
             thread_exit();
             Riscv::pushRegisterA0(context);
             break;
-        case (0x13):
+        case (THREAD_DISPATCH):
             thread_dispatch();
             break;
-        case(0x21):
+        case (THREAD_CREATE_SUSPENDED):
+            thread_create_suspended((uint64 *) args);
+            Riscv::pushRegisterA0(context);
+            break;
+        case (THREAD_START):
+            thread_start((uint64) args);
+            Riscv::pushRegisterA0(context);
+            break;
+        case(SEM_OPEN):
             sem_open((uint64 *) args);
             Riscv::pushRegisterA0(context);
             break;
-        case(0x22):
+        case(SEM_CLOSE):
             sem_close((uint64) args);
             Riscv::pushRegisterA0(context);
             break;
-        case(0x23):
+        case(SEM_WAIT):
             sem_wait((uint64) args);
             Riscv::pushRegisterA0(context);
             break;
-        case(0x24):
+        case(SEM_SIGNAL):
             sem_signal((uint64) args);
             Riscv::pushRegisterA0(context);
             break;
-        case(0x31):
+        case(TIME_SLEEP):
             time_sleep((time_t) args);
             Riscv::pushRegisterA0(context);
             break;
-        case(0x41):
+        case(GETC):
             getc();
             Riscv::pushRegisterA0(context);
             break;
-        case(0x42):
+        case(PUTC):
             putc((uint64) args);
             break;
         default:
@@ -76,7 +86,7 @@ int Kernel::mem_free(void *addr) {
 }
 
 int Kernel::thread_create(uint64 *args) {
-    TCB **handle = (TCB **) args[0];
+    auto *handle = (uint64 *) args[0];
     if (!handle) return -2;
 
     auto body = (TCB::Body) args[1];
@@ -90,24 +100,57 @@ int Kernel::thread_create(uint64 *args) {
 
     if (LinkedHashTable<TCB>::insert(thr->getHashNode()) < 0)
         return -5;
+    *handle = thr->getId();
 
     return 0;
 }
 
 int Kernel::thread_exit() {
-    LinkedHashTable<TCB>::remove(TCB::running->getId());
+    int ret = -1;
+    if (LinkedHashTable<TCB>::remove(TCB::running->getId()) < 0)
+        ret = -2;
 
     TCB::exit();
 
-    return -2;
+    return ret;
 }
 
 void Kernel::thread_dispatch() {
     TCB::dispatch();
 }
 
+int Kernel::thread_create_suspended(uint64 *args) {
+    auto *handle = (uint64 *) args[0];
+    if (!handle) return -2;
+
+    auto body = (TCB::Body) args[1];
+    if (!body) return -3;
+
+    void *arg = (void *) args[2];
+    auto *stack = (uint64 *) args[3];
+
+    TCB *thr = TCB::createUserThread(body, arg, stack, false);
+    if (!thr) return -4;
+
+    if (LinkedHashTable<TCB>::insert(thr->getHashNode()) < 0)
+        return -5;
+    *handle = thr->getId();
+
+    return 0;
+}
+
+int Kernel::thread_start(uint64 id) {
+    TCB *thr = LinkedHashTable<TCB>::get(id);
+    if (!thr) return -1;
+
+    if (TCB::start(thr) < 0)
+        return -2;
+
+    return 0;
+}
+
 int Kernel::sem_open(uint64 *args) {
-    auto **handle = (uint64 **) args[0];
+    auto *handle = (uint64 *) args[0];
     if (!handle) return -1;
 
     int init = (int) args[1];
@@ -117,8 +160,7 @@ int Kernel::sem_open(uint64 *args) {
 
     if (LinkedHashTable<KernelSemaphore>::insert(sem->getHashNode()) < 0)
         return -3;
-
-    *handle = (uint64 *) sem->getId();
+    *handle = sem->getId();
 
     return 0;
 }

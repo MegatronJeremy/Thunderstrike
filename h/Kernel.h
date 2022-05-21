@@ -3,8 +3,6 @@
 
 #include "../lib/hw.h"
 
-class KernelSemaphore;
-
 class Kernel {
 public:
     static void handleSystemCall();
@@ -18,6 +16,10 @@ public:
     static int thread_exit();
 
     static void thread_dispatch();
+
+    static int thread_create_suspended(uint64 *args);
+
+    static int thread_start(uint64 id);
 
     static int sem_open(uint64 *args);
 

@@ -3,32 +3,30 @@
 
 #include "../lib/hw.h"
 #include "Mutex.h"
-#include "KernelConsole.h"
 
 class PrintMutex : public KernelObject {
 public:
-    static PrintMutex* getInstance() {
-        if (!instance) instance = new PrintMutex;
-        return instance;
+    static Mutex* getMutex() {
+        if (!mutex) mutex = new Mutex;
+        return mutex;
     }
 
     static void wait() {
-        getInstance()->mutex.wait();
+        getMutex()->wait();
     }
 
     static void signal() {
-        getInstance()->mutex.signal();
+        getMutex()->signal();
     }
 
     ~PrintMutex() override {
-        delete instance;
+        delete mutex;
     }
 
 private:
     PrintMutex() = default;
 
-    static PrintMutex *instance;
-    Mutex mutex;
+    static Mutex *mutex;
 };
 
 void kprintString(char const *string);

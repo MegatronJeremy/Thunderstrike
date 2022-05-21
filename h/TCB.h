@@ -19,13 +19,15 @@ public:
         return new TCB();
     }
 
-    static TCB *createKernelThread(Body body, void *args);
+    static TCB *createKernelThread(Body body, void *args, bool start = true);
 
-    static TCB *createKernelThread(Body body, void *args, uint64 *threadStack);
+    static TCB *createKernelThread(Body body, void *args, uint64 *threadStack, bool start = true);
 
-    static TCB *createUserThread(Body body, void *args);
+    static TCB *createUserThread(Body body, void *args, bool start = true);
 
-    static TCB *createUserThread(Body body, void *args, uint64 *threadStack);
+    static TCB *createUserThread(Body body, void *args, uint64 *threadStack, bool start = true);
+
+    static int start(TCB *thr);
 
     int join();
 
@@ -39,6 +41,10 @@ public:
 
     int getId() const {
         return id;
+    }
+
+    bool isPrivileged() const {
+        return privileged;
     }
 
     bool isBlocked() const {
@@ -79,6 +85,10 @@ public:
 
     void setInterrupted() {
         status = INTERRUPTED;
+    }
+
+    bool isWaiting() const {
+        return status == WAITING;
     }
 
     uint64 getTimeSlice() const {
@@ -129,10 +139,10 @@ public:
 private:
     TCB();
 
-    explicit TCB(Body body, void *args, uint64 *threadStack, bool privileged);
+    explicit TCB(Body body, void *args, uint64 *threadStack, bool privileged, bool start);
 
     enum Status {
-        READY, FINISHED, BLOCKED, IDLE, INTERRUPTED
+        READY, FINISHED, BLOCKED, IDLE, INTERRUPTED, WAITING
     };
 
     struct Context {

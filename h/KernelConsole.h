@@ -29,9 +29,9 @@ private:
 
     static KernelConsole *instance;
 
-    [[noreturn]] static void writeToConsole();
+    [[noreturn]] void writeToConsole();
 
-    [[noreturn]] static void readFromConsole();
+    [[noreturn]] void readFromConsole();
 
     BoundedBuffer<char> outputBuffer, inputBuffer;
 

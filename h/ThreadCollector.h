@@ -19,7 +19,7 @@ public:
 private:
     ThreadCollector();
 
-    [[noreturn]] static void run();
+    [[noreturn]] void run();
 
     static ThreadCollector *instance;
 

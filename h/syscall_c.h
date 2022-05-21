@@ -9,12 +9,21 @@ typedef struct _sem {
 typedef struct _thread {
 } _thread;
 
-typedef _sem* sem_t;
-typedef _thread* thread_t;
+typedef _sem *sem_t;
+typedef _thread *thread_t;
 
 typedef unsigned long time_t;
 
 const int EOF = -1;
+
+enum {
+    MEM_ALLOC = 0x01, MEM_FREE = 0x02,
+    THREAD_CREATE = 0x11, THREAD_EXIT = 0x12, THREAD_DISPATCH = 0x13,
+    THREAD_CREATE_SUSPENDED = 0x14, THREAD_START = 0x15,
+    SEM_OPEN = 0x21, SEM_CLOSE = 0x22, SEM_WAIT = 0x23, SEM_SIGNAL = 0x24,
+    TIME_SLEEP = 0x31,
+    GETC = 0x41, PUTC = 0x42
+};
 
 #ifdef __cplusplus
 extern "C" {
@@ -35,6 +44,14 @@ int thread_create(
 int thread_exit();
 
 void thread_dispatch();
+
+int thread_create_suspended(
+        thread_t *handle,
+        void(*start_routine)(void *),
+        void *arg
+);
+
+int thread_start(thread_t handle);
 
 int sem_open(
         sem_t *handle,

@@ -6,6 +6,24 @@
 #include "ProducerConsumer.h"
 #include "printing.hpp"
 
+class MyPeriodicTen: public PeriodicThread {
+public:
+    MyPeriodicTen(): PeriodicThread(100) {};
+private:
+    void periodicActivation() override {
+        printString("Periodic activation with period 10s!\n");
+    }
+};
+
+class MyPeriodicFive: public PeriodicThread {
+public:
+    MyPeriodicFive(): PeriodicThread(50) {};
+private:
+    void periodicActivation() override {
+        printString("Periodic activation with period 5s!\n");
+    }
+};
+
 void myUserMain() {
     printString("In user main\n");
 
@@ -23,6 +41,11 @@ void myUserMain() {
     thread_t t6;
     thread_t t7;
     thread_t t8;
+
+    PeriodicThread *p1 = new MyPeriodicTen();
+    PeriodicThread *p2 = new MyPeriodicFive();
+    p1->start();
+    p2->start();
 
     thread_create(&t1, &workerBodyE, nullptr);
 
@@ -56,6 +79,8 @@ void myUserMain() {
     printInt(mem_free(mem), 10, 1);
     printString("\n");
 
+    delete p1;
+    delete p2;
     delete obj;
 
     printString("User main finished\n");

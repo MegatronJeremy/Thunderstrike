@@ -2,7 +2,7 @@
 #define _SCHEDULER_H
 
 #include "Mutex.h"
-#include "ThreadList.h"
+#include "NodeList.h"
 
 class TCB;
 
@@ -21,7 +21,7 @@ private:
 
     static Scheduler *instance;
 
-    ThreadList readyThreadQueue;
+    NodeList<TCB> readyThreadQueue;
 
     Mutex mutex;
 

@@ -4,8 +4,8 @@
 #include "../lib/hw.h"
 #include "KernelObject.h"
 #include "Mutex.h"
-#include "ThreadNode.h"
-#include "ThreadList.h"
+#include "ListNode.h"
+#include "NodeList.h"
 #include "LinkedHashNode.h"
 
 #define OFFSETOF(TYPE, ELEMENT) ((size_t)&(((TYPE *)0)->ELEMENT))
@@ -124,7 +124,7 @@ public:
         return threadStack;
     };
 
-    ThreadNode *getListNode() {
+    ListNode<TCB> *getListNode() {
         return &listNode;
     }
 
@@ -166,10 +166,10 @@ private:
 
     Status status = READY;
 
-    ThreadList waitingToJoin;
+    NodeList<TCB> waitingToJoin;
     Mutex mutex;
 
-    ThreadNode listNode = ThreadNode(this);
+    ListNode<TCB> listNode = ListNode<TCB>(this);
     LinkedHashNode<TCB> hashNode = LinkedHashNode<TCB>(this, id);
 
     static uint64 offsSSP;

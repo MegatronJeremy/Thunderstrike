@@ -37,7 +37,9 @@ int Thread::sleep(time_t time) {
 }
 
 Thread::Thread() {
-    thread_create_suspended(&myHandle, [](void *obj) { ((Thread *) obj)->run(); }, this);
+    thread_create_suspended(&myHandle, [](void *obj) {
+        ((Thread *) obj)->run();
+    }, this);
 };
 
 Semaphore::Semaphore(unsigned int init) {

@@ -2,7 +2,7 @@
 #define _KERNEL_SEMAPHORE_H
 
 #include "KernelObject.h"
-#include "ThreadList.h"
+#include "NodeList.h"
 #include "LinkedHashNode.h"
 
 class TCB;
@@ -38,7 +38,7 @@ private:
 
     LinkedHashNode<KernelSemaphore> hashNode;
 
-    ThreadList blockedThreadQueue;
+    NodeList<TCB> blockedThreadQueue;
 
 };
 

@@ -2,7 +2,7 @@
 #define _TIMERINTERRUPT_H
 
 #include "Mutex.h"
-#include "ThreadList.h"
+#include "NodeList.h"
 
 class TCB;
 
@@ -23,7 +23,7 @@ private:
 
     Mutex mutex;
 
-    ThreadList blockedThreads;
+    NodeList<TCB> blockedThreads;
 };
 
 #endif

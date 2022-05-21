@@ -10,38 +10,15 @@
 template<typename T>
 class BoundedBuffer : public KernelObject {
 public:
-    BoundedBuffer() :
-            slotsAvailable(DEFAULT_BUFFER_SIZE),
-            itemsAvailable(0) {
-        size_t sz = sizeof(T) * DEFAULT_BUFFER_SIZE;
-        buffer = (T *) kmalloc(sz);
-    };
+    BoundedBuffer();
 
     BoundedBuffer(const BoundedBuffer<T> &) = delete;
 
     BoundedBuffer &operator=(const BoundedBuffer<T> &) = delete;
 
-    int addLast(T t) {
-        slotsAvailable.wait();
-        mutex.wait();
-        buffer[back] = t;
-        back = (back + 1) % size;
-        cnt++;
-        mutex.signal();
-        itemsAvailable.signal();
-        return 0;
-    }
+    int addLast(T t);
 
-    T removeFirst() {
-        itemsAvailable.wait();
-        mutex.wait();
-        T t = buffer[front];
-        front = (front + 1) % size;
-        cnt--;
-        mutex.signal();
-        slotsAvailable.signal();
-        return t;
-    }
+    T removeFirst();
 
     uint64 getSize() const {
         return size;
@@ -61,5 +38,37 @@ private:
     Mutex mutex;
     T *buffer;
 };
+
+template<typename T>
+BoundedBuffer<T>::BoundedBuffer() :
+        slotsAvailable(DEFAULT_BUFFER_SIZE),
+        itemsAvailable(0) {
+    size_t sz = sizeof(T) * DEFAULT_BUFFER_SIZE;
+    buffer = (T *) kmalloc(sz);
+}
+
+template<typename T>
+int BoundedBuffer<T>::addLast(T t) {
+    slotsAvailable.wait();
+    mutex.wait();
+    buffer[back] = t;
+    back = (back + 1) % size;
+    cnt++;
+    mutex.signal();
+    itemsAvailable.signal();
+    return 0;
+}
+
+template<typename T>
+T BoundedBuffer<T>::removeFirst() {
+    itemsAvailable.wait();
+    mutex.wait();
+    T t = buffer[front];
+    front = (front + 1) % size;
+    cnt--;
+    mutex.signal();
+    slotsAvailable.signal();
+    return t;
+}
 
 #endif

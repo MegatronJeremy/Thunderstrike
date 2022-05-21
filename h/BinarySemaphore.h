@@ -5,7 +5,7 @@
 
 class BinarySemaphore: public KernelSemaphore {
 public:
-    BinarySemaphore(int val);
+    explicit BinarySemaphore(int val);
 
     int wait() override;
     int signal() override;

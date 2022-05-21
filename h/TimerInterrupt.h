@@ -19,10 +19,6 @@ public:
 private:
     TimerInterrupt() = default;
 
-    void update(TCB *tcb, time_t time);
-
-    void tickAll();
-
     static TimerInterrupt *instance;
 
     Mutex mutex;

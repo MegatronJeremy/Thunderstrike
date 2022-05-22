@@ -35,7 +35,7 @@ private:
 
     BoundedBuffer<char> outputBuffer, inputBuffer;
 
-    BinarySemaphore readyToRead, readyToWrite;
+    KernelSemaphore readyToRead, readyToWrite;
 
     TCB *kernelConsumer, *kernelProducer;
 

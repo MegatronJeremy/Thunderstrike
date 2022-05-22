@@ -35,7 +35,7 @@ public:
 private:
     uint64 front = 0, back = 0, size = DEFAULT_BUFFER_SIZE, cnt = 0;
     KernelSemaphore slotsAvailable, itemsAvailable;
-    Mutex mutex;
+    Mutex mutexFront, mutexBack;
     T *buffer;
 };
 
@@ -50,11 +50,11 @@ BoundedBuffer<T>::BoundedBuffer() :
 template<typename T>
 int BoundedBuffer<T>::addLast(T t) {
     slotsAvailable.wait();
-    mutex.wait();
+    mutexBack.wait();
     buffer[back] = t;
     back = (back + 1) % size;
     cnt++;
-    mutex.signal();
+    mutexBack.signal();
     itemsAvailable.signal();
     return 0;
 }
@@ -62,11 +62,11 @@ int BoundedBuffer<T>::addLast(T t) {
 template<typename T>
 T BoundedBuffer<T>::removeFirst() {
     itemsAvailable.wait();
-    mutex.wait();
+    mutexFront.wait();
     T t = buffer[front];
     front = (front + 1) % size;
     cnt--;
-    mutex.signal();
+    mutexFront.signal();
     slotsAvailable.signal();
     return t;
 }

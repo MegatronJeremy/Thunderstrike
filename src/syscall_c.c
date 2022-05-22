@@ -30,7 +30,7 @@ int thread_exit() {
 }
 
 void thread_dispatch() {
-    callSupervisorTrap(0x13, 0);
+    callSupervisorTrap(THREAD_DISPATCH, 0);
 }
 
 int thread_create_suspended(thread_t *handle, void(*start_routine)(void *), void *arg) {

@@ -14,6 +14,12 @@ void Scheduler::put(TCB *tcb) {
     mutex.signal();
 }
 
+void Scheduler::priorityPut(TCB *tcb) {
+    mutex.wait();
+    readyThreadQueue.addFirst(tcb->getListNode());
+    mutex.signal();
+}
+
 Scheduler *Scheduler::getInstance() {
     static auto *instance = new Scheduler;
     return instance;

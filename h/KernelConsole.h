@@ -4,7 +4,7 @@
 #include "../h/KernelObject.h"
 #include "../h/Mutex.h"
 #include "../h/Buffer.h"
-#include "../h/BinarySemaphore.h"
+#include "../h/IOEvent.h"
 
 typedef volatile uint8* reg;
 
@@ -34,7 +34,7 @@ private:
 
     Buffer<char> outputBuffer, inputBuffer;
 
-    BinarySemaphore readyToRead, readyToWrite;
+    IOEvent readyToRead, readyToWrite;
     KernelSemaphore inputItemsAvailable, outputItemsAvailable;
     KernelSemaphore inputSlotsAvailable, outputSlotsAvailable;
     Mutex mutexPut, mutexGet;

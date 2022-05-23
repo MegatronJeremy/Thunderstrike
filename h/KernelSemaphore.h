@@ -28,17 +28,16 @@ public:
 protected:
     void block();
 
-    void deblock();
+    virtual void deblock();
 
     int val;
 
+    NodeList<TCB> blockedThreadQueue;
 private:
     static uint64 ID;
     uint64 id = ID++;
 
     LinkedHashNode<KernelSemaphore> hashNode;
-
-    NodeList<TCB> blockedThreadQueue;
 
 };
 

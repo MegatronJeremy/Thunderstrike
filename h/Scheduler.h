@@ -16,6 +16,8 @@ public:
 
     void put(TCB *tcb);
 
+    void priorityPut(TCB *tcb);
+
     static Scheduler *getInstance();
 
     ~Scheduler() override;

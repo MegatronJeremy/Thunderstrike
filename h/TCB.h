@@ -13,6 +13,8 @@
 // Thread Control Block
 class TCB : public KernelObject {
 public:
+    bool ioThread = false;
+
     TCB(const TCB &) = delete;
 
     void operator=(const TCB &) = delete;

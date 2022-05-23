@@ -5,6 +5,8 @@
 #include "LinkedHashNode.h"
 #include "Mutex.h"
 
+constexpr uint64 DEFAULT_HASH_SIZE = 1499;
+
 template<typename T>
 class LinkedHashTable : public KernelObject {
 public:
@@ -31,14 +33,14 @@ private:
     static Mutex *getMutex();
 
     static uint64 getHash(uint64 id) {
-        return id % DEFAULT_BUFFER_SIZE;
+        return id % DEFAULT_HASH_SIZE;
     }
 
-    static LinkedHashNode<T> *hashTable[DEFAULT_BUFFER_SIZE];
+    static LinkedHashNode<T> *hashTable[DEFAULT_HASH_SIZE];
 };
 
 template<typename T>
-LinkedHashNode<T> *LinkedHashTable<T>::hashTable[DEFAULT_BUFFER_SIZE]{};
+LinkedHashNode<T> *LinkedHashTable<T>::hashTable[DEFAULT_HASH_SIZE]{};
 
 template<typename T>
 inline Mutex *LinkedHashTable<T>::getMutex() {

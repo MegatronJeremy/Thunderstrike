@@ -6,6 +6,9 @@
 
 class MemoryAllocator {
 public:
+    MemoryAllocator(const MemoryAllocator &) = delete;
+    void operator=(const MemoryAllocator&) = delete;
+
     static MemoryAllocator *getInstance();
 
     void *malloc(size_t size);
@@ -26,7 +29,7 @@ private:
     BlockHeader *freeMemHead;
     Mutex mutex;
 
-    static MemoryAllocator *instance;
+    static size_t maxFreeMem;
 
     static int tryToJoin(BlockHeader *curr);
 

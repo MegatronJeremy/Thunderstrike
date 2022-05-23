@@ -8,6 +8,10 @@ class TCB;
 
 class TimerInterrupt : public KernelObject {
 public:
+    TimerInterrupt(const TimerInterrupt &) = delete;
+
+    void operator=(const TimerInterrupt &) = delete;
+
     void block(TCB *tcb, time_t time);
 
     void tick();
@@ -18,8 +22,6 @@ public:
 
 private:
     TimerInterrupt() = default;
-
-    static TimerInterrupt *instance;
 
     Mutex mutex;
 

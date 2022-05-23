@@ -7,6 +7,9 @@ class TCB;
 
 class IdleThread : public KernelObject {
 public:
+    IdleThread(const IdleThread&) = delete;
+    void operator=(const IdleThread&) = delete;
+
     static TCB *getIdleThread();
 
     static IdleThread *getInstance();
@@ -17,8 +20,6 @@ private:
     IdleThread();
 
     [[noreturn]] static void run();
-
-    static IdleThread *instance;
 
     TCB *idleThread;
 

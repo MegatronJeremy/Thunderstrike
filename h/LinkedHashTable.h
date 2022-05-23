@@ -8,6 +8,9 @@
 template<typename T>
 class LinkedHashTable : public KernelObject {
 public:
+    LinkedHashTable(const LinkedHashTable<T> &) = delete;
+    void operator=(const LinkedHashTable<T> &) = delete;
+
     static int insert(LinkedHashNode<T> *elem);
 
     static T *get(uint64 id);
@@ -23,13 +26,10 @@ public:
     static int remove(uint64 id);
 
 private:
-    static Mutex *getMutex() {
-        if (!mutex) mutex = new Mutex;
-        return mutex;
-    }
+    LinkedHashTable() = default;
 
-    static Mutex *mutex;
-    
+    static Mutex *getMutex();
+
     static uint64 getHash(uint64 id) {
         return id % DEFAULT_BUFFER_SIZE;
     }
@@ -41,7 +41,10 @@ template<typename T>
 LinkedHashNode<T> *LinkedHashTable<T>::hashTable[DEFAULT_BUFFER_SIZE]{};
 
 template<typename T>
-Mutex *LinkedHashTable<T>::mutex = nullptr;
+inline Mutex *LinkedHashTable<T>::getMutex() {
+    static auto *mutex = new Mutex;
+    return mutex;
+}
 
 template<typename T>
 int LinkedHashTable<T>::insert(LinkedHashNode<T> *elem) {
@@ -96,6 +99,7 @@ int LinkedHashTable<T>::remove(uint64 id) {
     getMutex()->signal();
     return 0;
 }
+
 
 
 #endif

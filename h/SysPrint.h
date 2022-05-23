@@ -7,7 +7,7 @@
 class PrintMutex : public KernelObject {
 public:
     static Mutex* getMutex() {
-        if (!mutex) mutex = new Mutex;
+        static auto *mutex = new Mutex;
         return mutex;
     }
 
@@ -19,14 +19,8 @@ public:
         getMutex()->signal();
     }
 
-    ~PrintMutex() override {
-        delete mutex;
-    }
-
 private:
     PrintMutex() = default;
-
-    static Mutex *mutex;
 };
 
 void kprintString(char const *string);

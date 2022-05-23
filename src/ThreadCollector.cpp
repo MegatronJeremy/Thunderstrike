@@ -2,21 +2,16 @@
 #include "../h/TCB.h"
 #include "../h/Riscv.h"
 
-ThreadCollector *ThreadCollector::instance = nullptr;
-
 ThreadCollector *ThreadCollector::getInstance() {
-    if (!instance) instance = new ThreadCollector;
+    static auto *instance = new ThreadCollector;
     return instance;
 }
 
-void ThreadCollector::signal() {
-    getInstance()->readyToDelete.signal();
-}
-
 void ThreadCollector::put(TCB *tcb) {
-    getInstance()->mutex.wait();
-    getInstance()->finishedThreads.addLast(tcb->getListNode());
-    getInstance()->mutex.signal();
+    mutex.wait();
+    finishedThreads.addLast(tcb->getListNode());
+    mutex.signal();
+    readyToDelete.signal();
 }
 
 ThreadCollector::ThreadCollector() : readyToDelete(0) {

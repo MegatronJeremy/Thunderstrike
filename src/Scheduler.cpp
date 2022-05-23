@@ -1,23 +1,21 @@
 #include "../h/Scheduler.h"
 #include "../h/TCB.h"
 
-Scheduler *Scheduler::instance = nullptr;
-
 TCB *Scheduler::get() {
-    getInstance()->mutex.wait();
-    TCB *tcb = getInstance()->readyThreadQueue.removeFirst();
-    getInstance()->mutex.signal();
+    mutex.wait();
+    TCB *tcb = readyThreadQueue.removeFirst();
+    mutex.signal();
     return tcb;
 }
 
 void Scheduler::put(TCB *tcb) {
-    getInstance()->mutex.wait();
-    getInstance()->readyThreadQueue.addLast(tcb->getListNode());
-    getInstance()->mutex.signal();
+    mutex.wait();
+    readyThreadQueue.addLast(tcb->getListNode());
+    mutex.signal();
 }
 
 Scheduler *Scheduler::getInstance() {
-    if (!instance) instance = new Scheduler;
+    static auto *instance = new Scheduler;
     return instance;
 }
 

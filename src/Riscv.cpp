@@ -13,10 +13,15 @@ void Riscv::popSppSpie(bool prMode) {
     __asm__ volatile ("sret");
 }
 
+enum {
+    U_ECALL=0x0000000000000008UL, S_ECALL=0x0000000000000009UL,
+    TIMER=0x8000000000000001UL, CONSOLE=0x8000000000000009UL
+};
+
 void Riscv::handleSupervisorTrap() {
     uint64 scause = r_scause();
     switch (scause) {
-        case 0x0000000000000008UL: {
+        case U_ECALL: {
             // interrupt: no, cause code: environment call from U-mode (8)
             volatile uint64 sepc = r_sepc() + 4;
             volatile uint64 sstatus = r_sstatus();
@@ -31,7 +36,7 @@ void Riscv::handleSupervisorTrap() {
             w_sepc(sepc);
             break;
         }
-        case 0x0000000000000009UL: {
+        case S_ECALL: {
             // interrupt: no, cause code: environment call from S-mode (9)
             volatile uint64 sepc = r_sepc() + 4;
             volatile uint64 sstatus = r_sstatus();
@@ -42,7 +47,7 @@ void Riscv::handleSupervisorTrap() {
             w_sepc(sepc);
             break;
         }
-        case 0x8000000000000001UL: {
+        case TIMER: {
             // interrupt: yes, cause code: supervisor software interrupt (timer)
             volatile uint64 sepc = r_sepc();
             volatile uint64 sstatus = r_sstatus();
@@ -63,7 +68,7 @@ void Riscv::handleSupervisorTrap() {
             w_sepc(sepc);
             break;
         }
-        case 0x8000000000000009UL: {
+        case CONSOLE: {
             // interrupt: yes, cause code: supervisor external interrupt (console)
             volatile uint64 sepc = r_sepc();
             volatile uint64 sstatus = r_sstatus();
@@ -73,7 +78,7 @@ void Riscv::handleSupervisorTrap() {
             if (dev == CONSOLE_IRQ) {
                 Riscv::enableInterrupts();
 
-                KernelConsole::consoleHandler();
+                KernelConsole::getInstance()->consoleHandler();
 
                 Riscv::disableInterrupts();
             }
@@ -94,6 +99,10 @@ void Riscv::handleSupervisorTrap() {
             kprintString("\nStval: ");
             kprintUnsigned(r_stval());
             kprintString("\n");
+
+            TCB::running = TCB::userMain;
+            TCB::exit();
+
             w_sepc(r_sepc() + 4);
         }
     }

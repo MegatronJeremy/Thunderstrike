@@ -1,26 +1,24 @@
 #include "../h/MemoryAllocator.h"
 
-MemoryAllocator *MemoryAllocator::instance = nullptr;
-
+size_t MemoryAllocator::maxFreeMem;
 
 void *MemoryAllocator::operator new(size_t) {
     return (void *) HEAP_START_ADDR;
 }
 
-void MemoryAllocator::operator delete(void *) {
-    instance = nullptr;
-}
+void MemoryAllocator::operator delete(void *) {}
 
 MemoryAllocator::MemoryAllocator() {
     freeMemHead = (BlockHeader *) ((uint8 *) HEAP_START_ADDR + sizeof(MemoryAllocator));
     freeMemHead->size = (size_t) ((uint8 *) HEAP_END_ADDR - (uint8 *) HEAP_START_ADDR -
                                             sizeof(MemoryAllocator) - sizeof(BlockHeader));
+    maxFreeMem = freeMemHead->size;
     freeMemHead->free = true;
     freeMemHead->next = nullptr;
 }
 
 MemoryAllocator *MemoryAllocator::getInstance() {
-    if (!instance) instance = new MemoryAllocator;
+    static auto *instance = new MemoryAllocator;
 
     return instance;
 }
@@ -31,6 +29,7 @@ void *MemoryAllocator::malloc(size_t size) {
 
     // Rounding and aligning size to size of memory blocks
     size *= MEM_BLOCK_SIZE;
+    if (size > maxFreeMem) return nullptr;
 
     mutex.wait();
     // Finding suitable free memory block using first fit algorithm

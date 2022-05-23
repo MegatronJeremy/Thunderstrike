@@ -7,6 +7,8 @@
 
 TCB *TCB::running = nullptr;
 
+TCB *TCB::userMain = nullptr;
+
 uint64 TCB::ID = 0;
 
 uint64 TCB::offsSSP = OFFSETOF(TCB, ssp);
@@ -23,9 +25,7 @@ TCB::TCB(TCB::Body body, void *args, uint64 *threadStack, bool privileged, bool 
         privileged(privileged),
         context({(uint64) threadWrapper, (uint64) (threadStack + DEFAULT_STACK_SIZE)}),
         status(start ? READY : WAITING),
-        ssp((uint64) (kernelStack + DEFAULT_STACK_SIZE)) {
-    if (start) Scheduler::put(this);
-}
+        ssp((uint64) (kernelStack + DEFAULT_STACK_SIZE)) {}
 
 TCB *TCB::createKernelThread(TCB::Body body, void *args, bool start) {
     if (!body) return nullptr;
@@ -41,19 +41,27 @@ TCB *TCB::createUserThread(TCB::Body body, void *args, bool start) {
 
 TCB *TCB::createKernelThread(TCB::Body body, void *args, uint64 *threadStack, bool start) {
     if (!body) return nullptr;
-    return new TCB(body, args, threadStack, true, start);
+
+    TCB *tcb = new TCB(body, args, threadStack, true, start);
+    if (start) Scheduler::getInstance()->put(tcb);
+
+    return tcb;
 }
 
 TCB *TCB::createUserThread(TCB::Body body, void *args, uint64 *threadStack, bool start) {
     if (!body) return nullptr;
-    return new TCB(body, args, threadStack, false, start);
+
+    TCB *tcb = new TCB(body, args, threadStack, false, start);
+    if (start) Scheduler::getInstance()->put(tcb);
+
+    return tcb;
 }
 
 int TCB::start(TCB *tcb) {
     if (!tcb->isWaiting()) return -1;
 
     tcb->setReady();
-    Scheduler::put(tcb);
+    Scheduler::getInstance()->put(tcb);
 
     return 0;
 }
@@ -65,11 +73,11 @@ void TCB::exit() {
     while (!running->waitingToJoin.isEmpty()) {
         TCB *thr = running->waitingToJoin.removeFirst();
         thr->setReady();
-        Scheduler::put(thr);
+        Scheduler::getInstance()->put(thr);
     }
     running->mutex.signal();
 
-    ThreadCollector::put(running);
+    ThreadCollector::getInstance()->put(running);
 
     dispatch();
 }
@@ -78,11 +86,11 @@ void TCB::dispatch() {
     lock()
     TCB *old = running;
 
-    if (old->isReady()) Scheduler::put(old);
-    else if (old->isFinished()) {
-        ThreadCollector::signal();
+    if (old->isReady()) {
+        Scheduler::getInstance()->put(old);
     }
-    running = Scheduler::get();
+
+    running = Scheduler::getInstance()->get();
 
     if (!running) {
         running = IdleThread::getIdleThread();
@@ -119,4 +127,3 @@ TCB::~TCB() {
     kfree(kernelStack);
     kfree(threadStack);
 }
-

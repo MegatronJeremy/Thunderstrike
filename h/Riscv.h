@@ -125,6 +125,8 @@ public:
     static void supervisorTrap();
 
 private:
+    Riscv() = default;
+
     // supervisor trap handler
     static void handleSupervisorTrap();
 };

@@ -20,7 +20,7 @@ void KernelSemaphore::deblock() {
     if (blockedThreadQueue.isEmpty()) return;
     TCB *tcb = blockedThreadQueue.removeFirst();
     tcb->setReady();
-    Scheduler::put(tcb);
+    Scheduler::getInstance()->put(tcb);
 }
 
 int KernelSemaphore::wait() {
@@ -47,7 +47,7 @@ KernelSemaphore::~KernelSemaphore() {
     while (!blockedThreadQueue.isEmpty()) {
         TCB *tcb = blockedThreadQueue.removeFirst();
         tcb->setInterrupted();
-        Scheduler::put(tcb);
+        Scheduler::getInstance()->put(tcb);
     }
     unlock()
 

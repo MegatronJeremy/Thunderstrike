@@ -204,10 +204,10 @@ int Kernel::time_sleep(time_t time) {
 }
 
 char Kernel::getc() {
-    return KernelConsole::getc();
+    return KernelConsole::getInstance()->getc();
 }
 
 void Kernel::putc(char chr) {
-    KernelConsole::putc(chr);
+    KernelConsole::getInstance()->putc(chr);
 }
 

@@ -1,12 +1,9 @@
 #include "../h/TimerInterrupt.h"
 #include "../h/TCB.h"
 #include "../h/Scheduler.h"
-#include "../h/SysPrint.h"
-
-TimerInterrupt *TimerInterrupt::instance = nullptr;
 
 TimerInterrupt *TimerInterrupt::getInstance() {
-    if (!instance) instance = new TimerInterrupt;
+    static auto *instance = new TimerInterrupt;
     return instance;
 }
 
@@ -45,7 +42,7 @@ void TimerInterrupt::tick() {
 
     while (tcb && tcb->getBlockedTime() == 0) {
         tcb->setReady();
-        Scheduler::put(blockedThreads.removeFirst());
+        Scheduler::getInstance()->put(blockedThreads.removeFirst());
         tcb = blockedThreads.getFirst();
     }
 

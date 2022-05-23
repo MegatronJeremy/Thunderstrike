@@ -11,7 +11,7 @@ public:
 
     NodeList(const NodeList &) = delete;
 
-    NodeList &operator=(const NodeList &) = delete;
+    void operator=(const NodeList &) = delete;
 
     int getCount() const {
         return size;
@@ -31,7 +31,7 @@ public:
     T *removeLast();
 
     T *getLast() {
-        if (!head) return nullptr;
+        if (!tail) return nullptr;
         return tail->data;
     }
 
@@ -75,12 +75,13 @@ public:
 private:
     ListNode<T> *head = nullptr, *tail = nullptr, *curr = nullptr;
 
-    int size = 0;
+    uint64 size = 0;
 
 };
 
 template<typename T>
 void NodeList<T>::addFirst(ListNode<T> *elem) {
+    if (!elem) return;
     elem->next = head;
     elem->prev = nullptr;
     if (head) head->prev = elem;
@@ -92,6 +93,7 @@ void NodeList<T>::addFirst(ListNode<T> *elem) {
 
 template<typename T>
 void NodeList<T>::addLast(ListNode<T> *elem) {
+    if (!elem) return;
     elem->next = nullptr;
     elem->prev = tail;
     if (tail) tail->next = elem;

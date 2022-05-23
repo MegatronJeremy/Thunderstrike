@@ -3,39 +3,41 @@
 
 #include "../h/KernelObject.h"
 #include "../h/Mutex.h"
-#include "../h/BoundedBuffer.h"
+#include "../h/Buffer.h"
 #include "../h/BinarySemaphore.h"
 
 typedef volatile uint8* reg;
 
 class KernelConsole : public KernelObject {
 public:
+    KernelConsole(const KernelConsole &) = delete;
+    void operator=(const KernelConsole &) = delete;
 
-    static void putc(char chr);
+    void putc(char chr);
 
-    static char getc();
+    char getc();
 
-    static void consoleHandler();
+    void consoleHandler();
 
     static KernelConsole *getInstance();
 
     ~KernelConsole() override;
 
 private:
-
-    static reg inputData, outputData, status;
-
     KernelConsole();
 
-    static KernelConsole *instance;
+    static reg inputData, outputData, status;
 
     [[noreturn]] void writeToConsole();
 
     [[noreturn]] void readFromConsole();
 
-    BoundedBuffer<char> outputBuffer, inputBuffer;
+    Buffer<char> outputBuffer, inputBuffer;
 
-    KernelSemaphore readyToRead, readyToWrite;
+    BinarySemaphore readyToRead, readyToWrite;
+    KernelSemaphore inputItemsAvailable, outputItemsAvailable;
+    KernelSemaphore inputSlotsAvailable, outputSlotsAvailable;
+    Mutex mutexPut, mutexGet;
 
     TCB *kernelConsumer, *kernelProducer;
 

@@ -17,6 +17,7 @@ int main() {
     kprintString("Created main thread\n");
 
     TCB *uMain = TCB::createUserThread([](void *){userMain();}, nullptr);
+    TCB::userMain = uMain;
     kprintString("Created user main thread\n");
 
     Riscv::w_stvec((uint64) &Riscv::supervisorTrap);

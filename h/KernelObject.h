@@ -7,7 +7,7 @@ void *kmalloc(size_t);
 
 int kfree(void *);
 
-static constexpr uint64 DEFAULT_BUFFER_SIZE = 1024;
+static constexpr uint64 DEFAULT_BUFFER_SIZE = 2048;
 
 class KernelObject {
 public:

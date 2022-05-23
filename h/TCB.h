@@ -13,6 +13,10 @@
 // Thread Control Block
 class TCB : public KernelObject {
 public:
+    TCB(const TCB &) = delete;
+
+    void operator=(const TCB &) = delete;
+
     using Body = void (*)(void *);
 
     static TCB *createKernelThread() {
@@ -39,7 +43,7 @@ public:
 
     static void exit();
 
-    int getId() const {
+    uint64 getId() const {
         return id;
     }
 
@@ -136,11 +140,9 @@ public:
 
     static TCB *running;
 
+    static TCB *userMain;
+
 private:
-    TCB();
-
-    explicit TCB(Body body, void *args, uint64 *threadStack, bool privileged, bool start);
-
     enum Status {
         READY, FINISHED, BLOCKED, IDLE, INTERRUPTED, WAITING
     };
@@ -150,6 +152,15 @@ private:
         uint64 sp;
     };
 
+    explicit TCB(Body body, void *args, uint64 *threadStack, bool privileged, bool start);
+
+    static void threadWrapper();
+
+    static void contextSwitch(Context *oldContext, Context *runningContext);
+
+    friend class Riscv;
+
+    TCB();
     static uint64 ID;
     uint64 id = ID++;
 
@@ -169,21 +180,16 @@ private:
     NodeList<TCB> waitingToJoin;
     Mutex mutex;
 
-    ListNode<TCB> listNode = ListNode<TCB>(this);
-    LinkedHashNode<TCB> hashNode = LinkedHashNode<TCB>(this, id);
-
     static uint64 offsSSP;
     uint64 ssp = 0;
 
     time_t blockedTime = 0;
 
+    ListNode<TCB> listNode = ListNode<TCB>(this);
+    LinkedHashNode<TCB> hashNode = LinkedHashNode<TCB>(this, id);
+
     static uint64 timeSliceCounter;
 
-    friend class Riscv;
-
-    static void threadWrapper();
-
-    static void contextSwitch(Context *oldContext, Context *runningContext);
 
 };
 

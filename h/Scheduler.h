@@ -8,9 +8,13 @@ class TCB;
 
 class Scheduler : public KernelObject {
 public:
-    static TCB *get();
+    Scheduler(const Scheduler &) = delete;
 
-    static void put(TCB *tcb);
+    void operator=(const Scheduler &) = delete;
+
+    TCB *get();
+
+    void put(TCB *tcb);
 
     static Scheduler *getInstance();
 
@@ -18,8 +22,6 @@ public:
 
 private:
     Scheduler() = default;
-
-    static Scheduler *instance;
 
     NodeList<TCB> readyThreadQueue;
 

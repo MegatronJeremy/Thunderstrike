@@ -8,11 +8,13 @@ class TCB;
 
 class ThreadCollector : public KernelObject {
 public:
+    ThreadCollector(const ThreadCollector &) = delete;
+
+    void operator=(const ThreadCollector &) = delete;
+
     static ThreadCollector *getInstance();
 
-    static void put(TCB *tcb);
-
-    static void signal();
+    void put(TCB *tcb);
 
     ~ThreadCollector() override;
 
@@ -20,8 +22,6 @@ private:
     ThreadCollector();
 
     [[noreturn]] void run();
-
-    static ThreadCollector *instance;
 
     TCB *threadCollector = nullptr;
 

@@ -15,11 +15,11 @@ KernelConsole::KernelConsole() :
     inputData = (reg) CONSOLE_RX_DATA;
     status = (reg) CONSOLE_STATUS;
 
-    kernelConsumer = TCB::createKernelThread([](void *) {
-        KernelConsole::getInstance()->writeToConsole();
-    }, nullptr);
     kernelProducer = TCB::createKernelThread([](void *) {
         KernelConsole::getInstance()->readFromConsole();
+    }, nullptr);
+    kernelConsumer = TCB::createKernelThread([](void *) {
+        KernelConsole::getInstance()->writeToConsole();
     }, nullptr);
 }
 
@@ -46,15 +46,11 @@ char KernelConsole::getc() {
 }
 
 void KernelConsole::consoleHandler() {
-    if (*status & CONSOLE_RX_STATUS_BIT) {
-        readyToRead.signal();
-    }
-    if (*status & CONSOLE_TX_STATUS_BIT) {
-        readyToWrite.signal();
-    }
+    readyToRead.signal();
+    readyToWrite.signal();
 }
 
-[[noreturn]] void KernelConsole::readFromConsole() {
+void KernelConsole::readFromConsole() {
     while (true) {
         readyToRead.wait();
         while (*status & CONSOLE_RX_STATUS_BIT) {
@@ -65,7 +61,7 @@ void KernelConsole::consoleHandler() {
     }
 }
 
-[[noreturn]] void KernelConsole::writeToConsole() {
+void KernelConsole::writeToConsole() {
     while (true) {
         readyToWrite.wait();
         while (*status & CONSOLE_TX_STATUS_BIT) {

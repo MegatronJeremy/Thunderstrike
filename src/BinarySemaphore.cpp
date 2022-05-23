@@ -12,17 +12,22 @@ int BinarySemaphore::wait() {
     lock()
     if (val == 0) block();
     val = 0;
-    unlock()
     if (TCB::running->isInterrupted()) {
         TCB::running->setReady();
+        unlock()
         return -1;
     }
+    unlock()
+
     return 0;
 }
 
 int BinarySemaphore::signal() {
-    if (val == 1) return -1;
     lock()
+    if (val == 1) {
+        unlock();
+        return -1;
+    }
     val = 1;
     deblock();
     unlock()

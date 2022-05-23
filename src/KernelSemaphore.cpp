@@ -26,19 +26,24 @@ void KernelSemaphore::deblock() {
 int KernelSemaphore::wait() {
     lock()
     if (--val < 0) block();
-    unlock()
     if (TCB::running->isInterrupted()) {
         TCB::running->setReady();
+        unlock()
         return -1;
     }
+    unlock()
     return 0;
 }
 
 int KernelSemaphore::signal() {
-    if (val == INT_MAX) return -1;
     lock()
+    if (val == INT_MAX) {
+        unlock()
+        return -1;
+    }
     if (val++ < 0) deblock();
     unlock()
+
     return 0;
 }
 
@@ -49,9 +54,9 @@ KernelSemaphore::~KernelSemaphore() {
         tcb->setInterrupted();
         Scheduler::getInstance()->put(tcb);
     }
-    unlock()
-
     val = INT_MAX;
+
+    unlock()
 }
 
 

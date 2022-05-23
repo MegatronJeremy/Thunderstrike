@@ -15,7 +15,7 @@ void Riscv::popSppSpie(bool prMode) {
 
 enum {
     U_ECALL=0x0000000000000008UL, S_ECALL=0x0000000000000009UL,
-    TIMER=0x8000000000000001UL, CONSOLE=0x8000000000000009UL
+    TIMER_INTERRUPT=0x8000000000000001UL, CONSOLE_INTERRUPT=0x8000000000000009UL
 };
 
 void Riscv::handleSupervisorTrap() {
@@ -47,7 +47,7 @@ void Riscv::handleSupervisorTrap() {
             w_sepc(sepc);
             break;
         }
-        case TIMER: {
+        case TIMER_INTERRUPT: {
             // interrupt: yes, cause code: supervisor software interrupt (timer)
             volatile uint64 sepc = r_sepc();
             volatile uint64 sstatus = r_sstatus();
@@ -68,7 +68,7 @@ void Riscv::handleSupervisorTrap() {
             w_sepc(sepc);
             break;
         }
-        case CONSOLE: {
+        case CONSOLE_INTERRUPT: {
             // interrupt: yes, cause code: supervisor external interrupt (console)
             volatile uint64 sepc = r_sepc();
             volatile uint64 sstatus = r_sstatus();

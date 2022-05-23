@@ -6,13 +6,14 @@ int Mutex::wait() {
     if (holder == TCB::running) return 0;
     lock()
     if (holder) block();
-    if (!TCB::running->isInterrupted())
-    holder = TCB::running;
-    unlock()
     if (TCB::running->isInterrupted()) {
         TCB::running->setReady();
+        unlock()
         return -1;
+    } else {
+        holder = TCB::running;
     }
+    unlock()
     return 0;
 }
 

@@ -34,9 +34,13 @@ void TimerInterrupt::block(TCB *tcb, time_t time) {
 }
 
 void TimerInterrupt::tick() {
-    if (blockedThreads.isEmpty()) return;
-
     mutex.wait();
+
+    if (blockedThreads.isEmpty()) {
+        mutex.signal();
+        return;
+    };
+
     TCB *tcb = blockedThreads.getFirst();
     tcb->decBlockedTime();
 

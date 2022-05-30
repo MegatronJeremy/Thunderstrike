@@ -1,12 +1,13 @@
-#ifndef _TIMERINTERRUPT_H
-#define _TIMERINTERRUPT_H
+#ifndef _TIMERINTERRUPT_HPP
+#define _TIMERINTERRUPT_HPP
 
-#include "Mutex.h"
-#include "NodeList.h"
+#include "Mutex.hpp"
+#include "LinkedList.hpp"
 
 class TCB;
 
-class TimerInterrupt : public KernelObject {
+// Kernel object for handling timer interrupts and thread sleep requests
+class TimerInterrupt : public KObject {
 public:
     TimerInterrupt(const TimerInterrupt &) = delete;
 
@@ -25,7 +26,7 @@ private:
 
     Mutex mutex;
 
-    NodeList<TCB> blockedThreads;
+    LinkedList<TCB> blockedThreads;
 };
 
 #endif

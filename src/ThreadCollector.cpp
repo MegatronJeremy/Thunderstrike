@@ -1,6 +1,6 @@
-#include "../h/ThreadCollector.h"
-#include "../h/TCB.h"
-#include "../h/Riscv.h"
+#include "../h/ThreadCollector.hpp"
+#include "../h/TCB.hpp"
+#include "../h/Riscv.hpp"
 
 ThreadCollector *ThreadCollector::getInstance() {
     static auto *instance = new ThreadCollector;

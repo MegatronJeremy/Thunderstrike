@@ -1,13 +1,14 @@
-#ifndef _LINKEDHASHNODE_H
-#define _LINKEDHASHNODE_H
+#ifndef _LINKEDHASHNODE_HPP
+#define _LINKEDHASHNODE_HPP
 
-#include "KernelObject.h"
+#include "KObject.hpp"
 
 template<typename U>
 class LinkedHashTable;
 
+// Template linked hash table node
 template<typename T>
-class LinkedHashNode : public KernelObject {
+class LinkedHashNode : public KObject {
 public:
     explicit LinkedHashNode(T *data, uint64 id, LinkedHashNode<T> *next = nullptr) :
             data(data),

@@ -1,12 +1,13 @@
-#ifndef _THREAD_COLLECTOR_H
-#define _THREAD_COLLECTOR_H
+#ifndef _THREADCOLLECTOR_HPP
+#define _THREADCOLLECTOR_HPP
 
 class TCB;
 
-#include "Mutex.h"
-#include "NodeList.h"
+#include "Mutex.hpp"
+#include "LinkedList.hpp"
 
-class ThreadCollector : public KernelObject {
+// Thread collector kernel thread - for deallocation of finished threads
+class ThreadCollector : public KObject {
 public:
     ThreadCollector(const ThreadCollector &) = delete;
 
@@ -25,11 +26,11 @@ private:
 
     TCB *threadCollector = nullptr;
 
-    NodeList<TCB> finishedThreads;
+    LinkedList<TCB> finishedThreads;
 
     Mutex mutex;
 
-    KernelSemaphore readyToDelete;
+    KSemaphore readyToDelete;
 };
 
 #endif

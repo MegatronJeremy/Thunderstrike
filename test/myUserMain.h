@@ -45,7 +45,6 @@ void myUserMain() {
     PeriodicThread *p1 = new MyPeriodicTen();
     PeriodicThread *p2 = new MyPeriodicFive();
     p1->start();
-    p2->start();
 
     thread_create(&t1, &workerBodyE, nullptr);
 
@@ -63,7 +62,8 @@ void myUserMain() {
 
     time_sleep(50);
 
-
+    printString("Periodic thread 2 started:\n");
+    p2->start();
 
     printString("Nit t2: ");
     printInt((uint64) t2);

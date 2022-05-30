@@ -1,8 +1,9 @@
-#ifndef _KERNEL_H
-#define _KERNEL_H
+#ifndef _KERNEL_HPP
+#define _KERNEL_HPP
 
 #include "../lib/hw.h"
 
+// Kernel system call handler
 class Kernel {
 public:
     static void handleSystemCall();

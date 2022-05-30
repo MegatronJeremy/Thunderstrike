@@ -1,8 +1,9 @@
-#include "../h/MemoryAllocator.h"
+#include "../h/MemoryAllocator.hpp"
 
 size_t MemoryAllocator::maxFreeMem;
 
 void *MemoryAllocator::operator new(size_t) {
+    // Singleton must be allocated at heap start
     return (void *) HEAP_START_ADDR;
 }
 
@@ -27,11 +28,12 @@ void *MemoryAllocator::malloc(size_t size) {
     // Initial check
     if (!size) return nullptr;
 
-    // Rounding and aligning size to size of memory blocks
+    // Rounding size to size of memory blocks
     size *= MEM_BLOCK_SIZE;
     if (size > maxFreeMem) return nullptr;
 
     mutex.wait();
+
     // Finding suitable free memory block using first fit algorithm
     BlockHeader *curr = freeMemHead, *prev = nullptr;
     int i = 0;
@@ -70,32 +72,39 @@ void *MemoryAllocator::malloc(size_t size) {
 
 int MemoryAllocator::free(void *addr) {
     if (!addr
-        || (uint8 *) addr < (uint8 *) HEAP_START_ADDR + sizeof(MemoryAllocator) + sizeof(BlockHeader) + sizeof(Mutex)
+        || (uint8 *) addr < (uint8 *) HEAP_START_ADDR + sizeof(MemoryAllocator) + sizeof(BlockHeader)
         || addr >= HEAP_END_ADDR) {
         return -1;
     }
 
+    // Return to header
     auto *elem = (BlockHeader *) ((uint8 *) addr - sizeof(BlockHeader));
 
+    // Check if header is valid
     if (!elem || elem->free || elem->next) {
         return -2;
     }
 
     mutex.wait();
 
+    // Find place of allocated block in sorted free block list
     BlockHeader *curr = freeMemHead, *prev = nullptr;
     while (curr && curr < elem)
         prev = curr, curr = curr->next;
 
+    // Check if address is overlapping
     if ((prev && (uint8 *) prev + prev->size + sizeof(BlockHeader) > addr)
         || (curr && (uint8 *) addr + elem->size  > (uint8 *) curr)) {
+        mutex.signal();
         return -2;
     }
 
+    // Add new free block to free block structure
     elem->next = curr;
     elem->free = true;
     (!prev ? freeMemHead : prev->next) = elem;
 
+    // Attempt local defragmentation
     tryToJoin(elem);
     tryToJoin(prev);
 

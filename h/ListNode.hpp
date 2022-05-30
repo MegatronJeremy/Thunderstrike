@@ -1,13 +1,14 @@
-#ifndef _LISTNODE_H
-#define _LISTNODE_H
+#ifndef _LISTNODE_HPP
+#define _LISTNODE_HPP
 
-#include "KernelObject.h"
+#include "KObject.hpp"
 
 template<typename U>
-class NodeList;
+class LinkedList;
 
+// Template linked list node
 template<typename T>
-class ListNode : public KernelObject {
+class ListNode : public KObject {
 public:
     explicit ListNode(T *data, ListNode *next = nullptr, ListNode *prev = nullptr) :
             data(data),
@@ -15,7 +16,7 @@ public:
             prev(prev) {}
 
 private:
-    friend class NodeList<T>;
+    friend class LinkedList<T>;
 
     T *data;
     ListNode *next, *prev;

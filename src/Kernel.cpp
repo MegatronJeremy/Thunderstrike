@@ -1,11 +1,11 @@
-#include "../h/Kernel.h"
-#include "../h/MemoryAllocator.h"
-#include "../h/Riscv.h"
-#include "../h/TCB.h"
-#include "../h/TimerInterrupt.h"
-#include "../h/SysPrint.h"
-#include "../h/LinkedHashTable.h"
-#include "../h/KernelConsole.h"
+#include "../h/Kernel.hpp"
+#include "../h/MemoryAllocator.hpp"
+#include "../h/Riscv.hpp"
+#include "../h/TCB.hpp"
+#include "../h/TimerInterrupt.hpp"
+#include "../h/SysPrint.hpp"
+#include "../h/LinkedHashTable.hpp"
+#include "../h/KConsole.hpp"
 #include "../h/syscall_c.h"
 
 void Kernel::handleSystemCall() {
@@ -71,7 +71,7 @@ void Kernel::handleSystemCall() {
             break;
         default:
             kprintString("Unknown system call: ");
-            kprintUnsigned(code);
+            kprintUnsigned(code, 16);
             kprintString("\n");
             return;
     }
@@ -155,10 +155,10 @@ int Kernel::sem_open(uint64 *args) {
 
     int init = (int) args[1];
 
-    auto *sem = new KernelSemaphore(init);
+    auto *sem = new KSemaphore(init);
     if (!sem) return -2;
 
-    if (LinkedHashTable<KernelSemaphore>::insert(sem->getHashNode()) < 0)
+    if (LinkedHashTable<KSemaphore>::insert(sem->getHashNode()) < 0)
         return -3;
     *handle = sem->getId();
 
@@ -166,10 +166,10 @@ int Kernel::sem_open(uint64 *args) {
 }
 
 int Kernel::sem_close(uint64 id) {
-    KernelSemaphore *sem = LinkedHashTable<KernelSemaphore>::get(id);
+    KSemaphore *sem = LinkedHashTable<KSemaphore>::get(id);
     if (!sem) return -1;
 
-    if (LinkedHashTable<KernelSemaphore>::remove(id) < 0)
+    if (LinkedHashTable<KSemaphore>::remove(id) < 0)
         return -2;
 
     delete sem;
@@ -178,7 +178,7 @@ int Kernel::sem_close(uint64 id) {
 }
 
 int Kernel::sem_wait(uint64 id) {
-    KernelSemaphore *sem = LinkedHashTable<KernelSemaphore>::get(id);
+    KSemaphore *sem = LinkedHashTable<KSemaphore>::get(id);
     if (!sem) return -1;
 
     if (sem->wait() < 0)
@@ -188,7 +188,7 @@ int Kernel::sem_wait(uint64 id) {
 }
 
 int Kernel::sem_signal(uint64 id) {
-    KernelSemaphore *sem = LinkedHashTable<KernelSemaphore>::get(id);
+    KSemaphore *sem = LinkedHashTable<KSemaphore>::get(id);
     if (!sem) return -1;
 
     if (sem->signal() < 0)
@@ -204,10 +204,10 @@ int Kernel::time_sleep(time_t time) {
 }
 
 char Kernel::getc() {
-    return KernelConsole::getInstance()->getc();
+    return KConsole::getInstance()->getc();
 }
 
 void Kernel::putc(char chr) {
-    KernelConsole::getInstance()->putc(chr);
+    KConsole::getInstance()->putc(chr);
 }
 

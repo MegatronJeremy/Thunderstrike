@@ -1,9 +1,9 @@
-#include "../h/Riscv.h"
-#include "../h/SysPrint.h"
-#include "../h/TCB.h"
-#include "../h/Kernel.h"
-#include "../h/TimerInterrupt.h"
-#include "../h/KernelConsole.h"
+#include "../h/Riscv.hpp"
+#include "../h/SysPrint.hpp"
+#include "../h/TCB.hpp"
+#include "../h/Kernel.hpp"
+#include "../h/TimerInterrupt.hpp"
+#include "../h/KConsole.hpp"
 
 void Riscv::popSppSpie(bool prMode) {
     if(prMode) ms_sstatus(SSTATUS_SPP);
@@ -76,7 +76,7 @@ void Riscv::handleSupervisorTrap() {
             int dev = plic_claim();
 
             if (dev == CONSOLE_IRQ) {
-                KernelConsole::getInstance()->consoleHandler();
+                KConsole::getInstance()->consoleHandler();
             }
 
             plic_complete(dev);
@@ -89,11 +89,11 @@ void Riscv::handleSupervisorTrap() {
             // unexpected trap cause
             kprintString("Unexpected trap cause:\n");
             kprintString("Scause: ");
-            kprintUnsigned(scause);
+            kprintUnsigned(scause, 16);
             kprintString("\nSepc: ");
-            kprintUnsigned(r_sepc());
+            kprintUnsigned(r_sepc(), 16);
             kprintString("\nStval: ");
-            kprintUnsigned(r_stval());
+            kprintUnsigned(r_stval(), 16);
             kprintString("\n");
 
             TCB::running = TCB::userMain;

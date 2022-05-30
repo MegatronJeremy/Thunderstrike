@@ -1,9 +1,10 @@
-#ifndef _MEMORYALLOCATOR_H
-#define _MEMORYALLOCATOR_H
+#ifndef _MEMORYALLOCATOR_HPP
+#define _MEMORYALLOCATOR_HPP
 
 #include "../lib/hw.h"
-#include "Mutex.h"
+#include "Mutex.hpp"
 
+// Heap memory allocator kernel implementation - first fit algorithm and explicit free list
 class MemoryAllocator {
 public:
     MemoryAllocator(const MemoryAllocator &) = delete;

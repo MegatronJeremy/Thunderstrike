@@ -1,6 +1,6 @@
-#include "../h/Mutex.h"
-#include "../h/TCB.h"
-#include "../h/Riscv.h"
+#include "../h/Mutex.hpp"
+#include "../h/TCB.hpp"
+#include "../h/Riscv.hpp"
 
 int Mutex::wait() {
     if (holder == TCB::running) return 0;

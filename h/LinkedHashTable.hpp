@@ -1,14 +1,13 @@
-#ifndef _LINKEDHASHTABLE_H
-#define _LINKEDHASHTABLE_H
+#ifndef _LINKEDHASHTABLE_HPP
+#define _LINKEDHASHTABLE_HPP
 
-#include "KernelObject.h"
-#include "LinkedHashNode.h"
-#include "Mutex.h"
+#include "KObject.hpp"
+#include "LinkedHashNode.hpp"
+#include "Mutex.hpp"
 
-constexpr uint64 DEFAULT_HASH_SIZE = 1499;
-
+// Kernel template structure - linked list hash table with prime number modulus hash function
 template<typename T>
-class LinkedHashTable : public KernelObject {
+class LinkedHashTable : public KObject {
 public:
     LinkedHashTable(const LinkedHashTable<T> &) = delete;
     void operator=(const LinkedHashTable<T> &) = delete;

@@ -1,6 +1,6 @@
-#include "../h/TimerInterrupt.h"
-#include "../h/TCB.h"
-#include "../h/Scheduler.h"
+#include "../h/TimerInterrupt.hpp"
+#include "../h/TCB.hpp"
+#include "../h/Scheduler.hpp"
 
 TimerInterrupt *TimerInterrupt::getInstance() {
     static auto *instance = new TimerInterrupt;

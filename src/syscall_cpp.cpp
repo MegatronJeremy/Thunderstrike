@@ -17,6 +17,7 @@ void operator delete[](void *addr) {
 }
 
 Thread::Thread(void (*body)(void *), void *arg) {
+    myHandle = nullptr;
     thread_create_suspended(&myHandle, body, arg);
 }
 
@@ -37,6 +38,7 @@ int Thread::sleep(time_t time) {
 }
 
 Thread::Thread() {
+    myHandle = nullptr;
     thread_create_suspended(&myHandle, [](void *obj) {
         ((Thread *) obj)->run();
     }, this);

@@ -1,17 +1,17 @@
-#ifndef _TCB_H
-#define _TCB_H
+#ifndef _TCB_HPP
+#define _TCB_HPP
 
 #include "../lib/hw.h"
-#include "KernelObject.h"
-#include "Mutex.h"
-#include "ListNode.h"
-#include "NodeList.h"
-#include "LinkedHashNode.h"
+#include "KObject.hpp"
+#include "Mutex.hpp"
+#include "ListNode.hpp"
+#include "LinkedList.hpp"
+#include "LinkedHashNode.hpp"
 
 #define OFFSETOF(TYPE, ELEMENT) ((size_t)&(((TYPE *)0)->ELEMENT))
 
-// Thread Control Block
-class TCB : public KernelObject {
+// Thread Control Block - kernel implementation of threads
+class TCB : public KObject {
 public:
     bool ioThread = false;
 
@@ -154,15 +154,16 @@ private:
         uint64 sp;
     };
 
+    friend class Riscv;
+
+    TCB();
+
     explicit TCB(Body body, void *args, uint64 *threadStack, bool privileged, bool start);
 
     static void threadWrapper();
 
     static void contextSwitch(Context *oldContext, Context *runningContext);
 
-    friend class Riscv;
-
-    TCB();
     static uint64 ID;
     uint64 id = ID++;
 
@@ -179,7 +180,7 @@ private:
 
     Status status = READY;
 
-    NodeList<TCB> waitingToJoin;
+    LinkedList<TCB> waitingToJoin;
     Mutex mutex;
 
     static uint64 offsSSP;

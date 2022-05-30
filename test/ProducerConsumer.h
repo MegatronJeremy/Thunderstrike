@@ -16,7 +16,7 @@ public:
     }
 
     void produce() {
-        for (int i = 1; i <= 150; i++) {
+        for (int i = 1; i <= 120; i++) {
             sem_wait(semProducer);
             value++;
             sem_signal(semConsumer);
@@ -34,10 +34,12 @@ public:
 
     void consume() {
         for (int i = 1; i <= 50; i++) {
-            sem_wait(semConsumer);
+            int ret = sem_wait(semConsumer);
             printInt(value);
             printString(" squared is: ");
             printInt(value * value);
+            printString(" and wait ret is: ");
+            printInt(ret, 10, 1);
             printString("\n");
             sem_signal(semProducer);
         }

@@ -1,12 +1,13 @@
-#ifndef _SCHEDULER_H
-#define _SCHEDULER_H
+#ifndef _SCHEDULER_HPP
+#define _SCHEDULER_HPP
 
-#include "Mutex.h"
-#include "NodeList.h"
+#include "Mutex.hpp"
+#include "LinkedList.hpp"
 
 class TCB;
 
-class Scheduler : public KernelObject {
+// FIFO thread scheduler
+class Scheduler : public KObject {
 public:
     Scheduler(const Scheduler &) = delete;
 
@@ -25,7 +26,7 @@ public:
 private:
     Scheduler() = default;
 
-    NodeList<TCB> readyThreadQueue;
+    LinkedList<TCB> readyThreadQueue;
 
     Mutex mutex;
 

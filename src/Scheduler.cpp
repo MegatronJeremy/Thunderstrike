@@ -1,5 +1,5 @@
-#include "../h/Scheduler.h"
-#include "../h/TCB.h"
+#include "../h/Scheduler.hpp"
+#include "../h/TCB.hpp"
 
 TCB *Scheduler::get() {
     mutex.wait();

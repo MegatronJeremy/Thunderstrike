@@ -21,7 +21,7 @@ void userMain() {
     ConsumerProducerCPP::testConsumerProducer(); // zadatak 4. CPP API i asinhrona promena konteksta, kompletan test svega
 
 //    syncTest();
-    myUserMain();
-    printString("Exiting user main...\n");
+//    myUserMain();
+//    printString("Exiting user main...\n");
 
 }

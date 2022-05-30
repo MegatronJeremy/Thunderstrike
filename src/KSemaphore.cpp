@@ -1,29 +1,29 @@
-#include "../h/KernelSemaphore.h"
-#include "../h/Riscv.h"
-#include "../h/TCB.h"
-#include "../h/Scheduler.h"
+#include "../h/KSemaphore.hpp"
+#include "../h/Riscv.hpp"
+#include "../h/TCB.hpp"
+#include "../h/Scheduler.hpp"
 
-uint64 KernelSemaphore::ID = 0;
+uint64 KSemaphore::ID = 0;
 
 
-KernelSemaphore::KernelSemaphore(int val) :
+KSemaphore::KSemaphore(int val) :
     val(val),
     hashNode(this, id) {}
 
-void KernelSemaphore::block() {
+void KSemaphore::block() {
     blockedThreadQueue.addLast(TCB::running->getListNode());
     TCB::running->setBlocked();
     TCB::dispatch();
 }
 
-void KernelSemaphore::deblock() {
+void KSemaphore::deblock() {
     if (blockedThreadQueue.isEmpty()) return;
     TCB *tcb = blockedThreadQueue.removeFirst();
     tcb->setReady();
     Scheduler::getInstance()->put(tcb);
 }
 
-int KernelSemaphore::wait() {
+int KSemaphore::wait() {
     lock()
     if (--val < 0) block();
     if (TCB::running->isInterrupted()) {
@@ -35,19 +35,18 @@ int KernelSemaphore::wait() {
     return 0;
 }
 
-int KernelSemaphore::signal() {
-    lock()
+int KSemaphore::signal() {
     if (val == INT_MAX) {
-        unlock()
         return -1;
     }
+    lock()
     if (val++ < 0) deblock();
     unlock()
 
     return 0;
 }
 
-KernelSemaphore::~KernelSemaphore() {
+KSemaphore::~KSemaphore() {
     lock()
     while (!blockedThreadQueue.isEmpty()) {
         TCB *tcb = blockedThreadQueue.removeFirst();

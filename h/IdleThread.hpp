@@ -1,11 +1,12 @@
-#ifndef _IDLE_THREAD_H
-#define _IDLE_THREAD_H
+#ifndef _IDLETHREAD_HPP
+#define _IDLETHREAD_HPP
 
-#include "../h/KernelObject.h"
+#include "../h/KObject.hpp"
 
 class TCB;
 
-class IdleThread : public KernelObject {
+// Idle thread - for busy wait when no thread is scheduled
+class IdleThread : public KObject {
 public:
     IdleThread(const IdleThread&) = delete;
     void operator=(const IdleThread&) = delete;

@@ -1,9 +1,9 @@
-#include "../h/IOEvent.h"
-#include "../h/Riscv.h"
-#include "../h/TCB.h"
-#include "../h/Scheduler.h"
+#include "../h/IOEvent.hpp"
+#include "../h/Riscv.hpp"
+#include "../h/TCB.hpp"
+#include "../h/Scheduler.hpp"
 
-IOEvent::IOEvent(int val) : KernelSemaphore() {
+IOEvent::IOEvent(int val) : KSemaphore() {
     if (val < 0) val = 0;
     if (val > 1) val = 1;
     this->val = val;

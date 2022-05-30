@@ -1,5 +1,5 @@
-#include "../h/IdleThread.h"
-#include "../h/TCB.h"
+#include "../h/IdleThread.hpp"
+#include "../h/TCB.hpp"
 
 IdleThread *IdleThread::getInstance() {
     static auto *instance = new IdleThread;

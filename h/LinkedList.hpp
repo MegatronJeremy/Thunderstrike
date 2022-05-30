@@ -1,17 +1,18 @@
-#ifndef _NODELIST_H
-#define _NODELIST_H
+#ifndef _LINKEDLIST_HPP
+#define _LINKEDLIST_HPP
 
-#include "KernelObject.h"
-#include "ListNode.h"
+#include "KObject.hpp"
+#include "ListNode.hpp"
 
+// Kernel template structure - doubly linked list of already allocated nodes
 template<typename T>
-class NodeList : public KernelObject {
+class LinkedList : public KObject {
 public:
-    explicit NodeList() = default;
+    explicit LinkedList() = default;
 
-    NodeList(const NodeList &) = delete;
+    LinkedList(const LinkedList &) = delete;
 
-    void operator=(const NodeList &) = delete;
+    void operator=(const LinkedList &) = delete;
 
     int getCount() const {
         return size;
@@ -70,7 +71,7 @@ public:
 
     void insertBeforeCurr(ListNode<T> *elem);
 
-    ~NodeList() override;
+    ~LinkedList() override;
 
 private:
     ListNode<T> *head = nullptr, *tail = nullptr, *curr = nullptr;
@@ -80,7 +81,7 @@ private:
 };
 
 template<typename T>
-void NodeList<T>::addFirst(ListNode<T> *elem) {
+void LinkedList<T>::addFirst(ListNode<T> *elem) {
     if (!elem) return;
     elem->next = head;
     elem->prev = nullptr;
@@ -92,7 +93,7 @@ void NodeList<T>::addFirst(ListNode<T> *elem) {
 }
 
 template<typename T>
-void NodeList<T>::addLast(ListNode<T> *elem) {
+void LinkedList<T>::addLast(ListNode<T> *elem) {
     if (!elem) return;
     elem->next = nullptr;
     elem->prev = tail;
@@ -104,7 +105,7 @@ void NodeList<T>::addLast(ListNode<T> *elem) {
 }
 
 template<typename T>
-T *NodeList<T>::removeFirst() {
+T *LinkedList<T>::removeFirst() {
     if (!head) return nullptr;
 
     T *data = head->data;
@@ -119,7 +120,7 @@ T *NodeList<T>::removeFirst() {
 }
 
 template<typename T>
-T *NodeList<T>::removeLast() {
+T *LinkedList<T>::removeLast() {
     if (!tail) return nullptr;
 
     T *data = tail->data;
@@ -134,7 +135,7 @@ T *NodeList<T>::removeLast() {
 }
 
 template<typename T>
-void NodeList<T>::eraseCurr() {
+void LinkedList<T>::eraseCurr() {
     if (!curr) return;
 
     ListNode<T> *before = curr->prev, *after = curr->next;
@@ -149,7 +150,7 @@ void NodeList<T>::eraseCurr() {
 }
 
 template<typename T>
-void NodeList<T>::insertAfterCurr(ListNode<T> *elem) {
+void LinkedList<T>::insertAfterCurr(ListNode<T> *elem) {
     if (!curr) return;
     ListNode<T> *after = curr->next;
     elem->next = after;
@@ -161,7 +162,7 @@ void NodeList<T>::insertAfterCurr(ListNode<T> *elem) {
 }
 
 template<typename T>
-void NodeList<T>::insertBeforeCurr(ListNode<T> *elem) {
+void LinkedList<T>::insertBeforeCurr(ListNode<T> *elem) {
     if (!curr) return;
     ListNode<T> *before = curr->prev;
     elem->next = curr;
@@ -173,7 +174,7 @@ void NodeList<T>::insertBeforeCurr(ListNode<T> *elem) {
 }
 
 template<typename T>
-NodeList<T>::~NodeList() {
+LinkedList<T>::~LinkedList() {
     head = nullptr;
     tail = nullptr;
     curr = nullptr;

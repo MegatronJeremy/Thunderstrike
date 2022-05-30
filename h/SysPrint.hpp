@@ -1,10 +1,11 @@
-#ifndef _SYS_PRINT_H
-#define _SYS_PRINT_H
+#ifndef _SYSPRINT_HPP
+#define _SYSPRINT_HPP
 
 #include "../lib/hw.h"
-#include "Mutex.h"
+#include "Mutex.hpp"
 
-class PrintMutex : public KernelObject {
+// For printing system messages
+class PrintMutex : public KObject {
 public:
     static Mutex* getMutex() {
         static auto *mutex = new Mutex;
@@ -25,8 +26,8 @@ private:
 
 void kprintString(char const *string);
 
-void kprintInteger(int integer);
+void kprintInteger(int integer, int base = 10);
 
-void kprintUnsigned(uint64 uint);
+void kprintUnsigned(uint64 uint, int base = 10);
 
 #endif

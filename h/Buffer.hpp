@@ -1,13 +1,14 @@
-#ifndef _BUFFER_H
-#define _BUFFER_H
+#ifndef _BUFFER_HPP
+#define _BUFFER_HPP
 
 #include "../lib/hw.h"
-#include "KernelObject.h"
-#include "Mutex.h"
-#include "Riscv.h"
+#include "KObject.hpp"
+#include "Mutex.hpp"
+#include "Riscv.hpp"
 
+// Kernel template structure - buffer
 template<typename T>
-class Buffer : public KernelObject {
+class Buffer : public KObject {
 public:
     Buffer();
 

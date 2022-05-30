@@ -1,8 +1,8 @@
-#include "../h/TCB.h"
-#include "../h/Riscv.h"
-#include "../h/ThreadCollector.h"
-#include "../h/Scheduler.h"
-#include "../h/IdleThread.h"
+#include "../h/TCB.hpp"
+#include "../h/Riscv.hpp"
+#include "../h/ThreadCollector.hpp"
+#include "../h/Scheduler.hpp"
+#include "../h/IdleThread.hpp"
 #include "../h/syscall_c.h"
 
 TCB *TCB::running = nullptr;
@@ -29,13 +29,13 @@ TCB::TCB(TCB::Body body, void *args, uint64 *threadStack, bool privileged, bool 
 
 TCB *TCB::createKernelThread(TCB::Body body, void *args, bool start) {
     if (!body) return nullptr;
-    auto *threadStack = (uint64 *) kmalloc(DEFAULT_STACK_SIZE);
+    auto *threadStack = (uint64 *) kmalloc(byteToBlocks((DEFAULT_STACK_SIZE) * sizeof(uint64)));
     return createKernelThread(body, args, threadStack, start);
 }
 
 TCB *TCB::createUserThread(TCB::Body body, void *args, bool start) {
     if (!body) return nullptr;
-    auto *threadStack = (uint64 *) kmalloc(DEFAULT_STACK_SIZE);
+    auto *threadStack = (uint64 *) kmalloc(byteToBlocks((DEFAULT_STACK_SIZE) * sizeof(uint64)));
     return createUserThread(body, args, threadStack, start);
 }
 
@@ -67,14 +67,16 @@ int TCB::start(TCB *tcb) {
 }
 
 void TCB::exit() {
+    running->mutex.wait();
+
     running->setFinished();
 
-    running->mutex.wait();
     while (!running->waitingToJoin.isEmpty()) {
         TCB *thr = running->waitingToJoin.removeFirst();
         thr->setReady();
         Scheduler::getInstance()->put(thr);
     }
+
     running->mutex.signal();
 
     ThreadCollector::getInstance()->put(running);

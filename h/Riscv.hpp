@@ -1,10 +1,11 @@
-#ifndef _RISCV_H
-#define _RISCV_H
+#ifndef _RISCV_HPP
+#define _RISCV_HPP
 
 #include "../lib/hw.h"
 
 constexpr int INT_MAX = ((uint) ~0 >> 1);
 
+// For locking and unlocking critical sections while keeping previous SIE state
 #define lock()                  \
     volatile uint64 sstatus = Riscv::r_sstatus(); \
     Riscv::disableInterrupts();
@@ -12,7 +13,7 @@ constexpr int INT_MAX = ((uint) ~0 >> 1);
 #define unlock()                \
     Riscv::w_sstatus(sstatus);
 
-
+// Functions for usage with Risc-V architecture
 class Riscv {
 public:
 

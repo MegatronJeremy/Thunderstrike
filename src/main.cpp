@@ -1,16 +1,16 @@
-#include "../h/TCB.h"
-#include "../h/Riscv.h"
-#include "../h/TimerInterrupt.h"
-#include "../h/SysPrint.h"
-#include "../h/Scheduler.h"
-#include "../h/ThreadCollector.h"
-#include "../h/IdleThread.h"
-#include "../h/KernelConsole.h"
+#include "../h/TCB.hpp"
+#include "../h/Riscv.hpp"
+#include "../h/TimerInterrupt.hpp"
+#include "../h/SysPrint.hpp"
+#include "../h/Scheduler.hpp"
+#include "../h/ThreadCollector.hpp"
+#include "../h/IdleThread.hpp"
+#include "../h/KConsole.hpp"
 
 void userMain();
 
 int main() {
-    KernelConsole::getInstance();
+    KConsole::getInstance();
     ThreadCollector::getInstance();
     TCB *main = TCB::createKernelThread();
     TCB::running = main;
@@ -25,12 +25,9 @@ int main() {
     uMain->join();
     TCB::yield();
 
-    delete IdleThread::getInstance();
     delete ThreadCollector::getInstance();
     delete TimerInterrupt::getInstance();
     delete Scheduler::getInstance();
-
-    kprintString("Main finished\n");
 
     return 0;
 }

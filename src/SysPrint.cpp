@@ -1,5 +1,5 @@
-#include "../h/SysPrint.h"
-#include "../h/Kernel.h"
+#include "../h/SysPrint.hpp"
+#include "../h/Kernel.hpp"
 
 void kprintString(char const *string) {
     PrintMutex::wait();
@@ -10,7 +10,7 @@ void kprintString(char const *string) {
     PrintMutex::signal();
 }
 
-void kprintInteger(int integer) {
+void kprintInteger(int integer, int base) {
     PrintMutex::wait();
     static char digits[] = "0123456789";
     char buf[16];
@@ -27,8 +27,8 @@ void kprintInteger(int integer) {
 
     i = 0;
     do {
-        buf[i++] = digits[x % 10];
-    } while ((x /= 10) != 0);
+        buf[i++] = digits[x % base];
+    } while ((x /= base) != 0);
     if (neg) buf[i++] = '-';
 
     while (--i >= 0)
@@ -36,15 +36,15 @@ void kprintInteger(int integer) {
     PrintMutex::signal();
 }
 
-void kprintUnsigned(uint64 x) {
+void kprintUnsigned(uint64 x, int base) {
     PrintMutex::wait();
     static char digits[] = "0123456789";
     char buf[16];
 
     int i = 0;
     do {
-        buf[i++] = digits[x % 10];
-    } while ((x /= 10) != 0);
+        buf[i++] = digits[x % base];
+    } while ((x /= base) != 0);
 
     while (--i >= 0)
         Kernel::putc(buf[i]);

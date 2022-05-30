@@ -1,11 +1,11 @@
-#include "../h/KernelConsole.h"
-#include "../h/TCB.h"
+#include "../h/KConsole.hpp"
+#include "../h/TCB.hpp"
 
-reg KernelConsole::outputData = nullptr;
-reg KernelConsole::inputData = nullptr;
-reg KernelConsole::status = nullptr;
+reg KConsole::outputData = nullptr;
+reg KConsole::inputData = nullptr;
+reg KConsole::status = nullptr;
 
-KernelConsole::KernelConsole() :
+KConsole::KConsole() :
         readyToRead(0),
         readyToWrite(0),
         inputItemsAvailable(0), outputItemsAvailable(0),
@@ -16,19 +16,19 @@ KernelConsole::KernelConsole() :
     status = (reg) CONSOLE_STATUS;
 
     kernelProducer = TCB::createKernelThread([](void *) {
-        KernelConsole::getInstance()->readFromConsole();
+        KConsole::getInstance()->readFromConsole();
     }, nullptr);
     kernelConsumer = TCB::createKernelThread([](void *) {
-        KernelConsole::getInstance()->writeToConsole();
+        KConsole::getInstance()->writeToConsole();
     }, nullptr);
 }
 
-KernelConsole *KernelConsole::getInstance() {
-    static auto *instance = new KernelConsole;
+KConsole *KConsole::getInstance() {
+    static auto *instance = new KConsole;
     return instance;
 }
 
-void KernelConsole::putc(char chr) {
+void KConsole::putc(char chr) {
     outputSlotsAvailable.wait();
     mutexPut.wait();
     outputBuffer.addLast(chr);
@@ -36,7 +36,7 @@ void KernelConsole::putc(char chr) {
     outputItemsAvailable.signal();
 }
 
-char KernelConsole::getc() {
+char KConsole::getc() {
     inputItemsAvailable.wait();
     mutexGet.wait();
     char c = inputBuffer.removeFirst();
@@ -45,12 +45,12 @@ char KernelConsole::getc() {
     return c;
 }
 
-void KernelConsole::consoleHandler() {
+void KConsole::consoleHandler() {
     readyToRead.signal();
     readyToWrite.signal();
 }
 
-void KernelConsole::readFromConsole() {
+void KConsole::readFromConsole() {
     while (true) {
         readyToRead.wait();
         while (*status & CONSOLE_RX_STATUS_BIT) {
@@ -61,7 +61,7 @@ void KernelConsole::readFromConsole() {
     }
 }
 
-void KernelConsole::writeToConsole() {
+void KConsole::writeToConsole() {
     while (true) {
         readyToWrite.wait();
         while (*status & CONSOLE_TX_STATUS_BIT) {
@@ -72,7 +72,7 @@ void KernelConsole::writeToConsole() {
     }
 }
 
-KernelConsole::~KernelConsole() {
+KConsole::~KConsole() {
     delete kernelProducer;
     delete kernelConsumer;
 }

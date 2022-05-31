@@ -12,19 +12,19 @@ void Kernel::handleSystemCall() {
     uint64 context = TCB::running->getSavedContext();
 
     uint64 code = Riscv::r_a0();
-    void *args = (void *) Riscv::r_a1();
+    uint64 arg = Riscv::r_a1();
 
     switch (code) {
         case (MEM_ALLOC):
-            mem_alloc((size_t) args);
+            mem_alloc(arg);
             Riscv::pushRegisterA0(context);
             break;
         case (MEM_FREE):
-            mem_free(args);
+            mem_free((void *) arg);
             Riscv::pushRegisterA0(context);
             break;
         case (THREAD_CREATE):
-            thread_create((uint64 *) args);
+            thread_create((uint64 *) arg);
             Riscv::pushRegisterA0(context);
             break;
         case (THREAD_EXIT):
@@ -35,31 +35,31 @@ void Kernel::handleSystemCall() {
             thread_dispatch();
             break;
         case (THREAD_CREATE_SUSPENDED):
-            thread_create_suspended((uint64 *) args);
+            thread_create_suspended((uint64 *) arg);
             Riscv::pushRegisterA0(context);
             break;
         case (THREAD_START):
-            thread_start((uint64) args);
+            thread_start(arg);
             Riscv::pushRegisterA0(context);
             break;
         case(SEM_OPEN):
-            sem_open((uint64 *) args);
+            sem_open((uint64 *) arg);
             Riscv::pushRegisterA0(context);
             break;
         case(SEM_CLOSE):
-            sem_close((uint64) args);
+            sem_close(arg);
             Riscv::pushRegisterA0(context);
             break;
         case(SEM_WAIT):
-            sem_wait((uint64) args);
+            sem_wait(arg);
             Riscv::pushRegisterA0(context);
             break;
         case(SEM_SIGNAL):
-            sem_signal((uint64) args);
+            sem_signal(arg);
             Riscv::pushRegisterA0(context);
             break;
         case(TIME_SLEEP):
-            time_sleep((time_t) args);
+            time_sleep(arg);
             Riscv::pushRegisterA0(context);
             break;
         case(GETC):
@@ -67,10 +67,10 @@ void Kernel::handleSystemCall() {
             Riscv::pushRegisterA0(context);
             break;
         case(PUTC):
-            putc((uint64) args);
+            putc(arg);
             break;
         default:
-            kprintString("Unknown system call: ");
+            kprintString("Unknown system call: 0x");
             kprintUnsigned(code, 16);
             kprintString("\n");
             return;

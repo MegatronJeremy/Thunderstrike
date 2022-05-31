@@ -88,11 +88,11 @@ void Riscv::handleSupervisorTrap() {
         default: {
             // unexpected trap cause
             kprintString("Unexpected trap cause:\n");
-            kprintString("Scause: ");
+            kprintString("Scause: 0x");
             kprintUnsigned(scause, 16);
-            kprintString("\nSepc: ");
+            kprintString("\nSepc: 0x");
             kprintUnsigned(r_sepc(), 16);
-            kprintString("\nStval: ");
+            kprintString("\nStval: 0x");
             kprintUnsigned(r_stval(), 16);
             kprintString("\n");
 

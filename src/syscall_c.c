@@ -1,20 +1,19 @@
 #include "../h/syscall_c.h"
 
-
-void *callSupervisorTrap(uint64 param, void *args) {
+uint64 callSupervisorTrap(uint64 param, uint64 arg) {
     __asm__ volatile ("ecall");
 
-    return (void *) param;
+    return param;
 }
 
 void *mem_alloc(size_t size) {
     if (!size) return 0;
     size = (size - 1) / MEM_BLOCK_SIZE + 1;
-    return callSupervisorTrap(MEM_ALLOC, (void *) size);
+    return (void *) callSupervisorTrap(MEM_ALLOC, size);
 }
 
 int mem_free(void *addr) {
-    return (int) (uint64) callSupervisorTrap(MEM_FREE, addr);
+    return (int) callSupervisorTrap(MEM_FREE, (uint64) addr);
 }
 
 int thread_create(thread_t *handle, void(*start_routine)(void *), void *arg) {
@@ -22,11 +21,11 @@ int thread_create(thread_t *handle, void(*start_routine)(void *), void *arg) {
     if (!stack) return -1;
 
     uint64 args[] = {(uint64) handle, (uint64) start_routine, (uint64) arg, (uint64) stack};
-    return (int) (uint64) callSupervisorTrap(THREAD_CREATE, args);
+    return (int) callSupervisorTrap(THREAD_CREATE, (uint64) args);
 }
 
 int thread_exit() {
-    return (int) (uint64) callSupervisorTrap(THREAD_EXIT, 0);
+    return (int) callSupervisorTrap(THREAD_EXIT, 0);
 }
 
 void thread_dispatch() {
@@ -38,39 +37,39 @@ int thread_create_suspended(thread_t *handle, void(*start_routine)(void *), void
     if (!stack) return -1;
 
     uint64 args[] = {(uint64) handle, (uint64) start_routine, (uint64) arg, (uint64) stack};
-    return (int) (uint64) callSupervisorTrap(THREAD_CREATE_SUSPENDED, args);
+    return (int) callSupervisorTrap(THREAD_CREATE_SUSPENDED, (uint64) args);
 }
 
 int thread_start(thread_t handle) {
-    return (int) (uint64) callSupervisorTrap(THREAD_START, handle);
+    return (int) callSupervisorTrap(THREAD_START, (uint64) handle);
 }
 
 int sem_open(sem_t *handle, unsigned init) {
     uint64 args[] = {(uint64) handle, (uint64) init};
 
-    return (int) (uint64) callSupervisorTrap(SEM_OPEN, args);
+    return (int) callSupervisorTrap(SEM_OPEN, (uint64) args);
 }
 
 int sem_close(sem_t handle) {
-    return (int) (uint64) callSupervisorTrap(SEM_CLOSE, handle);
+    return (int) callSupervisorTrap(SEM_CLOSE, (uint64) handle);
 }
 
 int sem_wait(sem_t handle) {
-    return (int) (uint64) callSupervisorTrap(SEM_WAIT, handle);
+    return (int) callSupervisorTrap(SEM_WAIT, (uint64) handle);
 }
 
 int sem_signal(sem_t handle) {
-    return (int) (uint64) callSupervisorTrap(SEM_SIGNAL, handle);
+    return (int) callSupervisorTrap(SEM_SIGNAL, (uint64) handle);
 }
 
 int time_sleep(time_t time) {
-    return (int) (uint64) callSupervisorTrap(TIME_SLEEP, (void *) time);
+    return (int) callSupervisorTrap(TIME_SLEEP, time);
 }
 
 char getc() {
-    return (uint64) callSupervisorTrap(GETC, 0);
+    return callSupervisorTrap(GETC, 0);
 }
 
 void putc(char chr) {
-    callSupervisorTrap(PUTC, (void *) (uint64) chr);
+    callSupervisorTrap(PUTC, chr);
 }

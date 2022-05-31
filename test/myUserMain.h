@@ -83,6 +83,8 @@ void myUserMain() {
     delete p2;
     delete obj;
 
+//    __asm__ volatile("csrr a0, sepc");
+
     printString("User main finished\n");
 }
 

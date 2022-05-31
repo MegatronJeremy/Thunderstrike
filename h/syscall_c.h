@@ -29,7 +29,7 @@ enum {
 extern "C" {
 #endif
 
-void *callSupervisorTrap(uint64 code, void *args);
+uint64 callSupervisorTrap(uint64 code, uint64 arg);
 
 void *mem_alloc(size_t size);
 

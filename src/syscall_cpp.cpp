@@ -21,9 +21,7 @@ Thread::Thread(void (*body)(void *), void *arg) {
     thread_create_suspended(&myHandle, body, arg);
 }
 
-Thread::~Thread() {
-    myHandle = nullptr;
-};
+Thread::~Thread() = default;
 
 int Thread::start() {
     return thread_start(myHandle);

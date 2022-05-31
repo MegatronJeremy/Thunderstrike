@@ -11,7 +11,7 @@ size_t byteToBlocks(size_t size);
 
 static constexpr uint64 DEFAULT_BUFFER_SIZE = 2048;
 
-constexpr uint64 DEFAULT_HASH_SIZE = 1499;
+static constexpr uint64 DEFAULT_HASH_SIZE = 1499;
 
 // Base apstract class for kernel objects - contains necessary memory allocation / deallocation templates
 class KObject {

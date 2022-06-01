@@ -25,6 +25,9 @@ public:
 
     void put(int val);
     int get();
+
+    int getCnt();
+
 };
 
 

@@ -15,7 +15,7 @@ uint64 fib(uint64 n) {
     }
 //    printInteger(n);
 //    printString(" fibonacci number\n");
-    return fibonacci(n-1) + fibonacci(n-2);
+    return fib(n-1) + fib(n-2);
 }
 
 void workerBodyE(void *) {

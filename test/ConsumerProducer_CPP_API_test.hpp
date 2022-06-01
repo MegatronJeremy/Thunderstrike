@@ -36,8 +36,7 @@ namespace ConsumerProducerCPP {
             }
 
             threadEnd = 1;
-
-            delete td->buffer;
+            td->buffer->put('!');
 
             td->sem->signal();
         }
@@ -78,6 +77,11 @@ namespace ConsumerProducerCPP {
                 }
             }
 
+            while (td->buffer->getCnt() > 0) {
+                int key = td->buffer->get();
+                Console::putc(key);
+            }
+
             td->sem->signal();
         }
     };
@@ -98,6 +102,14 @@ namespace ConsumerProducerCPP {
         printString(" i velicina bafera "); printInt(n);
         printString(".\n");
 
+        if(threadNum > n) {
+            printString("Broj proizvodjaca ne sme biti manji od velicine bafera!\n");
+            return;
+        } else if (threadNum < 1) {
+            printString("Broj proizvodjaca mora biti veci od nula!\n");
+            return;
+        }
+
         BufferCPP *buffer = new BufferCPP(n);
 
         waitForAll = new Semaphore(0);
@@ -113,10 +125,10 @@ namespace ConsumerProducerCPP {
         threadData[0].id = 0;
         threadData[0].buffer = buffer;
         threadData[0].sem = waitForAll;
-        Thread *producerKeyboard = new ProducerKeyborad(&threadData[0]);
-        producerKeyboard->start();
+        producers[0] = new ProducerKeyborad(&threadData[0]);
+        producers[0]->start();
 
-        for (int i = 0; i < threadNum; i++) {
+        for (int i = 1; i < threadNum; i++) {
             threadData[i].id = i;
             threadData[i].buffer = buffer;
             threadData[i].sem = waitForAll;
@@ -136,9 +148,8 @@ namespace ConsumerProducerCPP {
         for (int i = 0; i < threadNum; i++) {
             delete producers[i];
         }
-        delete producerKeyboard;
         delete consumer;
-
+        delete buffer;
     }
 
 }

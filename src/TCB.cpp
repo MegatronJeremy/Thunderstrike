@@ -123,8 +123,6 @@ int TCB::join() {
         return 0;
     }
 
-    mutex.wait();
-
     running->setBlocked();
     waitingToJoin.addLast(&running->listNode);
 

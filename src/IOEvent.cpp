@@ -3,7 +3,7 @@
 #include "../h/TCB.hpp"
 #include "../h/Scheduler.hpp"
 
-IOEvent::IOEvent(int val) : KSemaphore() {
+IOEvent::IOEvent(int val) : PrioritySemaphore() {
     if (val < 0) val = 0;
     if (val > 1) val = 1;
     this->val = val;
@@ -34,11 +34,3 @@ int IOEvent::signal() {
     unlock()
     return 0;
 }
-
-void IOEvent::deblock() {
-    if (blockedThreadQueue.isEmpty()) return;
-    TCB *tcb = blockedThreadQueue.removeFirst();
-    tcb->setReady();
-    Scheduler::getInstance()->priorityPut(tcb);
-}
-

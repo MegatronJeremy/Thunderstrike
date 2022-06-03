@@ -12,7 +12,7 @@ void kprintString(char const *string) {
 
 void kprintInteger(int integer, int base) {
     PrintMutex::wait();
-    static char digits[] = "0123456789";
+    static char digits[] = "0123456789abcdef";
     char buf[16];
     int i, neg;
     uint x;
@@ -38,7 +38,7 @@ void kprintInteger(int integer, int base) {
 
 void kprintUnsigned(uint64 x, int base) {
     PrintMutex::wait();
-    static char digits[] = "0123456789";
+    static char digits[] = "0123456789abcdef";
     char buf[16];
 
     int i = 0;

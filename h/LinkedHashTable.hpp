@@ -52,7 +52,7 @@ int LinkedHashTable<T>::insert(LinkedHashNode<T> *elem) {
     if (!elem) return -1;
 
     getMutex()->wait();
-    
+
     uint64 hash = getHash(elem->id);
     LinkedHashNode<T> *curr = hashTable[hash];
     while (curr && curr->next) curr = curr->next;

@@ -116,7 +116,12 @@ void TCB::threadWrapper() {
 }
 
 int TCB::join() {
-    if (isFinished()) return 0;
+    mutex.wait();
+
+    if (isFinished()) {
+        mutex.signal();
+        return 0;
+    }
 
     mutex.wait();
 

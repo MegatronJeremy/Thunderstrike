@@ -13,8 +13,6 @@
 // Thread Control Block - kernel implementation of threads
 class TCB : public KObject {
 public:
-    bool ioThread = false;
-
     TCB(const TCB &) = delete;
 
     void operator=(const TCB &) = delete;

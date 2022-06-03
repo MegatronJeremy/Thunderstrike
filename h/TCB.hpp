@@ -170,8 +170,10 @@ private:
     Body body = nullptr;
     void *args = nullptr;
 
+    static size_t stackByteSize;
+
     uint64 *threadStack = nullptr;
-    uint64 *kernelStack = (uint64 *) kmalloc(DEFAULT_STACK_SIZE);
+    uint64 *kernelStack = (uint64 *) kmalloc(byteToBlocks(stackByteSize));
     bool privileged = true;
 
     Context context = {0, 0};

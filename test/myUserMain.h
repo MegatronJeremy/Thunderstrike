@@ -24,10 +24,19 @@ private:
     }
 };
 
+class MyPeriodicTwo: public PeriodicThread {
+public:
+    MyPeriodicTwo(): PeriodicThread(20) {};
+private:
+    void periodicActivation() override {
+        printString("Periodic activation with period 2s!\n");
+    }
+};
+
 void myUserMain() {
     printString("In user main\n");
 
-    void *mem = mem_alloc(25000);
+    void *mem = mem_alloc(250000);
     printInt((uint64) mem);
     printString("\n");
 
@@ -44,7 +53,9 @@ void myUserMain() {
 
     PeriodicThread *p1 = new MyPeriodicTen();
     PeriodicThread *p2 = new MyPeriodicFive();
+    PeriodicThread *p3 = new MyPeriodicTwo();
     p1->start();
+    p3->start();
 
     thread_create(&t1, &workerBodyE, nullptr);
 

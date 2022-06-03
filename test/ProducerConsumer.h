@@ -16,7 +16,7 @@ public:
     }
 
     void produce() {
-        for (int i = 1; i <= 120; i++) {
+        for (int i = 1; i <= 150; i++) {
             sem_wait(semProducer);
             value++;
             sem_signal(semConsumer);

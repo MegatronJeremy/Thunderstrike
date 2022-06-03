@@ -15,6 +15,8 @@ uint64 TCB::offsSSP = OFFSETOF(TCB, ssp);
 
 uint64 TCB::timeSliceCounter = 0;
 
+size_t TCB::stackByteSize = DEFAULT_STACK_SIZE * sizeof(uint64);
+
 TCB::TCB() {
     ssp = (uint64) (kernelStack + DEFAULT_STACK_SIZE);
 }
@@ -25,17 +27,18 @@ TCB::TCB(TCB::Body body, void *args, uint64 *threadStack, bool privileged, bool 
         privileged(privileged),
         context({(uint64) threadWrapper, (uint64) (threadStack + DEFAULT_STACK_SIZE)}),
         status(start ? READY : WAITING),
-        ssp((uint64) (kernelStack + DEFAULT_STACK_SIZE)) {}
+        ssp((uint64) (kernelStack + DEFAULT_STACK_SIZE)) {
+}
 
 TCB *TCB::createKernelThread(TCB::Body body, void *args, bool start) {
     if (!body) return nullptr;
-    auto *threadStack = (uint64 *) kmalloc(byteToBlocks((DEFAULT_STACK_SIZE) * sizeof(uint64)));
+    auto *threadStack = (uint64 *) kmalloc(byteToBlocks(stackByteSize));
     return createKernelThread(body, args, threadStack, start);
 }
 
 TCB *TCB::createUserThread(TCB::Body body, void *args, bool start) {
     if (!body) return nullptr;
-    auto *threadStack = (uint64 *) kmalloc(byteToBlocks((DEFAULT_STACK_SIZE) * sizeof(uint64)));
+    auto *threadStack = (uint64 *) kmalloc(byteToBlocks(stackByteSize));
     return createUserThread(body, args, threadStack, start);
 }
 

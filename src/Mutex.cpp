@@ -20,8 +20,10 @@ int Mutex::wait() {
 int Mutex::signal() {
     if (holder != TCB::running) return -1;
     lock()
-    holder = nullptr;
-    deblock();
+    if (blockedThreadQueue.isEmpty())
+        holder = nullptr;
+    else
+        deblock();
     unlock()
     return 0;
 }

@@ -29,8 +29,10 @@ int IOEvent::signal() {
         unlock();
         return -1;
     }
-    val = 1;
-    deblock();
+    if (blockedThreadQueue.isEmpty())
+        val = 1;
+    else
+        deblock();
     unlock()
     return 0;
 }

@@ -2,11 +2,11 @@
 #include "../h/MemoryAllocator.hpp"
 
 void *kmalloc(size_t size) {
-    return MemoryAllocator::getInstance()->malloc(size);
+    return MemoryAllocator::malloc(size);
 }
 
 int kfree(void *addr) {
-    return MemoryAllocator::getInstance()->free(addr);
+    return MemoryAllocator::free(addr);
 }
 
 size_t byteToBlocks(size_t size) {

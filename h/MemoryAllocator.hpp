@@ -12,14 +12,17 @@ public:
 
     static MemoryAllocator *getInstance();
 
-    void *malloc(size_t size);
-    int free(void *addr);
+    static void *malloc(size_t size);
+    static int free(void *addr);
 
     void *operator new(size_t);
     void operator delete(void *);
 
 private:
     MemoryAllocator();
+
+    void *mmalloc(size_t size);
+    int mfree(void *addr);
 
     struct BlockHeader {
         size_t size;

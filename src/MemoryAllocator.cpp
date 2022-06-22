@@ -25,6 +25,20 @@ MemoryAllocator *MemoryAllocator::getInstance() {
 }
 
 void *MemoryAllocator::malloc(size_t size) {
+    getInstance()->mutex.wait();
+    void *ret = getInstance()->mmalloc(size);
+    getInstance()->mutex.signal();
+    return ret;
+}
+
+int MemoryAllocator::free(void *addr) {
+    getInstance()->mutex.wait();
+    int ret = getInstance()->mfree(addr);
+    getInstance()->mutex.signal();
+    return ret;
+}
+
+void *MemoryAllocator::mmalloc(size_t size) {
     // Initial check
     if (!size) return nullptr;
 
@@ -32,15 +46,12 @@ void *MemoryAllocator::malloc(size_t size) {
     size *= MEM_BLOCK_SIZE;
     if (size > maxFreeMem) return nullptr;
 
-    mutex.wait();
-
     // Finding suitable free memory block using first fit algorithm
     BlockHeader *curr = freeMemHead, *prev = nullptr;
     int i = 0;
     while (curr && curr->size < size)
         prev = curr, curr = curr->next, i++;
     if (!curr)  {
-        mutex.signal();
         return nullptr;
     }
 
@@ -65,12 +76,10 @@ void *MemoryAllocator::malloc(size_t size) {
     // Free memory start address after segment descriptor of allocated memory block
     void *addr = (uint8 *) curr + sizeof(BlockHeader);
 
-    mutex.signal();
-
     return addr;
 }
 
-int MemoryAllocator::free(void *addr) {
+int MemoryAllocator::mfree(void *addr) {
     if (!addr
         || (uint8 *) addr < (uint8 *) HEAP_START_ADDR + sizeof(MemoryAllocator) + sizeof(BlockHeader)
         || addr >= HEAP_END_ADDR) {
@@ -85,8 +94,6 @@ int MemoryAllocator::free(void *addr) {
         return -2;
     }
 
-    mutex.wait();
-
     // Find place of allocated block in sorted free block list
     BlockHeader *curr = freeMemHead, *prev = nullptr;
     while (curr && curr < elem)
@@ -95,7 +102,6 @@ int MemoryAllocator::free(void *addr) {
     // Check if address is overlapping
     if ((prev && (uint8 *) prev + prev->size + sizeof(BlockHeader) > addr)
         || (curr && (uint8 *) addr + elem->size  > (uint8 *) curr)) {
-        mutex.signal();
         return -2;
     }
 
@@ -107,8 +113,6 @@ int MemoryAllocator::free(void *addr) {
     // Attempt local defragmentation
     tryToJoin(elem);
     tryToJoin(prev);
-
-    mutex.signal();
 
     return 0;
 }

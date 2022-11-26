@@ -10,9 +10,15 @@
 
 #define OFFSETOF(TYPE, ELEMENT) ((size_t)&(((TYPE *)0)->ELEMENT))
 
+
 // Thread Control Block - kernel implementation of threads
 class TCB : public KObject {
 public:
+    enum Type {
+        // Lower number represents higher priority in scheduling
+        KERNEL = 0, CONSOLE = 1, USER = 2
+    };
+
     TCB(const TCB &) = delete;
 
     void operator=(const TCB &) = delete;
@@ -26,6 +32,10 @@ public:
     static TCB *createKernelThread(Body body, void *args, bool start = true);
 
     static TCB *createKernelThread(Body body, void *args, uint64 *threadStack, bool start = true);
+
+    static TCB *createConsoleThread(Body body, void *args, bool start = true);
+
+    static TCB *createConsoleThread(Body body, void *args, uint64 *threadStack, bool start = true);
 
     static TCB *createUserThread(Body body, void *args, bool start = true);
 
@@ -136,6 +146,10 @@ public:
         return &hashNode;
     }
 
+    Type getType() const {
+        return type;
+    }
+
     ~TCB() override;
 
     static TCB *running;
@@ -156,7 +170,7 @@ private:
 
     TCB();
 
-    explicit TCB(Body body, void *args, uint64 *threadStack, bool privileged, bool start);
+    explicit TCB(Body body, void *args, uint64 *threadStack, bool privileged, bool start, Type type);
 
     static void threadWrapper();
 
@@ -185,6 +199,8 @@ private:
 
     static uint64 offsSSP;
     uint64 ssp = 0;
+
+    Type type = KERNEL;
 
     time_t blockedTime = 0;
 

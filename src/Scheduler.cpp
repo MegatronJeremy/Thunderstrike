@@ -3,20 +3,17 @@
 
 TCB *Scheduler::get() {
     mutex.wait();
-    TCB *tcb = readyThreadQueue.removeFirst();
+    TCB *tcb = nullptr;
+    for (int i = 0; i < threadTypes && tcb == nullptr; i++) {
+        tcb = readyThreadQueue[i].removeFirst();
+    }
     mutex.signal();
     return tcb;
 }
 
 void Scheduler::put(TCB *tcb) {
     mutex.wait();
-    readyThreadQueue.addLast(tcb->getListNode());
-    mutex.signal();
-}
-
-void Scheduler::priorityPut(TCB *tcb) {
-    mutex.wait();
-    readyThreadQueue.addFirst(tcb->getListNode());
+    readyThreadQueue[tcb->getType()].addLast(tcb->getListNode());
     mutex.signal();
 }
 
@@ -26,7 +23,7 @@ Scheduler *Scheduler::getInstance() {
 }
 
 Scheduler::~Scheduler() {
-    while (!readyThreadQueue.isEmpty()) {
-        delete readyThreadQueue.removeFirst();
+    while (!readyThreadQueue[0].isEmpty()) {
+        delete readyThreadQueue[0].removeFirst();
     }
 }

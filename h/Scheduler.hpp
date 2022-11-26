@@ -17,8 +17,6 @@ public:
 
     void put(TCB *tcb);
 
-    void priorityPut(TCB *tcb);
-
     static Scheduler *getInstance();
 
     ~Scheduler() override;
@@ -26,7 +24,9 @@ public:
 private:
     Scheduler() = default;
 
-    LinkedList<TCB> readyThreadQueue;
+    static const int threadTypes = 3;
+
+    LinkedList<TCB> readyThreadQueue[threadTypes];
 
     Mutex mutex;
 

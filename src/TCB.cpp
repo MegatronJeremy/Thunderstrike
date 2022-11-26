@@ -21,19 +21,26 @@ TCB::TCB() {
     ssp = (uint64) (kernelStack + DEFAULT_STACK_SIZE);
 }
 
-TCB::TCB(TCB::Body body, void *args, uint64 *threadStack, bool privileged, bool start) :
+TCB::TCB(TCB::Body body, void *args, uint64 *threadStack, bool privileged, bool start, Type type) :
         body(body), args(args),
         threadStack(threadStack),
         privileged(privileged),
         context({(uint64) threadWrapper, (uint64) (threadStack + DEFAULT_STACK_SIZE)}),
         status(start ? READY : WAITING),
-        ssp((uint64) (kernelStack + DEFAULT_STACK_SIZE)) {
+        ssp((uint64) (kernelStack + DEFAULT_STACK_SIZE)),
+        type(type) {
 }
 
 TCB *TCB::createKernelThread(TCB::Body body, void *args, bool start) {
     if (!body) return nullptr;
     auto *threadStack = (uint64 *) kmalloc(byteToBlocks(stackByteSize));
     return createKernelThread(body, args, threadStack, start);
+}
+
+TCB *TCB::createConsoleThread(TCB::Body body, void *args, bool start) {
+    if (!body) return nullptr;
+    auto *threadStack = (uint64 *) kmalloc(byteToBlocks(stackByteSize));
+    return createConsoleThread(body, args, threadStack, start);
 }
 
 TCB *TCB::createUserThread(TCB::Body body, void *args, bool start) {
@@ -45,7 +52,7 @@ TCB *TCB::createUserThread(TCB::Body body, void *args, bool start) {
 TCB *TCB::createKernelThread(TCB::Body body, void *args, uint64 *threadStack, bool start) {
     if (!body) return nullptr;
 
-    TCB *tcb = new TCB(body, args, threadStack, true, start);
+    TCB *tcb = new TCB(body, args, threadStack, true, start, KERNEL);
     if (start) Scheduler::getInstance()->put(tcb);
 
     return tcb;
@@ -54,7 +61,16 @@ TCB *TCB::createKernelThread(TCB::Body body, void *args, uint64 *threadStack, bo
 TCB *TCB::createUserThread(TCB::Body body, void *args, uint64 *threadStack, bool start) {
     if (!body) return nullptr;
 
-    TCB *tcb = new TCB(body, args, threadStack, false, start);
+    TCB *tcb = new TCB(body, args, threadStack, false, start, USER);
+    if (start) Scheduler::getInstance()->put(tcb);
+
+    return tcb;
+}
+
+TCB *TCB::createConsoleThread(TCB::Body body, void *args, uint64 *threadStack, bool start) {
+    if (!body) return nullptr;
+
+    TCB *tcb = new TCB(body, args, threadStack, true, start, CONSOLE);
     if (start) Scheduler::getInstance()->put(tcb);
 
     return tcb;
@@ -135,3 +151,4 @@ TCB::~TCB() {
     kfree(kernelStack);
     kfree(threadStack);
 }
+

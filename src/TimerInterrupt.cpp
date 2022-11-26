@@ -39,7 +39,7 @@ void TimerInterrupt::tick() {
     if (blockedThreads.isEmpty()) {
         mutex.signal();
         return;
-    };
+    }
 
     TCB *tcb = blockedThreads.getFirst();
     tcb->decBlockedTime();

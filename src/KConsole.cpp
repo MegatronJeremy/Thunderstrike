@@ -15,10 +15,10 @@ KConsole::KConsole() :
     inputData = (reg) CONSOLE_RX_DATA;
     status = (reg) CONSOLE_STATUS;
 
-    kernelProducer = TCB::createKernelThread([](void *) {
+    kernelProducer = TCB::createConsoleThread([](void *) {
         KConsole::getInstance()->readFromConsole();
     }, nullptr);
-    kernelConsumer = TCB::createKernelThread([](void *) {
+    kernelConsumer = TCB::createConsoleThread([](void *) {
         KConsole::getInstance()->writeToConsole();
     }, nullptr);
 }

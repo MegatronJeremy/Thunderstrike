@@ -36,8 +36,8 @@ private:
     Buffer<char> outputBuffer, inputBuffer;
 
     IOEvent readyToRead, readyToWrite;
-    PrioritySemaphore inputItemsAvailable, outputItemsAvailable;
-    PrioritySemaphore inputSlotsAvailable, outputSlotsAvailable;
+    KSemaphore inputItemsAvailable, outputItemsAvailable;
+    KSemaphore inputSlotsAvailable, outputSlotsAvailable;
     Mutex mutexPut, mutexGet;
 
     TCB *kernelConsumer, *kernelProducer;

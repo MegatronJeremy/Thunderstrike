@@ -1,4 +1,4 @@
-# RISC-V OS
+# THUNDERSTRIKE OS
 - This is an operating system project made for the college course Operating Systems 1 (OS1), School of Electrical Engineering, Belgrade.
 - It was built completely from scratch in C/C++ without any preexisting libraries (and no support for exceptions), 
 put toggether to work on a RISC-V 64-bit processor using a host XV6 system, with minimal (or almost no) additional support.

@@ -103,12 +103,12 @@ void TCB::exit() {
     dispatch();
 }
 
-void TCB::dispatch() {
+void TCB::dispatch(bool wasBlocked) {
     lock()
     TCB *old = running;
 
     if (old->isReady()) {
-        Scheduler::getInstance()->put(old);
+        Scheduler::getInstance()->put(old, wasBlocked);
     }
 
     running = Scheduler::getInstance()->get();

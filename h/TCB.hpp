@@ -16,7 +16,7 @@ class TCB : public KObject {
 public:
     enum Type {
         // Lower number represents higher priority in scheduling
-        KERNEL = 0, CONSOLE = 1, USER = 2
+        KERNEL = 1, CONSOLE = 0, USER = 2
     };
 
     TCB(const TCB &) = delete;
@@ -49,7 +49,7 @@ public:
         __asm__ volatile ("ecall");
     }
 
-    static void dispatch();
+    static void dispatch(bool wasBlocked = true);
 
     static void exit();
 

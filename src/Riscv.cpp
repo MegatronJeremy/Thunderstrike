@@ -61,7 +61,7 @@ void Riscv::handleSupervisorTrap() {
             Riscv::disableInterrupts();
 
             if (TCB::timeSliceCounter >= TCB::running->timeSlice) {
-                TCB::dispatch();
+                TCB::dispatch(false);
             }
 
             w_sstatus(sstatus);

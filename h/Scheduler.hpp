@@ -15,20 +15,22 @@ public:
 
     TCB *get();
 
-    void put(TCB *tcb);
+    void put(TCB *tcb, bool wasBlocked = true);
 
     static Scheduler *getInstance();
 
     ~Scheduler() override;
 
 private:
-    Scheduler() = default;
+    Scheduler();
 
     static const int threadTypes = 3;
 
-    LinkedList<TCB> readyThreadQueue[threadTypes];
+    LinkedList<TCB> *readyThreadQueue[2];
 
     Mutex mutex;
+
+    int active = 0;
 
 };
 

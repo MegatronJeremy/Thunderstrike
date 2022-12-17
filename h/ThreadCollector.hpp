@@ -7,30 +7,22 @@ class TCB;
 #include "LinkedList.hpp"
 
 // Thread collector kernel thread - for deallocation of finished threads
-class ThreadCollector : public KObject {
+class ThreadCollector {
 public:
-    ThreadCollector(const ThreadCollector &) = delete;
+    static void initThreadCollector();
 
-    void operator=(const ThreadCollector &) = delete;
-
-    static ThreadCollector *getInstance();
-
-    void put(TCB *tcb);
-
-    ~ThreadCollector() override;
+    static void put(TCB *tcb);
 
 private:
-    ThreadCollector();
+    [[noreturn]] static void run();
 
-    [[noreturn]] void run();
+    static bool initialised;
 
-    TCB *threadCollector = nullptr;
+    static LinkedList<TCB> *finishedThreads;
 
-    LinkedList<TCB> finishedThreads;
+    static Mutex *mutex;
 
-    Mutex mutex;
-
-    KSemaphore readyToDelete;
+    static KSemaphore *readyToDelete;
 };
 
 #endif

@@ -5,7 +5,6 @@
 
 uint64 KSemaphore::ID = 0;
 
-
 KSemaphore::KSemaphore(int val) :
     val(val),
     hashNode(this, id) {}

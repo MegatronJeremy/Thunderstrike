@@ -101,6 +101,4 @@ int LinkedHashTable<T>::remove(uint64 id) {
     return 0;
 }
 
-
-
 #endif

@@ -42,31 +42,31 @@ void Kernel::handleSystemCall() {
             thread_start(arg);
             Riscv::pushRegisterA0(context);
             break;
-        case(SEM_OPEN):
+        case (SEM_OPEN):
             sem_open((uint64 *) arg);
             Riscv::pushRegisterA0(context);
             break;
-        case(SEM_CLOSE):
+        case (SEM_CLOSE):
             sem_close(arg);
             Riscv::pushRegisterA0(context);
             break;
-        case(SEM_WAIT):
+        case (SEM_WAIT):
             sem_wait(arg);
             Riscv::pushRegisterA0(context);
             break;
-        case(SEM_SIGNAL):
+        case (SEM_SIGNAL):
             sem_signal(arg);
             Riscv::pushRegisterA0(context);
             break;
-        case(TIME_SLEEP):
+        case (TIME_SLEEP):
             time_sleep(arg);
             Riscv::pushRegisterA0(context);
             break;
-        case(GETC):
+        case (GETC):
             getc();
             Riscv::pushRegisterA0(context);
             break;
-        case(PUTC):
+        case (PUTC):
             putc(arg);
             break;
         default:
@@ -95,7 +95,7 @@ int Kernel::thread_create(uint64 *args) {
     void *arg = (void *) args[2];
     auto *stack = (uint64 *) args[3];
 
-    TCB *thr = TCB::createUserThread(body, arg, stack);
+    TCB *thr = TCB::createThread(body, arg, stack);
     if (!thr) return -4;
 
     if (LinkedHashTable<TCB>::insert(thr->getHashNode()) < 0)
@@ -129,7 +129,7 @@ int Kernel::thread_create_suspended(uint64 *args) {
     void *arg = (void *) args[2];
     auto *stack = (uint64 *) args[3];
 
-    TCB *thr = TCB::createUserThread(body, arg, stack, false);
+    TCB *thr = TCB::createThread(body, arg, stack, TCB::USER, false);
     if (!thr) return -4;
 
     if (LinkedHashTable<TCB>::insert(thr->getHashNode()) < 0)
@@ -199,15 +199,15 @@ int Kernel::sem_signal(uint64 id) {
 
 int Kernel::time_sleep(time_t time) {
     if (time == 0) TCB::dispatch();
-    else TimerInterrupt::getInstance()->block(TCB::running, time);
+    else TimerInterrupt::block(TCB::running, time);
     return 0;
 }
 
 char Kernel::getc() {
-    return KConsole::getInstance()->getc();
+    return KConsole::getc();
 }
 
 void Kernel::putc(char chr) {
-    KConsole::getInstance()->putc(chr);
+    KConsole::putc(chr);
 }
 

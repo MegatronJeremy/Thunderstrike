@@ -8,34 +8,43 @@
 class MemoryAllocator {
 public:
     MemoryAllocator(const MemoryAllocator &) = delete;
-    void operator=(const MemoryAllocator&) = delete;
+
+    void operator=(const MemoryAllocator &) = delete;
 
     static MemoryAllocator *getInstance();
 
     static void *malloc(size_t size);
+
     static int free(void *addr);
 
     void *operator new(size_t);
+
     void operator delete(void *);
 
 private:
-    MemoryAllocator();
-
-    void *mmalloc(size_t size);
-    int mfree(void *addr);
-
     struct BlockHeader {
         size_t size;
         bool free;
         BlockHeader *next;
     };
 
-    BlockHeader *freeMemHead;
-    Mutex mutex;
+    MemoryAllocator();
 
-    static size_t maxFreeMem;
+    void *mmalloc(size_t size);
+
+    int mfree(void *addr);
 
     static int tryToJoin(BlockHeader *curr);
+
+    static const void *USER_HEAP_START_ADDR;
+
+    static const void *USER_HEAP_END_ADDR;
+
+    static size_t USER_HEAP_SIZE;
+
+    BlockHeader *freeMemHead;
+
+    Mutex mutex;
 
 };
 

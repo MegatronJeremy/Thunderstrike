@@ -56,7 +56,7 @@ void Riscv::handleSupervisorTrap() {
 
             Riscv::enableInterrupts();
 
-            TimerInterrupt::getInstance()->tick();
+            TimerInterrupt::tick();
 
             Riscv::disableInterrupts();
 
@@ -76,7 +76,7 @@ void Riscv::handleSupervisorTrap() {
             int dev = plic_claim();
 
             if (dev == CONSOLE_IRQ) {
-                KConsole::getInstance()->consoleHandler();
+                KConsole::consoleHandler();
             }
 
             plic_complete(dev);

@@ -1,26 +1,22 @@
 #include "../h/IdleThread.hpp"
 #include "../h/TCB.hpp"
 
-IdleThread *IdleThread::getInstance() {
-    static auto *instance = new IdleThread;
-    return instance;
-}
-
-IdleThread::IdleThread() {
-    idleThread = TCB::createUserThread([](void *){IdleThread::run();}, nullptr);
-    idleThread->setIdle();
-}
+TCB *IdleThread::idleThread = nullptr;
 
 TCB *IdleThread::getIdleThread() {
-    return getInstance()->idleThread;
+    if (idleThread == nullptr) {
+        initIdleThread();
+    }
+
+    return idleThread;
+}
+
+void IdleThread::initIdleThread() {
+    idleThread = TCB::createThread([](void *) { IdleThread::run(); }, nullptr);
+    idleThread->setIdle();
 }
 
 [[noreturn]] void IdleThread::run() {
     while (true);
 }
-
-IdleThread::~IdleThread() {
-    delete idleThread;
-}
-
 

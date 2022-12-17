@@ -9,24 +9,18 @@ class TCB;
 // Kernel object for handling timer interrupts and thread sleep requests
 class TimerInterrupt : public KObject {
 public:
-    TimerInterrupt(const TimerInterrupt &) = delete;
+    static void initTimerInterrupt();
 
-    void operator=(const TimerInterrupt &) = delete;
+    static void block(TCB *tcb, time_t time);
 
-    void block(TCB *tcb, time_t time);
-
-    void tick();
-
-    static TimerInterrupt *getInstance();
-
-    ~TimerInterrupt() override;
+    static void tick();
 
 private:
-    TimerInterrupt() = default;
+    static bool initialised;
 
-    Mutex mutex;
+    static Mutex *mutex;
 
-    LinkedList<TCB> blockedThreads;
+    static LinkedList<TCB> *blockedThreads;
 };
 
 #endif

@@ -6,16 +6,19 @@
 #include "../h/ThreadCollector.hpp"
 #include "../h/IdleThread.hpp"
 #include "../h/KConsole.hpp"
+#include "../h/SlabAllocator.hpp"
 
 void userMain();
 
 int main() {
-    KConsole::getInstance();
-    ThreadCollector::getInstance();
+    SlabAllocator::initSlabAllocator(nullptr, 0);
+    KConsole::initKConsole();
+    ThreadCollector::initThreadCollector();
+    TimerInterrupt::initTimerInterrupt();
     TCB *main = TCB::createKernelThread();
     TCB::running = main;
 
-    TCB *uMain = TCB::createUserThread([](void *){userMain();}, nullptr);
+    TCB *uMain = TCB::createThread([](void *){userMain();}, nullptr);
     TCB::userMain = uMain;
 
     Riscv::w_stvec((uint64) &Riscv::supervisorTrap);

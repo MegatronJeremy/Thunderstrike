@@ -17,6 +17,10 @@ static constexpr uint64 DEFAULT_HASH_SIZE = 1499;
 class KObject {
 public:
     static void *operator new(size_t size) {
+        // void * obj = kmem_alloc(...)
+        // init(obj)
+
+
         return kmalloc(byteToBlocks(size));
     }
 

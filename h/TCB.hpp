@@ -8,15 +8,15 @@
 #include "LinkedList.hpp"
 #include "LinkedHashNode.hpp"
 
+#include "../h/Cache.hpp"
+
 #define OFFSETOF(TYPE, ELEMENT) ((size_t)&(((TYPE *)0)->ELEMENT))
 
-
 // Thread Control Block - kernel implementation of threads
-class TCB : public KObject {
+class TCB {
 public:
     enum Type {
-        // Lower number represents higher priority in scheduling
-        KERNEL = 1, CONSOLE = 0, USER = 2
+        KERNEL, CONSOLE, USER
     };
 
     TCB(const TCB &) = delete;
@@ -29,17 +29,9 @@ public:
         return new TCB();
     }
 
-    static TCB *createKernelThread(Body body, void *args, bool start = true);
+    static TCB *createThread(Body body, void *args, Type type = USER, bool start = true);
 
-    static TCB *createKernelThread(Body body, void *args, uint64 *threadStack, bool start = true);
-
-    static TCB *createConsoleThread(Body body, void *args, bool start = true);
-
-    static TCB *createConsoleThread(Body body, void *args, uint64 *threadStack, bool start = true);
-
-    static TCB *createUserThread(Body body, void *args, bool start = true);
-
-    static TCB *createUserThread(Body body, void *args, uint64 *threadStack, bool start = true);
+    static TCB *createThread(Body body, void *args, uint64 *threadStack, Type type = USER, bool start = true);
 
     static int start(TCB *thr);
 
@@ -150,11 +142,26 @@ public:
         return type;
     }
 
-    ~TCB() override;
+    void setTimeSlice(uint64 timeSlice) {
+        this->timeSlice = timeSlice;
+    }
+
+    uint64 getPriority() const {
+        return priority;
+    }
+
+    void setPriority(uint64 priority) {
+        this->priority = priority;
+    }
+
+    ~TCB();
 
     static TCB *running;
 
     static TCB *userMain;
+
+    void* operator new(size_t);
+    void operator delete(void *);
 
 private:
     enum Status {
@@ -170,11 +177,13 @@ private:
 
     TCB();
 
-    explicit TCB(Body body, void *args, uint64 *threadStack, bool privileged, bool start, Type type);
+    explicit TCB(Body body, void *args, uint64 *threadStack, bool privileged, Type type);
 
     static void threadWrapper();
 
     static void contextSwitch(Context *oldContext, Context *runningContext);
+
+    static Cache *tcbCache;
 
     static uint64 ID;
     uint64 id = ID++;
@@ -192,6 +201,8 @@ private:
 
     uint64 timeSlice = DEFAULT_TIME_SLICE;
 
+    uint64 priority = 1;
+
     Status status = READY;
 
     LinkedList<TCB> waitingToJoin;
@@ -208,8 +219,6 @@ private:
     LinkedHashNode<TCB> hashNode = LinkedHashNode<TCB>(this, id);
 
     static uint64 timeSliceCounter;
-
-
 };
 
 

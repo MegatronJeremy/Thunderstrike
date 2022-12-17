@@ -2,6 +2,7 @@
 #include "../h/MemoryAllocator.hpp"
 
 void *kmalloc(size_t size) {
+//    kprintString(KObject::name);
     return MemoryAllocator::malloc(size);
 }
 

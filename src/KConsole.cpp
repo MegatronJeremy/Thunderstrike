@@ -1,79 +1,98 @@
 #include "../h/KConsole.hpp"
 #include "../h/TCB.hpp"
 
-reg KConsole::outputData = nullptr;
-reg KConsole::inputData = nullptr;
-reg KConsole::status = nullptr;
+bool KConsole::initialised = false;
 
-KConsole::KConsole() :
-        readyToRead(0),
-        readyToWrite(0),
-        inputItemsAvailable(0), outputItemsAvailable(0),
-        inputSlotsAvailable(DEFAULT_BUFFER_SIZE), outputSlotsAvailable(DEFAULT_BUFFER_SIZE) {
+REG KConsole::outputData = nullptr;
+REG KConsole::inputData = nullptr;
+REG KConsole::status = nullptr;
 
-    outputData = (reg) CONSOLE_TX_DATA;
-    inputData = (reg) CONSOLE_RX_DATA;
-    status = (reg) CONSOLE_STATUS;
+Buffer<char> *KConsole::outputBuffer;
+Buffer<char> *KConsole::inputBuffer;
 
-    kernelProducer = TCB::createConsoleThread([](void *) {
-        KConsole::getInstance()->readFromConsole();
-    }, nullptr);
-    kernelConsumer = TCB::createConsoleThread([](void *) {
-        KConsole::getInstance()->writeToConsole();
-    }, nullptr);
-}
+IOEvent *KConsole::readyToRead;
+IOEvent *KConsole::readyToWrite;
 
-KConsole *KConsole::getInstance() {
-    static auto *instance = new KConsole;
-    return instance;
+KSemaphore *KConsole::inputItemsAvailable;
+KSemaphore *KConsole::outputItemsAvailable;
+KSemaphore *KConsole::inputSlotsAvailable;
+KSemaphore *KConsole::outputSlotsAvailable;
+
+Mutex *KConsole::mutexGet;
+Mutex *KConsole::mutexPut;
+
+void KConsole::initKConsole() {
+    if (initialised) return;
+
+    initialised = true;
+
+    outputData = (REG) CONSOLE_TX_DATA;
+    inputData = (REG) CONSOLE_RX_DATA;
+    status = (REG) CONSOLE_STATUS;
+
+    outputBuffer = new Buffer<char>;
+    inputBuffer = new Buffer<char>;
+
+    readyToRead = new IOEvent(0);
+    readyToWrite = new IOEvent(0);
+
+    inputItemsAvailable = new KSemaphore(0);
+    outputItemsAvailable = new KSemaphore(0);
+    inputSlotsAvailable = new KSemaphore(DEFAULT_BUFFER_SIZE);
+    outputSlotsAvailable = new KSemaphore(DEFAULT_BUFFER_SIZE);
+
+    mutexGet = new Mutex;
+    mutexPut = new Mutex;
+
+    TCB::createThread([](void *) {
+        KConsole::readFromConsole();
+    }, nullptr, TCB::CONSOLE);
+
+    TCB::createThread([](void *) {
+        KConsole::writeToConsole();
+    }, nullptr, TCB::CONSOLE);
 }
 
 void KConsole::putc(char chr) {
-    outputSlotsAvailable.wait();
-    mutexPut.wait();
-    outputBuffer.addLast(chr);
-    mutexPut.signal();
-    outputItemsAvailable.signal();
+    outputSlotsAvailable->wait();
+    mutexPut->wait();
+    outputBuffer->addLast(chr);
+    mutexPut->signal();
+    outputItemsAvailable->signal();
 }
 
 char KConsole::getc() {
-    inputItemsAvailable.wait();
-    mutexGet.wait();
-    char c = inputBuffer.removeFirst();
-    mutexGet.signal();
-    inputSlotsAvailable.signal();
+    inputItemsAvailable->wait();
+    mutexGet->wait();
+    char c = inputBuffer->removeFirst();
+    mutexGet->signal();
+    inputSlotsAvailable->signal();
     return c;
 }
 
 void KConsole::consoleHandler() {
-    readyToRead.signal();
-    readyToWrite.signal();
+    readyToRead->signal();
+    readyToWrite->signal();
 }
 
 void KConsole::readFromConsole() {
     while (true) {
-        readyToRead.wait();
+        readyToRead->wait();
         while (*status & CONSOLE_RX_STATUS_BIT) {
-            inputSlotsAvailable.wait();
-            inputBuffer.addLast(*inputData);
-            inputItemsAvailable.signal();
+            inputSlotsAvailable->wait();
+            inputBuffer->addLast(*inputData);
+            inputItemsAvailable->signal();
         }
     }
 }
 
 void KConsole::writeToConsole() {
     while (true) {
-        readyToWrite.wait();
+        readyToWrite->wait();
         while (*status & CONSOLE_TX_STATUS_BIT) {
-            outputItemsAvailable.wait();
-            *outputData = outputBuffer.removeFirst();
-            outputSlotsAvailable.signal();
+            outputItemsAvailable->wait();
+            *outputData = outputBuffer->removeFirst();
+            outputSlotsAvailable->signal();
         }
     }
 }
-
-KConsole::~KConsole() {
-    delete kernelProducer;
-    delete kernelConsumer;
-}
-

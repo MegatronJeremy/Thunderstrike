@@ -6,42 +6,34 @@
 #include "../h/Buffer.hpp"
 #include "../h/IOEvent.hpp"
 
-typedef volatile uint8* reg;
+typedef volatile uint8 *REG;
 
 // Kernel console implementation - for direct communication with UART console
-class KConsole : public KObject {
+class KConsole {
 public:
-    KConsole(const KConsole &) = delete;
-    void operator=(const KConsole &) = delete;
+    static void initKConsole();
 
-    void putc(char chr);
+    static void putc(char chr);
 
-    char getc();
+    static char getc();
 
-    void consoleHandler();
-
-    static KConsole *getInstance();
-
-    ~KConsole() override;
+    static void consoleHandler();
 
 private:
-    KConsole();
+    static bool initialised;
 
-    static reg inputData, outputData, status;
+    static REG inputData, outputData, status;
 
-    [[noreturn]] void writeToConsole();
+    [[noreturn]] static void writeToConsole();
 
-    [[noreturn]] void readFromConsole();
+    [[noreturn]] static void readFromConsole();
 
-    Buffer<char> outputBuffer, inputBuffer;
+    static Buffer<char> *outputBuffer, *inputBuffer;
 
-    IOEvent readyToRead, readyToWrite;
-    KSemaphore inputItemsAvailable, outputItemsAvailable;
-    KSemaphore inputSlotsAvailable, outputSlotsAvailable;
-    Mutex mutexPut, mutexGet;
-
-    TCB *kernelConsumer, *kernelProducer;
-
+    static IOEvent *readyToRead, *readyToWrite;
+    static KSemaphore *inputItemsAvailable, *outputItemsAvailable;
+    static KSemaphore *inputSlotsAvailable, *outputSlotsAvailable;
+    static Mutex *mutexPut, *mutexGet;
 };
 
 #endif

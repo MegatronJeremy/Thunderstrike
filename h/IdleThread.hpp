@@ -6,23 +6,16 @@
 class TCB;
 
 // Idle thread - for busy wait when no thread is scheduled
-class IdleThread : public KObject {
+class IdleThread {
 public:
-    IdleThread(const IdleThread&) = delete;
-    void operator=(const IdleThread&) = delete;
-
     static TCB *getIdleThread();
 
-    static IdleThread *getInstance();
-
-    ~IdleThread() override;
-
 private:
-    IdleThread();
+    static void initIdleThread();
 
     [[noreturn]] static void run();
 
-    TCB *idleThread;
+    static TCB *idleThread;
 
 };
 

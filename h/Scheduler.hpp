@@ -6,7 +6,7 @@
 
 class TCB;
 
-// FIFO thread scheduler
+// MFQ thread scheduler with starvation avoidance
 class Scheduler : public KObject {
 public:
     Scheduler(const Scheduler &) = delete;
@@ -24,14 +24,15 @@ public:
 private:
     Scheduler();
 
-    static const int threadTypes = 3;
+    static const uint64 maxPriority = 2;
+
+    static const uint64 timeSlicePriority[maxPriority + 1];
 
     LinkedList<TCB> *readyThreadQueue[2];
 
     Mutex mutex;
 
-    int active = 0;
-
+    uint8 active = 0;
 };
 
 

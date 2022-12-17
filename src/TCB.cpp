@@ -17,61 +17,48 @@ uint64 TCB::timeSliceCounter = 0;
 
 size_t TCB::stackByteSize = DEFAULT_STACK_SIZE * sizeof(uint64);
 
+Cache *TCB::tcbCache = nullptr;
+
 TCB::TCB() {
     ssp = (uint64) (kernelStack + DEFAULT_STACK_SIZE);
 }
 
-TCB::TCB(TCB::Body body, void *args, uint64 *threadStack, bool privileged, bool start, Type type) :
+TCB::TCB(TCB::Body body, void *args, uint64 *threadStack, bool privileged, Type type) :
         body(body), args(args),
         threadStack(threadStack),
         privileged(privileged),
         context({(uint64) threadWrapper, (uint64) (threadStack + DEFAULT_STACK_SIZE)}),
-        status(start ? READY : WAITING),
+        status(WAITING),
         ssp((uint64) (kernelStack + DEFAULT_STACK_SIZE)),
         type(type) {
 }
 
-TCB *TCB::createKernelThread(TCB::Body body, void *args, bool start) {
+TCB *TCB::createThread(TCB::Body body, void *args, Type type, bool start) {
     if (!body) return nullptr;
     auto *threadStack = (uint64 *) kmalloc(byteToBlocks(stackByteSize));
-    return createKernelThread(body, args, threadStack, start);
+    return createThread(body, args, threadStack, type, start);
 }
 
-TCB *TCB::createConsoleThread(TCB::Body body, void *args, bool start) {
-    if (!body) return nullptr;
-    auto *threadStack = (uint64 *) kmalloc(byteToBlocks(stackByteSize));
-    return createConsoleThread(body, args, threadStack, start);
-}
-
-TCB *TCB::createUserThread(TCB::Body body, void *args, bool start) {
-    if (!body) return nullptr;
-    auto *threadStack = (uint64 *) kmalloc(byteToBlocks(stackByteSize));
-    return createUserThread(body, args, threadStack, start);
-}
-
-TCB *TCB::createKernelThread(TCB::Body body, void *args, uint64 *threadStack, bool start) {
+TCB *TCB::createThread(TCB::Body body, void *args, uint64 *threadStack, Type type, bool start) {
     if (!body) return nullptr;
 
-    TCB *tcb = new TCB(body, args, threadStack, true, start, KERNEL);
-    if (start) Scheduler::getInstance()->put(tcb);
+    bool prMode;
+    switch (type) {
+        case (KERNEL):
+        case (CONSOLE):
+            prMode = true;
+            break;
+        case (USER):
+            prMode = false;
+            break;
+        default:
+            // invalid thread type
+            // mfree(threadStack)
+            return nullptr;
+    }
 
-    return tcb;
-}
-
-TCB *TCB::createUserThread(TCB::Body body, void *args, uint64 *threadStack, bool start) {
-    if (!body) return nullptr;
-
-    TCB *tcb = new TCB(body, args, threadStack, false, start, USER);
-    if (start) Scheduler::getInstance()->put(tcb);
-
-    return tcb;
-}
-
-TCB *TCB::createConsoleThread(TCB::Body body, void *args, uint64 *threadStack, bool start) {
-    if (!body) return nullptr;
-
-    TCB *tcb = new TCB(body, args, threadStack, true, start, CONSOLE);
-    if (start) Scheduler::getInstance()->put(tcb);
+    TCB *tcb = new TCB(body, args, threadStack, prMode, KERNEL);
+    if (start) TCB::start(tcb);
 
     return tcb;
 }
@@ -98,7 +85,7 @@ void TCB::exit() {
 
     running->mutex.signal();
 
-    ThreadCollector::getInstance()->put(running);
+    ThreadCollector::put(running);
 
     dispatch();
 }
@@ -150,5 +137,15 @@ int TCB::join() {
 TCB::~TCB() {
     kfree(kernelStack);
     kfree(threadStack);
+}
+
+void *TCB::operator new(size_t) {
+    if (!tcbCache) tcbCache = new Cache("tcb", sizeof(TCB));
+
+    return tcbCache->allocate();
+}
+
+void TCB::operator delete(void *obj) {
+    tcbCache->free(obj);
 }
 

@@ -1,22 +1,32 @@
 #include "../h/MemoryAllocator.hpp"
+#include "../h/MemorySegments.hpp"
 
-size_t MemoryAllocator::maxFreeMem;
+size_t MemoryAllocator::USER_HEAP_SIZE;
 
-void *MemoryAllocator::operator new(size_t) {
-    // Singleton must be allocated at heap start
-    return (void *) HEAP_START_ADDR;
-}
+const void *MemoryAllocator::USER_HEAP_START_ADDR;
 
-void MemoryAllocator::operator delete(void *) {}
+const void *MemoryAllocator::USER_HEAP_END_ADDR;
 
 MemoryAllocator::MemoryAllocator() {
-    freeMemHead = (BlockHeader *) ((uint8 *) HEAP_START_ADDR + sizeof(MemoryAllocator));
-    freeMemHead->size = (size_t) ((uint8 *) HEAP_END_ADDR - (uint8 *) HEAP_START_ADDR -
-                                            sizeof(MemoryAllocator) - sizeof(BlockHeader));
-    maxFreeMem = freeMemHead->size;
+    freeMemHead = (BlockHeader *) ((uint8 *) USER_HEAP_START_ADDR + sizeof(MemoryAllocator));
+    freeMemHead->size = (size_t) (USER_HEAP_SIZE -
+                                  sizeof(MemoryAllocator) - sizeof(BlockHeader));
     freeMemHead->free = true;
     freeMemHead->next = nullptr;
 }
+
+void *MemoryAllocator::operator new(size_t) {
+    USER_HEAP_SIZE = MemorySegments::getUserHeapSize();
+
+    USER_HEAP_START_ADDR = MemorySegments::getUserHeapStartAddr();
+
+    USER_HEAP_END_ADDR = MemorySegments::getUserHeapEndAddr();
+
+    // Singleton must be allocated at user heap start
+    return (void *) USER_HEAP_START_ADDR;
+}
+
+void MemoryAllocator::operator delete(void *) {}
 
 MemoryAllocator *MemoryAllocator::getInstance() {
     static auto *instance = new MemoryAllocator;
@@ -44,14 +54,14 @@ void *MemoryAllocator::mmalloc(size_t size) {
 
     // Rounding size to size of memory blocks
     size *= MEM_BLOCK_SIZE;
-    if (size > maxFreeMem) return nullptr;
+    if (size > USER_HEAP_SIZE) return nullptr;
 
     // Finding suitable free memory block using first fit algorithm
     BlockHeader *curr = freeMemHead, *prev = nullptr;
     int i = 0;
     while (curr && curr->size < size)
         prev = curr, curr = curr->next, i++;
-    if (!curr)  {
+    if (!curr) {
         return nullptr;
     }
 
@@ -81,8 +91,8 @@ void *MemoryAllocator::mmalloc(size_t size) {
 
 int MemoryAllocator::mfree(void *addr) {
     if (!addr
-        || (uint8 *) addr < (uint8 *) HEAP_START_ADDR + sizeof(MemoryAllocator) + sizeof(BlockHeader)
-        || addr >= HEAP_END_ADDR) {
+        || (uint8 *) addr < (uint8 *) USER_HEAP_START_ADDR + sizeof(MemoryAllocator) + sizeof(BlockHeader)
+        || addr >= USER_HEAP_END_ADDR) {
         return -1;
     }
 
@@ -101,7 +111,7 @@ int MemoryAllocator::mfree(void *addr) {
 
     // Check if address is overlapping
     if ((prev && (uint8 *) prev + prev->size + sizeof(BlockHeader) > addr)
-        || (curr && (uint8 *) addr + elem->size  > (uint8 *) curr)) {
+        || (curr && (uint8 *) addr + elem->size > (uint8 *) curr)) {
         return -2;
     }
 

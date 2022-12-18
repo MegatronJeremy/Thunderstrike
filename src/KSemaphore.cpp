@@ -19,7 +19,7 @@ void KSemaphore::deblock() {
     if (blockedThreadQueue.isEmpty()) return;
     TCB *tcb = blockedThreadQueue.removeFirst();
     tcb->setReady();
-    Scheduler::getInstance()->put(tcb);
+    Scheduler::put(tcb);
 }
 
 int KSemaphore::wait() {
@@ -50,7 +50,7 @@ KSemaphore::~KSemaphore() {
     while (!blockedThreadQueue.isEmpty()) {
         TCB *tcb = blockedThreadQueue.removeFirst();
         tcb->setInterrupted();
-        Scheduler::getInstance()->put(tcb);
+        Scheduler::put(tcb);
     }
     val = INT_MAX;
 

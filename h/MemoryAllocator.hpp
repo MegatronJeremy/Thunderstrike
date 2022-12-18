@@ -2,7 +2,7 @@
 #define _MEMORYALLOCATOR_HPP
 
 #include "../lib/hw.h"
-#include "Mutex.hpp"
+#include "DummyMutex.hpp"
 
 // Heap memory allocator kernel implementation - first fit algorithm and explicit free list
 class MemoryAllocator {

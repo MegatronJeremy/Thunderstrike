@@ -3,37 +3,35 @@
 
 #include "../lib/hw.h"
 
-void *kmalloc(size_t);
+void *mmalloc(size_t);
 
-int kfree(void *);
+int mfree(void *);
 
 size_t byteToBlocks(size_t size);
 
-static constexpr uint64 DEFAULT_BUFFER_SIZE = 2048;
+static constexpr uint64
+DEFAULT_BUFFER_SIZE = 2048;
 
-static constexpr uint64 DEFAULT_HASH_SIZE = 1499;
+static constexpr uint64
+DEFAULT_HASH_SIZE = 1499;
 
 // Base apstract class for kernel objects - contains necessary memory allocation / deallocation templates
 class KObject {
 public:
     static void *operator new(size_t size) {
-        // void * obj = kmem_alloc(...)
-        // init(obj)
-
-
-        return kmalloc(byteToBlocks(size));
+        return mmalloc(byteToBlocks(size));
     }
 
     static void *operator new[](size_t size) {
-        return kmalloc(byteToBlocks(size));
+        return mmalloc(byteToBlocks(size));
     }
 
     static void operator delete(void *addr) {
-        kfree(addr);
+        mfree(addr);
     }
 
     static void operator delete[](void *addr) {
-        kfree(addr);
+        mfree(addr);
     }
 
     virtual ~KObject() = 0;

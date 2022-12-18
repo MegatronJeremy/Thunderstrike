@@ -18,7 +18,7 @@ void TimerInterrupt::initTimerInterrupt() {
 }
 
 void TimerInterrupt::block(TCB *tcb, time_t time) {
-    mutex->wait();
+    DummyMutex dummy(mutex);
 
     for (blockedThreads->toHead(); blockedThreads->hasCurr(); blockedThreads->toNext()) {
         time_t currTime = blockedThreads->getCurr()->getBlockedTime();
@@ -37,17 +37,12 @@ void TimerInterrupt::block(TCB *tcb, time_t time) {
 
     tcb->setBlockedTime(time);
     tcb->setBlocked();
-
-    mutex->signal();
-
-    TCB::dispatch();
 }
 
 void TimerInterrupt::tick() {
-    mutex->wait();
+    DummyMutex dummy(mutex);
 
     if (blockedThreads->isEmpty()) {
-        mutex->signal();
         return;
     }
 
@@ -56,9 +51,7 @@ void TimerInterrupt::tick() {
 
     while (tcb && tcb->getBlockedTime() == 0) {
         tcb->setReady();
-        Scheduler::getInstance()->put(blockedThreads->removeFirst());
+        Scheduler::put(blockedThreads->removeFirst());
         tcb = blockedThreads->getFirst();
     }
-
-    mutex->signal();
 }

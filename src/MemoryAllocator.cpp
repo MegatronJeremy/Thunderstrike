@@ -35,22 +35,18 @@ MemoryAllocator *MemoryAllocator::getInstance() {
 }
 
 void *MemoryAllocator::malloc(size_t size) {
-    getInstance()->mutex.wait();
-    void *ret = getInstance()->mmalloc(size);
-    getInstance()->mutex.signal();
-    return ret;
+    return getInstance()->mmalloc(size);
 }
 
 int MemoryAllocator::free(void *addr) {
-    getInstance()->mutex.wait();
-    int ret = getInstance()->mfree(addr);
-    getInstance()->mutex.signal();
-    return ret;
+    return getInstance()->mfree(addr);
 }
 
 void *MemoryAllocator::mmalloc(size_t size) {
     // Initial check
     if (!size) return nullptr;
+
+    DummyMutex dummy(&mutex);
 
     // Rounding size to size of memory blocks
     size *= MEM_BLOCK_SIZE;
@@ -95,6 +91,8 @@ int MemoryAllocator::mfree(void *addr) {
         || addr >= USER_HEAP_END_ADDR) {
         return -1;
     }
+
+    DummyMutex dummy(&mutex);
 
     // Return to header
     auto *elem = (BlockHeader *) ((uint8 *) addr - sizeof(BlockHeader));

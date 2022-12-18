@@ -1,38 +1,33 @@
 #ifndef _SCHEDULER_HPP
 #define _SCHEDULER_HPP
 
-#include "Mutex.hpp"
+#include "DummyMutex.hpp"
 #include "LinkedList.hpp"
 
 class TCB;
 
 // MFQ thread scheduler with starvation avoidance
-class Scheduler : public KObject {
+class Scheduler {
 public:
-    Scheduler(const Scheduler &) = delete;
+    static void initScheduler();
 
-    void operator=(const Scheduler &) = delete;
+    static TCB *get();
 
-    TCB *get();
-
-    void put(TCB *tcb, bool wasBlocked = true);
-
-    static Scheduler *getInstance();
-
-    ~Scheduler() override;
+    static void put(TCB *tcb, bool wasBlocked = true);
 
 private:
-    Scheduler();
 
     static const uint64 maxPriority = 2;
 
     static const uint64 timeSlicePriority[maxPriority + 1];
 
-    LinkedList<TCB> *readyThreadQueue[2];
+    static bool init;
 
-    Mutex mutex;
+    static LinkedList<TCB> *readyThreadQueue[2];
 
-    uint8 active = 0;
+    static Mutex *mutex;
+
+    static uint8 active;
 };
 
 

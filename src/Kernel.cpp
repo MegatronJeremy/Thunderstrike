@@ -78,11 +78,11 @@ void Kernel::handleSystemCall() {
 }
 
 void *Kernel::mem_alloc(size_t size) {
-    return kmalloc(size);
+    return mmalloc(size);
 }
 
 int Kernel::mem_free(void *addr) {
-    return kfree(addr);
+    return mfree(addr);
 }
 
 int Kernel::thread_create(uint64 *args) {
@@ -198,8 +198,8 @@ int Kernel::sem_signal(uint64 id) {
 }
 
 int Kernel::time_sleep(time_t time) {
-    if (time == 0) TCB::dispatch();
-    else TimerInterrupt::block(TCB::running, time);
+    if (time != 0) TimerInterrupt::block(TCB::running, time);
+    TCB::dispatch();
     return 0;
 }
 

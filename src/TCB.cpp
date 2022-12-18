@@ -17,25 +17,80 @@ uint64 TCB::timeSliceCounter = 0;
 
 size_t TCB::stackByteSize = DEFAULT_STACK_SIZE * sizeof(uint64);
 
-Cache *TCB::tcbCache = nullptr;
+kmem_cache_t *TCB::tcbCache = nullptr;
 
-TCB::TCB() {
-    ssp = (uint64) (kernelStack + DEFAULT_STACK_SIZE);
+TCB *TCB::createTCB() {
+    TCB *tcb = (TCB *) kmem_cache_alloc(tcbCache);
+    if (!tcb) {
+        // try to shrink cache if no memory
+        kmem_cache_shrink(tcbCache);
+        tcb = (TCB *) kmem_cache_alloc(tcbCache);
+    }
+    return tcb;
 }
 
-TCB::TCB(TCB::Body body, void *args, uint64 *threadStack, bool privileged, Type type) :
-        body(body), args(args),
-        threadStack(threadStack),
-        privileged(privileged),
-        context({(uint64) threadWrapper, (uint64) (threadStack + DEFAULT_STACK_SIZE)}),
-        status(WAITING),
-        ssp((uint64) (kernelStack + DEFAULT_STACK_SIZE)),
-        type(type) {
+void TCB::initTCB(TCB::Body body, void *args, uint64 *threadStack, bool privileged, Type type) {
+    this->body = body;
+
+    this->args = args;
+
+    this->threadStack = threadStack;
+
+    this->privileged = privileged;
+
+    this->type = type;
+
+    context = {(uint64) threadWrapper, (uint64) (threadStack + DEFAULT_STACK_SIZE)};
+
+    status = WAITING;
+}
+
+void TCB::defaultCtor() {
+    id = ID++;
+
+    body = nullptr;
+    args = nullptr;
+
+    threadStack = nullptr;
+
+    kernelStack = (uint64 *) kmalloc(stackByteSize);
+
+    privileged = true;
+
+    context = {0, 0};
+
+    priority = 1;
+
+    status = READY;
+
+    waitingToJoin = new LinkedList<TCB>;
+
+    mutex = new Mutex;
+
+    ssp = (uint64) (kernelStack + DEFAULT_STACK_SIZE);
+
+    type = KERNEL;
+
+    listNode = new ListNode<TCB>(this);
+
+    hashNode = new LinkedHashNode<TCB>(this, id);
+}
+
+void TCB::defaultDtor() {
+    mfree(threadStack);
+    kfree(kernelStack);
+
+    delete listNode;
+    delete hashNode;
+}
+
+TCB *TCB::createKernelThread() {
+    return createTCB();
 }
 
 TCB *TCB::createThread(TCB::Body body, void *args, Type type, bool start) {
     if (!body) return nullptr;
-    auto *threadStack = (uint64 *) kmalloc(byteToBlocks(stackByteSize));
+    auto *threadStack = (uint64 *) mmalloc(byteToBlocks(stackByteSize));
     return createThread(body, args, threadStack, type, start);
 }
 
@@ -57,33 +112,48 @@ TCB *TCB::createThread(TCB::Body body, void *args, uint64 *threadStack, Type typ
             return nullptr;
     }
 
-    TCB *tcb = new TCB(body, args, threadStack, prMode, KERNEL);
+    if (!tcbCache)
+        tcbCache = kmem_cache_create("tcb", sizeof(TCB),
+                                     [](void *obj) {
+                                         ((TCB *) obj)->defaultCtor();
+                                     },
+                                     [](void *obj) {
+                                         ((TCB *) obj)->defaultDtor();
+                                     });
+
+    TCB *tcb = createTCB();
+    if (!tcb) return nullptr;
+
+    tcb->initTCB(body, args, threadStack, prMode, type);
+
     if (start) TCB::start(tcb);
 
     return tcb;
+}
+
+void TCB::deleteTCB(void *obj) {
+    kmem_cache_free(tcbCache, obj);
 }
 
 int TCB::start(TCB *tcb) {
     if (!tcb->isWaiting()) return -1;
 
     tcb->setReady();
-    Scheduler::getInstance()->put(tcb);
+    Scheduler::put(tcb);
 
     return 0;
 }
 
 void TCB::exit() {
-    running->mutex.wait();
+    DummyMutex dummy(running->mutex);
 
     running->setFinished();
 
-    while (!running->waitingToJoin.isEmpty()) {
-        TCB *thr = running->waitingToJoin.removeFirst();
+    while (!running->waitingToJoin->isEmpty()) {
+        TCB *thr = running->waitingToJoin->removeFirst();
         thr->setReady();
-        Scheduler::getInstance()->put(thr);
+        Scheduler::put(thr);
     }
-
-    running->mutex.signal();
 
     ThreadCollector::put(running);
 
@@ -95,10 +165,10 @@ void TCB::dispatch(bool wasBlocked) {
     TCB *old = running;
 
     if (old->isReady()) {
-        Scheduler::getInstance()->put(old, wasBlocked);
+        Scheduler::put(old, wasBlocked);
     }
 
-    running = Scheduler::getInstance()->get();
+    running = Scheduler::get();
 
     if (!running) {
         running = IdleThread::getIdleThread();
@@ -119,33 +189,15 @@ void TCB::threadWrapper() {
 }
 
 int TCB::join() {
-    mutex.wait();
+    DummyMutex dummy(mutex);
 
     if (isFinished()) {
-        mutex.signal();
         return 0;
     }
 
     running->setBlocked();
-    waitingToJoin.addLast(&running->listNode);
-
-    mutex.signal();
+    waitingToJoin->addLast(running->listNode);
 
     return 0;
-}
-
-TCB::~TCB() {
-    kfree(kernelStack);
-    kfree(threadStack);
-}
-
-void *TCB::operator new(size_t) {
-    if (!tcbCache) tcbCache = new Cache("tcb", sizeof(TCB));
-
-    return tcbCache->allocate();
-}
-
-void TCB::operator delete(void *obj) {
-    tcbCache->free(obj);
 }
 

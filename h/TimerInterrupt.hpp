@@ -1,7 +1,7 @@
 #ifndef _TIMERINTERRUPT_HPP
 #define _TIMERINTERRUPT_HPP
 
-#include "Mutex.hpp"
+#include "DummyMutex.hpp"
 #include "LinkedList.hpp"
 
 class TCB;

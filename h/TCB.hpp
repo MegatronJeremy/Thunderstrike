@@ -2,15 +2,14 @@
 #define _TCB_HPP
 
 #include "../lib/hw.h"
-#include "KObject.hpp"
-#include "Mutex.hpp"
+#include "DummyMutex.hpp"
 #include "ListNode.hpp"
 #include "LinkedList.hpp"
 #include "LinkedHashNode.hpp"
-
-#include "../h/Cache.hpp"
+#include "../h/slab.h"
 
 #define OFFSETOF(TYPE, ELEMENT) ((size_t)&(((TYPE *)0)->ELEMENT))
+
 
 // Thread Control Block - kernel implementation of threads
 class TCB {
@@ -19,15 +18,15 @@ public:
         KERNEL, CONSOLE, USER
     };
 
+    TCB() = delete;
+
     TCB(const TCB &) = delete;
 
     void operator=(const TCB &) = delete;
 
     using Body = void (*)(void *);
 
-    static TCB *createKernelThread() {
-        return new TCB();
-    }
+    static TCB *createKernelThread();
 
     static TCB *createThread(Body body, void *args, Type type = USER, bool start = true);
 
@@ -114,10 +113,6 @@ public:
         blockedTime -= time;
     }
 
-    const Mutex *getMutex() const {
-        return &mutex;
-    }
-
     uint64 getSsp() const {
         return ssp;
     }
@@ -131,11 +126,11 @@ public:
     };
 
     ListNode<TCB> *getListNode() {
-        return &listNode;
+        return listNode;
     }
 
     LinkedHashNode<TCB> *getHashNode() {
-        return &hashNode;
+        return hashNode;
     }
 
     Type getType() const {
@@ -154,16 +149,14 @@ public:
         this->priority = priority;
     }
 
-    ~TCB();
-
     static TCB *running;
 
     static TCB *userMain;
 
-    void* operator new(size_t);
-    void operator delete(void *);
+    static void deleteTCB(void *);
 
 private:
+
     enum Status {
         READY, FINISHED, BLOCKED, IDLE, INTERRUPTED, WAITING
     };
@@ -175,50 +168,62 @@ private:
 
     friend class Riscv;
 
-    TCB();
-
-    explicit TCB(Body body, void *args, uint64 *threadStack, bool privileged, Type type);
+    static TCB *createTCB();
 
     static void threadWrapper();
 
     static void contextSwitch(Context *oldContext, Context *runningContext);
 
-    static Cache *tcbCache;
+    void initTCB(Body body, void *args, uint64 *threadStack, bool privileged, Type type);
+
+    void defaultCtor();
+
+    void defaultDtor();
+
+    static kmem_cache_t *tcbCache;
 
     static uint64 ID;
-    uint64 id = ID++;
-
-    Body body = nullptr;
-    void *args = nullptr;
 
     static size_t stackByteSize;
 
+    static uint64 offsSSP;
+
+    static uint64 timeSliceCounter;
+
+    uint64 id = ID++;
+
+    Body body = nullptr;
+
+    void *args = nullptr;
+
     uint64 *threadStack = nullptr;
-    uint64 *kernelStack = (uint64 *) kmalloc(byteToBlocks(stackByteSize));
+
+    uint64 *kernelStack = (uint64 *) mmalloc(byteToBlocks(stackByteSize));
+
     bool privileged = true;
 
     Context context = {0, 0};
 
-    uint64 timeSlice = DEFAULT_TIME_SLICE;
+    uint64 timeSlice;
 
     uint64 priority = 1;
 
     Status status = READY;
 
-    LinkedList<TCB> waitingToJoin;
-    Mutex mutex;
+    LinkedList<TCB> *waitingToJoin = new LinkedList<TCB>;
 
-    static uint64 offsSSP;
-    uint64 ssp = 0;
+    Mutex *mutex = new Mutex;
+
+    uint64 ssp = (uint64) (kernelStack + DEFAULT_STACK_SIZE);
 
     Type type = KERNEL;
 
-    time_t blockedTime = 0;
+    time_t blockedTime;
 
-    ListNode<TCB> listNode = ListNode<TCB>(this);
-    LinkedHashNode<TCB> hashNode = LinkedHashNode<TCB>(this, id);
+    ListNode<TCB> *listNode = new ListNode<TCB>(this);
 
-    static uint64 timeSliceCounter;
+    LinkedHashNode<TCB> *hashNode = new LinkedHashNode<TCB>(this, id);
+
 };
 
 

@@ -3,19 +3,20 @@
 
 #include "KObject.hpp"
 #include "LinkedHashNode.hpp"
-#include "Mutex.hpp"
+#include "DummyMutex.hpp"
 
 // Kernel template structure - linked list hash table with prime number modulus hash function
 template<typename T>
 class LinkedHashTable : public KObject {
 public:
     LinkedHashTable(const LinkedHashTable<T> &) = delete;
+
     void operator=(const LinkedHashTable<T> &) = delete;
 
     static int insert(LinkedHashNode<T> *elem);
 
     static T *get(uint64 id);
-    
+
     static bool contains(uint64 id) {
         return get(id) != nullptr;
     }
@@ -51,39 +52,34 @@ template<typename T>
 int LinkedHashTable<T>::insert(LinkedHashNode<T> *elem) {
     if (!elem) return -1;
 
-    getMutex()->wait();
+    DummyMutex dummy(getMutex());
 
     uint64 hash = getHash(elem->id);
     LinkedHashNode<T> *curr = hashTable[hash];
     while (curr && curr->next) curr = curr->next;
     (!curr ? hashTable[hash] : curr->next) = elem;
-    
-    getMutex()->signal();
 
     return 0;
 }
 
 template<typename T>
 T *LinkedHashTable<T>::get(uint64 id) {
-    getMutex()->wait();
+    DummyMutex dummy(getMutex());
 
     uint64 hash = getHash(id);
     LinkedHashNode<T> *curr = hashTable[hash];
     while (curr && curr->id != id) curr = curr->next;
 
     if (!curr) {
-        getMutex()->signal();
         return nullptr;
     }
-    
-    getMutex()->signal();
 
     return curr->data;
 }
 
 template<typename T>
 int LinkedHashTable<T>::remove(uint64 id) {
-    getMutex()->wait();
+    DummyMutex dummy(getMutex());
 
     uint64 hash = getHash(id);
 
@@ -91,13 +87,11 @@ int LinkedHashTable<T>::remove(uint64 id) {
 
     while (curr && curr->id != id) prev = curr, curr = curr->next;
     if (!curr) {
-        getMutex()->signal();
         return -1;
     }
 
     (!prev ? hashTable[hash] : prev->next) = curr->next;
-    
-    getMutex()->signal();
+
     return 0;
 }
 

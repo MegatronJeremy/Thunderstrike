@@ -1,12 +1,11 @@
 #include "../h/KObject.hpp"
 #include "../h/MemoryAllocator.hpp"
 
-void *kmalloc(size_t size) {
-//    kprintString(KObject::name);
+void *mmalloc(size_t size) {
     return MemoryAllocator::malloc(size);
 }
 
-int kfree(void *addr) {
+int mfree(void *addr) {
     return MemoryAllocator::free(addr);
 }
 

@@ -1,6 +1,4 @@
 #include "../h/SlabAllocator.hpp"
-#include "../h/Cache.hpp"
-#include "../h/KObject.hpp"
 
 Cache *SlabAllocator::usedCacheHead = nullptr;
 
@@ -14,9 +12,14 @@ Cache::Slab *SlabAllocator::freeSlabHead = nullptr;
 
 Cache::Slab *SlabAllocator::freeSlabTail = nullptr;
 
+Mutex *SlabAllocator::mutex;
+
+Cache *SlabAllocator::bufferCache[BUFFER_CACHE_SIZE] = {nullptr};
+
 void SlabAllocator::initSlabAllocator(void *space, int blockNum) {
     //TODO
     // init buddyAllocator (space, blockNum)
+    mutex = new Mutex;
 
     expandCacheDescriptors();
 
@@ -24,10 +27,12 @@ void SlabAllocator::initSlabAllocator(void *space, int blockNum) {
 }
 
 void SlabAllocator::expandCacheDescriptors() {
+    DummyMutex dummy(mutex);
+
     //TODO
     static const ushort optimalCacheBucket = getOptimalBucket(sizeof(Cache));
 
-    Cache *curr = (Cache *) kmalloc(byteToBlocks((1 << optimalCacheBucket) * BLOCK_SIZE));
+    Cache *curr = (Cache *) mmalloc(byteToBlocks((1 << optimalCacheBucket) * BLOCK_SIZE));
     if (!curr) return;
 
     const size_t cacheDscPerBucket = getNumberOfSlots(sizeof(Cache), optimalCacheBucket);
@@ -41,10 +46,12 @@ void SlabAllocator::expandCacheDescriptors() {
 }
 
 void SlabAllocator::expandSlabDescriptors() {
+    DummyMutex dummy(mutex);
+
     //TODO
     static const ushort optimalSlabBucket = getOptimalBucket(sizeof(Slab));
 
-    Slab *curr = (Slab *) kmalloc(byteToBlocks((1 << optimalSlabBucket) * BLOCK_SIZE));
+    Slab *curr = (Slab *) mmalloc(byteToBlocks((1 << optimalSlabBucket) * BLOCK_SIZE));
     if (!curr) return;
 
     static size_t slabDscPerBucket = getNumberOfSlots(sizeof(Slab), optimalSlabBucket);
@@ -57,6 +64,8 @@ void SlabAllocator::expandSlabDescriptors() {
 }
 
 Cache *SlabAllocator::getCacheHeader() {
+    DummyMutex dummy(mutex);
+
     if (!freeCacheHead) expandCacheDescriptors();
     if (!freeCacheHead) return nullptr;
 
@@ -70,6 +79,8 @@ Cache *SlabAllocator::getCacheHeader() {
 }
 
 void SlabAllocator::addUsedCacheHeader(Cache *cache) {
+    DummyMutex dummy(mutex);
+
     // add to used list
     cache->prev = usedCacheTail;
     usedCacheTail = (!usedCacheTail ? usedCacheHead : usedCacheTail->next) = cache;
@@ -77,6 +88,8 @@ void SlabAllocator::addUsedCacheHeader(Cache *cache) {
 }
 
 Cache::Slab *SlabAllocator::getSlabHeader() {
+    DummyMutex dummy(mutex);
+
     if (!freeSlabHead) expandSlabDescriptors();
     if (!freeSlabHead) return nullptr;
 
@@ -90,6 +103,8 @@ Cache::Slab *SlabAllocator::getSlabHeader() {
 }
 
 void SlabAllocator::returnCache(Cache *cache) {
+    DummyMutex dummy(mutex);
+
     if (!cache) return;
 
     // remove from used list
@@ -103,11 +118,37 @@ void SlabAllocator::returnCache(Cache *cache) {
 }
 
 void SlabAllocator::returnSlab(Slab *slab) {
+    DummyMutex dummy(mutex);
+
     if (!slab) return;
 
     // return to free list
     freeSlabTail = (!freeSlabTail ? freeSlabHead : freeSlabTail->next) = slab;
     freeSlabTail->next = nullptr;
+}
+
+void *SlabAllocator::allocateBuffer(size_t bufferSize) {
+    ushort bucket = MIN_BUFFER_BUCKET;
+    size_t size = (1 << MIN_BUFFER_BUCKET);
+
+    while (size < bufferSize && bucket < MAX_BUFFER_BUCKET) {
+        size <<= 1;
+        bucket++;
+    }
+
+    if (bufferSize > size) return nullptr;
+
+    ushort ind = bucket - MIN_BUFFER_BUCKET;
+    if (bufferCache[ind] == nullptr) {
+        const char *name = "size-";
+        bufferCache[ind] = new Cache(name, size);
+    }
+
+    return bufferCache[ind]->allocate();
+}
+
+void SlabAllocator::deallocateBuffer(const void *obj) {
+    Cache::sFree(obj);
 }
 
 const ushort SlabAllocator::getOptimalBucket(size_t slotSize) {

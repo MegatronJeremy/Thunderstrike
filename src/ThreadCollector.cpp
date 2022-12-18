@@ -2,7 +2,7 @@
 #include "../h/TCB.hpp"
 #include "../h/Riscv.hpp"
 
-bool ThreadCollector::initialised = false;
+bool ThreadCollector::init = false;
 
 LinkedList<TCB> *ThreadCollector::finishedThreads;
 
@@ -10,32 +10,38 @@ Mutex *ThreadCollector::mutex;
 
 KSemaphore *ThreadCollector::readyToDelete;
 
-void ThreadCollector::initThreadCollector() {
-    if (initialised) return;
-    initialised = true;
+TCB *ThreadCollector::threadCollector;
 
-    TCB::createThread([](void *) { ThreadCollector::run(); }, nullptr, TCB::KERNEL);
+void ThreadCollector::initThreadCollector() {
+    if (init) return;
+    init = true;
 
     finishedThreads = new LinkedList<TCB>;
 
     mutex = new Mutex;
 
     readyToDelete = new KSemaphore(0);
+
+    TCB::createThread([](void *) { ThreadCollector::run(); }, nullptr, TCB::KERNEL);
 }
 
 void ThreadCollector::put(TCB *tcb) {
-    mutex->wait();
+    DummyMutex dummy(mutex);
+
     finishedThreads->addLast(tcb->getListNode());
-    mutex->signal();
     readyToDelete->signal();
+}
+
+void ThreadCollector::deleteThread() {
+    DummyMutex dummy(mutex);
+
+    TCB::deleteTCB(finishedThreads->removeFirst());
 }
 
 [[noreturn]] void ThreadCollector::run() {
     while (true) {
         readyToDelete->wait();
-        mutex->wait();
-        TCB *thr = finishedThreads->removeFirst();
-        mutex->signal();
-        delete thr;
+        deleteThread();
     }
 }
+

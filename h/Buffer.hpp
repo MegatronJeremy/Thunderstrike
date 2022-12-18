@@ -5,6 +5,7 @@
 #include "KObject.hpp"
 #include "Mutex.hpp"
 #include "Riscv.hpp"
+#include "slab.h"
 
 // Kernel template structure - buffer
 template<typename T>

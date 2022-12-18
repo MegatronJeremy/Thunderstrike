@@ -1,7 +1,5 @@
 #include "../h/Cache.hpp"
 #include "../h/SlabAllocator.hpp"
-#include "../h/KObject.hpp"
-
 
 Cache::Cache(const char *name, const size_t objSize, Cache::Constructor ctor, Cache::Destructor dtor) :
         name(name),
@@ -14,6 +12,8 @@ Cache::Cache(const char *name, const size_t objSize, Cache::Constructor ctor, Ca
 }
 
 void *Cache::allocate() {
+    DummyMutex dummy(&mutex);
+
     Slab *slab = slabList[PARTIAL].get();
     if (!slab) {
         slab = slabList[EMPTY].get();
@@ -52,6 +52,9 @@ void Cache::free(void *obj) {
     if (!obj) return;
 
     if (dtor) dtor(obj);
+    if (ctor) ctor(obj);
+
+    DummyMutex dummy(&mutex);
 
     Slot *slot = (Slot *) ((uint8 *) obj - sizeof(Slot));
 
@@ -75,8 +78,19 @@ void Cache::free(void *obj) {
     }
 }
 
+void Cache::sFree(const void *obj) {
+    if (!obj) return;
+
+    Slot *slot = (Slot *) ((uint8 *) obj - sizeof(Slot));
+    Cache *cache = slot->parentCache;
+    cache->free(slot->slotSpace);
+}
+
 int Cache::shrinkCache() {
     if (!newSlabsAllocated) return 0;
+
+    DummyMutex dummy(&mutex);
+
     newSlabsAllocated = false;
     Slab *slab;
     int i = 0;
@@ -85,6 +99,19 @@ int Cache::shrinkCache() {
         i++;
     }
     return i;
+}
+
+void Cache::addEmptySlab() {
+    Slab *slab = SlabAllocator::getSlabHeader();
+
+    if (!slab) return;
+
+    initEmptySlab(slab);
+
+    DummyMutex dummy(&mutex);
+
+    numberOfSlabs++;
+    cacheSizeBlocks += (1 << optimalBucket);
 }
 
 Cache::Slot *Cache::Slab::getSlot() {
@@ -123,21 +150,10 @@ void Cache::SlabList::remove(Cache::Slab *slab) {
     slab->prev = slab->next = nullptr;
 }
 
-void Cache::addEmptySlab() {
-    Slab *slab = SlabAllocator::getSlabHeader();
-    if (!slab) return;
-
-    initEmptySlab(slab);
-
-    numberOfSlabs++;
-    cacheSizeBlocks += (1 << optimalBucket);
-
-    return;
-}
 
 void Cache::initEmptySlab(Slab *slab) {
     //TODO
-    Slot *curr = (Slot *) kmalloc(byteToBlocks(BLOCK_SIZE * (1 << optimalBucket)));
+    Slot *curr = (Slot *) mmalloc(byteToBlocks(BLOCK_SIZE * (1 << optimalBucket)));
     if (!curr) return;
 
     slab->slotNum = slotsPerSlab;
@@ -146,6 +162,7 @@ void Cache::initEmptySlab(Slab *slab) {
 
     for (ushort i = 0; i < slotsPerSlab; i++) {
         curr->parentSlab = slab;
+        curr->parentCache = this;
         curr->slotSpace = (uint8 *) curr + sizeof(Slot);
 
         if (ctor) ctor(curr->slotSpace);
@@ -165,3 +182,4 @@ void *Cache::operator new(size_t) {
 void Cache::operator delete(void *obj) {
     SlabAllocator::returnCache((Cache *) obj);
 }
+

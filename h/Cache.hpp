@@ -2,6 +2,7 @@
 #define _CACHE_HPP
 
 #include "../h/slab.h"
+#include "../h/DummyMutex.hpp"
 
 class Cache {
 public:
@@ -13,6 +14,8 @@ public:
     void *allocate();
 
     void free(void *obj);
+
+    static void sFree(const void *obj);
 
     int shrinkCache();
 
@@ -31,6 +34,7 @@ private:
 
     struct Slot {
         Slab *parentSlab;
+        Cache *parentCache;
 
         Slot *next;
 
@@ -88,6 +92,8 @@ private:
     Cache *next = nullptr, *prev = nullptr;
 
     SlabList slabList[3];
+
+    Mutex mutex;
 
     bool newSlabsAllocated = false;
 };

@@ -16,13 +16,17 @@ public:
 private:
     [[noreturn]] static void run();
 
-    static bool initialised;
+    static void deleteThread();
+
+    static bool init;
 
     static LinkedList<TCB> *finishedThreads;
 
     static Mutex *mutex;
 
     static KSemaphore *readyToDelete;
+
+    static TCB *threadCollector;
 };
 
 #endif

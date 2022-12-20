@@ -20,7 +20,7 @@ void KSemaphore::defaultDtor() {
         tcb->setInterrupted();
         Scheduler::put(tcb);
     }
-    val = INT_MAX;
+    val = 1;
     unlock()
 
 //    LinkedList<TCB>::deleteObj(blockedThreadQueue);

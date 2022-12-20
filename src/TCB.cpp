@@ -34,7 +34,26 @@ void TCB::initTCB(TCB::Body b, void *a, uint64 *tS, bool priv, Type t) {
 }
 
 void TCB::defaultDtor() {
+    body = nullptr;
+    args = nullptr;
+
     mfree(threadStack);
+    threadStack = nullptr;
+
+    privileged = true;
+
+    context = {0, 0};
+
+    priority = 1;
+
+    status = READY;
+
+    ssp = (uint64) (kernelStack + DEFAULT_STACK_SIZE);
+
+    type = KERNEL;
+}
+
+TCB::~TCB() {
     kfree(kernelStack);
 
     delete listNode;

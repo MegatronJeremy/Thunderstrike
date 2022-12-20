@@ -12,6 +12,8 @@ public:
 
     using KObject<IOEvent>::operator new;
 
+    using KObject<IOEvent>::operator delete;
+
     static IOEvent *createIOEvent(int val);
 
     int wait() override;

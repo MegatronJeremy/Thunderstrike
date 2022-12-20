@@ -33,12 +33,14 @@ protected:
 
     int val = 1;
 
+    //TODO
     LinkedList<TCB> blockedThreadQueue;
     //= LinkedList<TCB>::createObj();
 private:
     static uint64 ID;
     uint64 id = ID++;
 
+    //TODO
     LinkedHashNode<KSemaphore> hashNode = LinkedHashNode<KSemaphore>(this, id);
     //= LinkedHashNode<KSemaphore>::createLinkedHashNode(this, id);
 

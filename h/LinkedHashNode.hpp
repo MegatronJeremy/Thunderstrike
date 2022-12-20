@@ -20,9 +20,9 @@ public:
 private:
     friend class LinkedHashTable<T>;
 
-    T *data = nullptr;
-    uint64 id = -1;
-    LinkedHashNode *next = nullptr;
+    T *data;
+    uint64 id;
+    LinkedHashNode *next;
 };
 
 template<typename T>

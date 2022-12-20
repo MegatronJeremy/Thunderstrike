@@ -12,26 +12,26 @@ size_t MemorySegments::getUserHeapSize() {
     return USER_HEAP_SIZE;
 }
 
-const void *MemorySegments::getUserHeapStartAddr() {
-    static const void *USER_HEAP_START_ADDR = (uint8 *) HEAP_START_ADDR + getKernelHeapSize();
+void *MemorySegments::getUserHeapStartAddr() {
+    static void *USER_HEAP_START_ADDR = (uint8 *) HEAP_START_ADDR + getKernelHeapSize();
 
     return USER_HEAP_START_ADDR;
 }
 
-const void *MemorySegments::getUserHeapEndAddr() {
-    static const void *USER_HEAP_END_ADDR = HEAP_END_ADDR;
+void *MemorySegments::getUserHeapEndAddr() {
+    static void *USER_HEAP_END_ADDR = (void *) HEAP_END_ADDR;
 
     return USER_HEAP_END_ADDR;
 }
 
-const void *MemorySegments::getKernelHeapStartAddr() {
-    static const void *KERNEL_HEAP_START_ADDR = HEAP_START_ADDR;
+void *MemorySegments::getKernelHeapStartAddr() {
+    static void *KERNEL_HEAP_START_ADDR = (void *) HEAP_START_ADDR;
 
     return KERNEL_HEAP_START_ADDR;
 }
 
-const void *MemorySegments::getKernelHeapEndAddr() {
-    static const void *KERNEL_HEAP_END_ADDR = getUserHeapStartAddr();
+void *MemorySegments::getKernelHeapEndAddr() {
+    static void *KERNEL_HEAP_END_ADDR = getUserHeapStartAddr();
 
     return KERNEL_HEAP_END_ADDR;
 }

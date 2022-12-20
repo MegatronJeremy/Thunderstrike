@@ -172,7 +172,7 @@ int Kernel::sem_close(uint64 id) {
     if (LinkedHashTable<KSemaphore>::remove(id) < 0)
         return -2;
 
-    delete sem;
+    KObject<KSemaphore>::deleteObj(sem);
 
     return 0;
 }

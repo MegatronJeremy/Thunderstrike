@@ -14,6 +14,8 @@ public:
 
     void operator=(const LinkedList &) = delete;
 
+    void defaultDtor() override;
+
     int getCount() const {
         return size;
     }
@@ -78,6 +80,11 @@ private:
 
 };
 
+template<typename T>
+void LinkedList<T>::defaultDtor() {
+    head = tail = curr = nullptr;
+    size = 0;
+}
 
 template<typename T>
 void LinkedList<T>::addFirst(ListNode<T> *elem) {

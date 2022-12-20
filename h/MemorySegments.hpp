@@ -9,13 +9,13 @@ public:
 
     static size_t getUserHeapSize();
 
-    static const void *getUserHeapStartAddr();
+    static void *getUserHeapStartAddr();
 
-    static const void *getUserHeapEndAddr();
+    static void *getUserHeapEndAddr();
 
-    static const void *getKernelHeapStartAddr();
+    static void *getKernelHeapStartAddr();
 
-    static const void *getKernelHeapEndAddr();
+    static void *getKernelHeapEndAddr();
 
 private:
     static size_t getHeapSize();

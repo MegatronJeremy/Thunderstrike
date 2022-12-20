@@ -51,8 +51,11 @@ void *Cache::allocate() {
 void Cache::free(void *obj) {
     if (!obj) return;
 
-    if (dtor) dtor(obj);
-    if (ctor) ctor(obj);
+    if (dtor) {
+        bool destroyObj = false;
+        uint64 params[] = {(uint64) obj, (uint64) destroyObj};
+        dtor(params);
+    }
 
     DummyMutex dummy(&mutex);
 
@@ -93,8 +96,18 @@ int Cache::shrinkCache() {
 
     newSlabsAllocated = false;
     Slab *slab;
+
     int i = 0;
     while ((slab = slabList[EMPTY].get()) != nullptr) {
+        if (dtor) {
+            Slot *curr;
+            while ((curr = slab->getSlot()) != nullptr) {
+                bool destroyObj = true;
+                uint64 params[] = {(uint64) curr->slotSpace, (uint64) destroyObj};
+                dtor(params);
+            }
+        }
+
         SlabAllocator::returnSlab(slab);
         i++;
     }

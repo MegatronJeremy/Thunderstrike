@@ -33,11 +33,12 @@ public:
         return addr;
     }
 
+    static void operator delete(void *) {}
+
 private:
     static void initCache();
 
     static kmem_cache_t *objCache;
-
 };
 
 template<typename T>
@@ -52,8 +53,15 @@ void KObject<T>::initCache() {
                                      [](void *obj) {
                                          new(obj) T;
                                      },
-                                     [](void *obj) {
-                                         ((T *) obj)->defaultDtor();
+                                     [](void *args) {
+                                         uint64 * params = (uint64 *) args;
+                                         T *obj = (T *) params[0];
+                                         bool destroyObj = (bool) params[1];
+                                         if (destroyObj) {
+                                             delete obj;
+                                         } else {
+                                             obj->defaultDtor();
+                                         }
                                      });
 
         if (!objCache && !triedToShrink) {
@@ -64,8 +72,8 @@ void KObject<T>::initCache() {
             break;
         }
     }
-
 }
+
 
 template<typename T>
 T *KObject<T>::createObj() {

@@ -4,11 +4,12 @@
 #include "../h/Scheduler.hpp"
 #include "../h/ThreadCollector.hpp"
 #include "../h/KConsole.hpp"
+#include "../h/MemorySegments.hpp"
 
 void userMain();
 
 int main() {
-    kmem_init(nullptr, 0);
+    kmem_init(MemorySegments::getKernelHeapStartAddr(), 0);
     Scheduler::initScheduler();
     KConsole::initKConsole();
     ThreadCollector::initThreadCollector();

@@ -4,6 +4,7 @@
 
 void Mutex::defaultDtor() {
     KSemaphore::defaultDtor();
+    holder = nullptr;
 }
 
 int Mutex::wait() {

@@ -26,6 +26,8 @@ public:
 
     void operator=(const TCB &) = delete;
 
+    ~TCB() override;
+
     void defaultDtor() override;
 
     static TCB *createKernelThread();

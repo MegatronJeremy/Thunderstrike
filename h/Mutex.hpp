@@ -14,8 +14,6 @@ public:
 
     using KObject<Mutex>::operator new;
 
-    using KObject<Mutex>::operator delete;
-
     int wait() override;
 
     int signal() override;

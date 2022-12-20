@@ -31,6 +31,12 @@ void TCB::initTCB(TCB::Body b, void *a, uint64 *tS, bool priv, Type t) {
     context = {(uint64) threadWrapper, (uint64) (tS + DEFAULT_STACK_SIZE)};
 
     status = WAITING;
+
+    kernelStack = (uint64 *) kmalloc(stackByteSize);
+
+    listNode = ListNode<TCB>::createListNode(this);
+    hashNode = LinkedHashNode<TCB>::createLinkedHashNode(this, id);
+    waitingToJoin = LinkedList<TCB>::createObj();
 }
 
 void TCB::defaultDtor() {
@@ -51,13 +57,17 @@ void TCB::defaultDtor() {
     ssp = (uint64) (kernelStack + DEFAULT_STACK_SIZE);
 
     type = KERNEL;
-}
 
-TCB::~TCB() {
     kfree(kernelStack);
+    kernelStack = nullptr;
 
-    delete listNode;
-    delete hashNode;
+    ListNode<TCB>::deleteObj(listNode);
+    LinkedHashNode<TCB>::deleteObj(hashNode);
+    LinkedList<TCB>::deleteObj(waitingToJoin);
+
+    listNode = nullptr;
+    hashNode = nullptr;
+    waitingToJoin = nullptr;
 }
 
 TCB *TCB::createKernelThread() {

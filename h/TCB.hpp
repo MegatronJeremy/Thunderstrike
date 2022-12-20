@@ -194,7 +194,7 @@ private:
 
     uint64 *threadStack = nullptr;
 
-    uint64 *kernelStack = (uint64 *) kmalloc(stackByteSize);
+    uint64 *kernelStack = nullptr;
 
     bool privileged = true;
 
@@ -206,7 +206,7 @@ private:
 
     Status status = READY;
 
-    LinkedList<TCB> *waitingToJoin = LinkedList<TCB>::createObj();
+    LinkedList<TCB> *waitingToJoin = nullptr;
 
     Mutex *mutex = Mutex::createObj();
 
@@ -216,9 +216,9 @@ private:
 
     time_t blockedTime;
 
-    ListNode<TCB> *listNode = ListNode<TCB>::createListNode(this);
+    ListNode<TCB> *listNode = nullptr;
 
-    LinkedHashNode<TCB> *hashNode = LinkedHashNode<TCB>::createLinkedHashNode(this, id);
+    LinkedHashNode<TCB> *hashNode = nullptr;
 
 };
 

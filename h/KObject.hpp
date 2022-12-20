@@ -11,10 +11,10 @@ int mfree(void *);
 size_t byteToBlocks(size_t size);
 
 static constexpr uint64
-DEFAULT_BUFFER_SIZE = 2048;
+        DEFAULT_BUFFER_SIZE = 2048;
 
 static constexpr uint64
-DEFAULT_HASH_SIZE = 1499;
+        DEFAULT_HASH_SIZE = 1499;
 
 // Base apstract class for kernel objects - contains necessary memory allocation / deallocation templates
 
@@ -32,8 +32,6 @@ public:
     static void *operator new(size_t, void *addr) {
         return addr;
     }
-
-    static void operator delete(void *) {}
 
 private:
     static void initCache();
@@ -53,15 +51,8 @@ void KObject<T>::initCache() {
                                      [](void *obj) {
                                          new(obj) T;
                                      },
-                                     [](void *args) {
-                                         uint64 * params = (uint64 *) args;
-                                         T *obj = (T *) params[0];
-                                         bool destroyObj = (bool) params[1];
-                                         if (destroyObj) {
-                                             delete obj;
-                                         } else {
-                                             obj->defaultDtor();
-                                         }
+                                     [](void *obj) {
+                                         ((T *) obj)->defaultDtor();
                                      });
 
         if (!objCache && !triedToShrink) {

@@ -11,17 +11,15 @@
 template<typename T>
 class Buffer : public KObject<Buffer<T>> {
 public:
-    Buffer() = delete;
-
-    void defaultCtor() override;
-
-    void defaultDtor() override;
-
-    static Buffer *createBuffer(uint64 sz = DEFAULT_BUFFER_SIZE);
+    Buffer() = default;
 
     Buffer(const Buffer<T> &) = delete;
 
     Buffer &operator=(const Buffer<T> &) = delete;
+
+    void defaultDtor() override;
+
+    static Buffer *createBuffer(uint64 sz = DEFAULT_BUFFER_SIZE);
 
     int addLast(T t);
 
@@ -32,21 +30,16 @@ public:
     }
 
 private:
-    uint64 front = 0, back = 0, size = DEFAULT_BUFFER_SIZE;
-    T *buffer;
+    uint64 front = 0, back = 0, size = 0;
+    T *buffer = nullptr;
 };
-
-
-template<typename T>
-void Buffer<T>::defaultCtor() {
-    front = back = 0;
-    size = 0;
-    buffer = nullptr;
-}
 
 template<typename T>
 void Buffer<T>::defaultDtor() {
+    front = back = size = 0;
+
     kfree(buffer);
+    buffer = nullptr;
 }
 
 template<typename T>
@@ -72,6 +65,5 @@ T Buffer<T>::removeFirst() {
     front = (front + 1) % size;
     return t;
 }
-
 
 #endif

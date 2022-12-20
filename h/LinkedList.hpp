@@ -8,15 +8,11 @@
 template<typename T>
 class LinkedList : public KObject<LinkedList<T>> {
 public:
-    LinkedList() = delete;
+    LinkedList() = default;
 
     LinkedList(const LinkedList &) = delete;
 
     void operator=(const LinkedList &) = delete;
-
-    void defaultCtor() override;
-
-    void defaultDtor() override;
 
     int getCount() const {
         return size;
@@ -82,15 +78,6 @@ private:
 
 };
 
-
-template<typename T>
-void LinkedList<T>::defaultCtor() {
-    head = tail = curr = nullptr;
-    size = 0;
-}
-
-template<typename T>
-void LinkedList<T>::defaultDtor() {}
 
 template<typename T>
 void LinkedList<T>::addFirst(ListNode<T> *elem) {
@@ -184,4 +171,5 @@ void LinkedList<T>::insertBeforeCurr(ListNode<T> *elem) {
     else before->next = elem;
     size++;
 }
+
 #endif

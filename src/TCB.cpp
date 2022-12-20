@@ -17,8 +17,6 @@ uint64 TCB::timeSliceCounter = 0;
 
 size_t TCB::stackByteSize = DEFAULT_STACK_SIZE * sizeof(uint64);
 
-kmem_cache_t *TCB::tcbCache = nullptr;
-
 void TCB::initTCB(TCB::Body b, void *a, uint64 *tS, bool priv, Type t) {
     body = b;
 
@@ -33,37 +31,6 @@ void TCB::initTCB(TCB::Body b, void *a, uint64 *tS, bool priv, Type t) {
     context = {(uint64) threadWrapper, (uint64) (tS + DEFAULT_STACK_SIZE)};
 
     status = WAITING;
-}
-
-void TCB::defaultCtor() {
-    id = ID++;
-
-    body = nullptr;
-    args = nullptr;
-
-    threadStack = nullptr;
-
-    kernelStack = (uint64 *) kmalloc(stackByteSize);
-
-    privileged = true;
-
-    context = {0, 0};
-
-    priority = 1;
-
-    status = READY;
-
-    waitingToJoin = LinkedList<TCB>::createObj();
-
-    mutex = Mutex::createObj();
-
-    ssp = (uint64) (kernelStack + DEFAULT_STACK_SIZE);
-
-    type = KERNEL;
-
-    listNode = ListNode<TCB>::createListNode(this);
-
-    hashNode = LinkedHashNode<TCB>::createLinkedHashNode(this, id);
 }
 
 void TCB::defaultDtor() {
@@ -107,10 +74,6 @@ TCB *TCB::createThread(TCB::Body body, void *args, uint64 *threadStack, Type typ
     if (start) TCB::start(tcb);
 
     return tcb;
-}
-
-void TCB::deleteTCB(void *obj) {
-    kmem_cache_free(tcbCache, obj);
 }
 
 int TCB::start(TCB *tcb) {

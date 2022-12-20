@@ -12,8 +12,6 @@ class KSemaphore : public KObject<KSemaphore> {
 public:
     static KSemaphore *createKSemaphore(int v = 1);
 
-    void defaultCtor() override;
-
     void defaultDtor() override;
 
     virtual int wait();
@@ -25,7 +23,7 @@ public:
     }
 
     LinkedHashNode<KSemaphore> *getHashNode() {
-        return hashNode;
+        return &hashNode;
     }
 
 protected:
@@ -33,14 +31,16 @@ protected:
 
     virtual void deblock();
 
-    int val;
+    int val = 1;
 
-    LinkedList<TCB> *blockedThreadQueue;
+    LinkedList<TCB> blockedThreadQueue;
+    //= LinkedList<TCB>::createObj();
 private:
     static uint64 ID;
     uint64 id = ID++;
 
-    LinkedHashNode<KSemaphore> *hashNode;
+    LinkedHashNode<KSemaphore> hashNode = LinkedHashNode<KSemaphore>(this, id);
+    //= LinkedHashNode<KSemaphore>::createLinkedHashNode(this, id);
 
 };
 

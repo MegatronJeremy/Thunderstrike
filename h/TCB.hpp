@@ -20,13 +20,11 @@ public:
 
     using Body = void (*)(void *);
 
-    TCB() = delete;
+    TCB() = default;
 
     TCB(const TCB &) = delete;
 
     void operator=(const TCB &) = delete;
-
-    void defaultCtor() override;
 
     void defaultDtor() override;
 
@@ -157,8 +155,6 @@ public:
 
     static TCB *userMain;
 
-    static void deleteTCB(void *);
-
 
 private:
 
@@ -180,8 +176,6 @@ private:
     void initTCB(Body b, void *a, uint64 *tS, bool priv, Type t);
 
 
-    static kmem_cache_t *tcbCache;
-
     static uint64 ID;
 
     static size_t stackByteSize;
@@ -198,21 +192,21 @@ private:
 
     uint64 *threadStack = nullptr;
 
-    uint64 *kernelStack = (uint64 *) mmalloc(byteToBlocks(stackByteSize));
+    uint64 *kernelStack = (uint64 *) kmalloc(stackByteSize);
 
     bool privileged = true;
 
     Context context = {0, 0};
 
-    uint64 timeSlice;
+    uint64 timeSlice = DEFAULT_TIME_SLICE;
 
     uint64 priority = 1;
 
     Status status = READY;
 
-    LinkedList<TCB> *waitingToJoin;
+    LinkedList<TCB> *waitingToJoin = LinkedList<TCB>::createObj();
 
-    Mutex *mutex = new Mutex;
+    Mutex *mutex = Mutex::createObj();
 
     uint64 ssp = (uint64) (kernelStack + DEFAULT_STACK_SIZE);
 
@@ -220,9 +214,9 @@ private:
 
     time_t blockedTime;
 
-    ListNode<TCB> *listNode;
+    ListNode<TCB> *listNode = ListNode<TCB>::createListNode(this);
 
-    LinkedHashNode<TCB> *hashNode;
+    LinkedHashNode<TCB> *hashNode = LinkedHashNode<TCB>::createLinkedHashNode(this, id);
 
 };
 

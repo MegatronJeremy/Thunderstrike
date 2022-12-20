@@ -7,17 +7,13 @@
 
 // Kernel template structure - linked list hash table with prime number modulus hash function
 template<typename T>
-class LinkedHashTable : public KObject<LinkedHashTable<T>> {
+class LinkedHashTable {
 public:
     LinkedHashTable() = delete;
 
     LinkedHashTable(const LinkedHashTable<T> &) = delete;
 
     void operator=(const LinkedHashTable<T> &) = delete;
-
-    void defaultCtor() override;
-
-    void defaultDtor() override;
 
     static int insert(LinkedHashNode<T> *elem);
 
@@ -47,24 +43,16 @@ template<typename T>
 LinkedHashNode<T> **LinkedHashTable<T>::hashTable = nullptr;
 
 template<typename T>
-void LinkedHashTable<T>::defaultCtor() {
-    hashTable = kmalloc(DEFAULT_HASH_SIZE * sizeof(LinkedHashNode<T>));
-    for (int i = 0; i < DEFAULT_HASH_SIZE; i++) {
-        hashTable[i] = nullptr;
-    }
-}
-
-template<typename T>
-void LinkedHashTable<T>::defaultDtor() {
-    for (int i = 0; i < DEFAULT_HASH_SIZE; i++) {
-        LinkedHashNode<T>::deleteObj(hashTable[i]);
-    }
-    kfree(hashTable);
-}
-
-template<typename T>
 inline Mutex *LinkedHashTable<T>::getMutex() {
-    static auto *mutex = (Mutex *) Mutex::createObj();
+    static Mutex *mutex = Mutex::createObj();
+
+    if (hashTable == nullptr) {
+        hashTable = (LinkedHashNode<T> **) kmalloc(DEFAULT_HASH_SIZE * sizeof(LinkedHashNode<T>));
+        for (uint64 i = 0; i < DEFAULT_HASH_SIZE; i++) {
+            hashTable[i] = nullptr;
+        }
+    }
+
     return mutex;
 }
 

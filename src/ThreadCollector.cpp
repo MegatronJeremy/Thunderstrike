@@ -16,7 +16,7 @@ void ThreadCollector::initThreadCollector() {
 
     finishedThreads = LinkedList<TCB>::createObj();
 
-    mutex = new Mutex;
+    mutex = Mutex::createObj();
 
     readyToDelete = KSemaphore::createKSemaphore(0);
 

@@ -10,27 +10,20 @@ class LinkedHashTable;
 template<typename T>
 class LinkedHashNode : public KObject<LinkedHashNode<T>> {
 public:
-    LinkedHashNode() = delete;
+    LinkedHashNode<T>() = default;
 
-    void defaultCtor() override;
+    LinkedHashNode<T>(T *d, uint64 i, LinkedHashNode<T> *n = nullptr) :
+            data(d), id(i), next(n) {}
 
     static LinkedHashNode<T> *createLinkedHashNode(T *d, uint64 i, LinkedHashNode<T> *n = nullptr);
 
 private:
     friend class LinkedHashTable<T>;
 
-    T *data;
-    uint64 id;
-    LinkedHashNode *next;
-
+    T *data = nullptr;
+    uint64 id = -1;
+    LinkedHashNode *next = nullptr;
 };
-
-template<typename T>
-void LinkedHashNode<T>::defaultCtor() {
-    data = nullptr;
-    id = -1;
-    next = nullptr;
-}
 
 template<typename T>
 LinkedHashNode<T> *LinkedHashNode<T>::createLinkedHashNode(T *d, uint64 i, LinkedHashNode<T> *n) {

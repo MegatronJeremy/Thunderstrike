@@ -19,7 +19,7 @@ Cache *SlabAllocator::bufferCache[BUFFER_CACHE_SIZE] = {nullptr};
 void SlabAllocator::initSlabAllocator(void *space, int blockNum) {
     //TODO
     // init buddyAllocator (space, blockNum)
-    mutex = new Mutex;
+//    mutex = new Mutex;
 
     expandCacheDescriptors();
 
@@ -27,7 +27,7 @@ void SlabAllocator::initSlabAllocator(void *space, int blockNum) {
 }
 
 void SlabAllocator::expandCacheDescriptors() {
-    DummyMutex dummy(mutex);
+//    DummyMutex dummy(mutex);
 
     //TODO
     static const ushort optimalCacheBucket = getOptimalBucket(sizeof(Cache));
@@ -46,7 +46,7 @@ void SlabAllocator::expandCacheDescriptors() {
 }
 
 void SlabAllocator::expandSlabDescriptors() {
-    DummyMutex dummy(mutex);
+//    DummyMutex dummy(mutex);
 
     //TODO
     static const ushort optimalSlabBucket = getOptimalBucket(sizeof(Slab));
@@ -64,7 +64,7 @@ void SlabAllocator::expandSlabDescriptors() {
 }
 
 Cache *SlabAllocator::getCacheHeader() {
-    DummyMutex dummy(mutex);
+//    DummyMutex dummy(mutex);
 
     if (!freeCacheHead) expandCacheDescriptors();
     if (!freeCacheHead) return nullptr;
@@ -79,7 +79,7 @@ Cache *SlabAllocator::getCacheHeader() {
 }
 
 void SlabAllocator::addUsedCacheHeader(Cache *cache) {
-    DummyMutex dummy(mutex);
+//    DummyMutex dummy(mutex);
 
     // add to used list
     cache->prev = usedCacheTail;
@@ -88,7 +88,7 @@ void SlabAllocator::addUsedCacheHeader(Cache *cache) {
 }
 
 Cache::Slab *SlabAllocator::getSlabHeader() {
-    DummyMutex dummy(mutex);
+//    DummyMutex dummy(mutex);
 
     if (!freeSlabHead) expandSlabDescriptors();
     if (!freeSlabHead) return nullptr;
@@ -103,7 +103,7 @@ Cache::Slab *SlabAllocator::getSlabHeader() {
 }
 
 void SlabAllocator::returnCache(Cache *cache) {
-    DummyMutex dummy(mutex);
+//    DummyMutex dummy(mutex);
 
     if (!cache) return;
 
@@ -118,7 +118,7 @@ void SlabAllocator::returnCache(Cache *cache) {
 }
 
 void SlabAllocator::returnSlab(Slab *slab) {
-    DummyMutex dummy(mutex);
+//    DummyMutex dummy(mutex);
 
     if (!slab) return;
 

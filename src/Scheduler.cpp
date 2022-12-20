@@ -19,7 +19,8 @@ void Scheduler::initScheduler() {
     if (init) return;
     init = true;
 
-    for (auto & i : readyThreadQueue) {
+    for (auto &i: readyThreadQueue) {
+        i = (LinkedList<TCB> **) kmalloc((maxPriority + 1) * sizeof(LinkedList<TCB> *));
         for (uint64 j = 0; j <= maxPriority; j++) {
             i[j] = LinkedList<TCB>::createObj();
         }

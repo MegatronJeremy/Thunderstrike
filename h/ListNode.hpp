@@ -10,15 +10,11 @@ class LinkedList;
 template<typename T>
 class ListNode : public KObject<ListNode<T>> {
 public:
-    ListNode() = delete;
+    ListNode() = default;
 
     ListNode(const ListNode &) = delete;
 
     void operator=(const ListNode &) = delete;
-
-    void defaultCtor() override;
-
-    void defaultDtor() override;
 
     static ListNode *createListNode(T *d, ListNode *n = nullptr, ListNode *p = nullptr);
 
@@ -39,15 +35,5 @@ ListNode<T> *ListNode<T>::createListNode(T *d, ListNode *n, ListNode *p) {
 
     return obj;
 }
-
-template<typename T>
-void ListNode<T>::defaultCtor() {
-    data = nullptr;
-    next = prev = nullptr;
-}
-
-template<typename T>
-void ListNode<T>::defaultDtor() {}
-
 
 #endif

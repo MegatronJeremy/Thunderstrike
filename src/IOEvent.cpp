@@ -12,11 +12,6 @@ IOEvent *IOEvent::createIOEvent(int val) {
     return obj;
 }
 
-void IOEvent::defaultCtor() {
-    KSemaphore::defaultCtor();
-    val = 0;
-}
-
 void IOEvent::defaultDtor() {
     KSemaphore::defaultDtor();
 }
@@ -41,7 +36,7 @@ int IOEvent::signal() {
         unlock();
         return -1;
     }
-    if (blockedThreadQueue->isEmpty())
+    if (blockedThreadQueue.isEmpty())
         val = 1;
     else
         deblock();

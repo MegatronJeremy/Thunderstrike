@@ -33,8 +33,8 @@ void KConsole::initKConsole() {
     outputBuffer = Buffer<char>::createBuffer();
     inputBuffer = Buffer<char>::createBuffer();
 
-    readyToRead = IOEvent::createObj();
-    readyToWrite = IOEvent::createObj();
+    readyToRead = IOEvent::createIOEvent(0);
+    readyToWrite = IOEvent::createIOEvent(0);
 
     inputItemsAvailable = KSemaphore::createKSemaphore(0);
     outputItemsAvailable = KSemaphore::createKSemaphore(0);

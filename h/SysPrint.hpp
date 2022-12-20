@@ -8,7 +8,7 @@
 class PrintMutex {
 public:
     static Mutex* getMutex() {
-        static auto *mutex = new Mutex;
+        static auto *mutex = Mutex::createObj();
         return mutex;
     }
 

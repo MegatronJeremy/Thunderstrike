@@ -8,11 +8,11 @@ class TCB;
 // Mutex class - for synchronization of kernel critical sections
 class Mutex : public KSemaphore, public KObject<Mutex> {
 public:
-    void defaultCtor() override;
-
     void defaultDtor() override;
 
     using KObject<Mutex>::createObj;
+
+    using KObject<Mutex>::operator new;
 
     int wait() override;
 

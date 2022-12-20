@@ -12,7 +12,7 @@ TCB *IdleThread::getIdleThread() {
 }
 
 void IdleThread::initIdleThread() {
-    idleThread = TCB::createThread([](void *) { IdleThread::run(); }, nullptr);
+    idleThread = TCB::createObj([](void *) { IdleThread::run(); }, nullptr);
     idleThread->setIdle();
 }
 

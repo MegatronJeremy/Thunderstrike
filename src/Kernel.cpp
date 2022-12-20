@@ -95,7 +95,7 @@ int Kernel::thread_create(uint64 *args) {
     void *arg = (void *) args[2];
     auto *stack = (uint64 *) args[3];
 
-    TCB *thr = TCB::createThread(body, arg, stack);
+    TCB *thr = TCB::createObj(body, arg, stack);
     if (!thr) return -4;
 
     if (LinkedHashTable<TCB>::insert(thr->getHashNode()) < 0)
@@ -129,7 +129,7 @@ int Kernel::thread_create_suspended(uint64 *args) {
     void *arg = (void *) args[2];
     auto *stack = (uint64 *) args[3];
 
-    TCB *thr = TCB::createThread(body, arg, stack, TCB::USER, false);
+    TCB *thr = TCB::createObj(body, arg, stack, TCB::USER, false);
     if (!thr) return -4;
 
     if (LinkedHashTable<TCB>::insert(thr->getHashNode()) < 0)
@@ -155,7 +155,7 @@ int Kernel::sem_open(uint64 *args) {
 
     int init = (int) args[1];
 
-    auto *sem = KSemaphore::createKSemaphore(init);
+    auto *sem = KSemaphore::createObj(init);
     if (!sem) return -2;
 
     if (LinkedHashTable<KSemaphore>::insert(sem->getHashNode()) < 0)
@@ -172,7 +172,7 @@ int Kernel::sem_close(uint64 id) {
     if (LinkedHashTable<KSemaphore>::remove(id) < 0)
         return -2;
 
-    KObject<KSemaphore>::deleteObj(sem);
+    sem->deleteObj();
 
     return 0;
 }

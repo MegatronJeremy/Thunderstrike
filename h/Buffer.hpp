@@ -17,9 +17,9 @@ public:
 
     Buffer &operator=(const Buffer<T> &) = delete;
 
-    void defaultDtor() override;
+    static Buffer *createObj(uint64 sz = DEFAULT_BUFFER_SIZE);
 
-    static Buffer *createBuffer(uint64 sz = DEFAULT_BUFFER_SIZE);
+    void deleteObj() override;
 
     int addLast(T t);
 
@@ -35,16 +35,17 @@ private:
 };
 
 template<typename T>
-void Buffer<T>::defaultDtor() {
+void Buffer<T>::deleteObj() {
     front = back = size = 0;
 
     kfree(buffer);
     buffer = nullptr;
+    KObject<Buffer<T>>::deleteObj();
 }
 
 template<typename T>
-Buffer<T> *Buffer<T>::createBuffer(uint64 sz) {
-    Buffer *obj = Buffer<T>::createObj();
+Buffer<T> *Buffer<T>::createObj(uint64 sz) {
+    Buffer *obj = KObject<Buffer<T>>::createObj();
 
     obj->size = sz;
     obj->buffer = (T *) kmalloc(sz * sizeof(T));

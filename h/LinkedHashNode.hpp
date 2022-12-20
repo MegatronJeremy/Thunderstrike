@@ -15,7 +15,7 @@ public:
     LinkedHashNode<T>(T *d, uint64 i, LinkedHashNode<T> *n = nullptr) :
             data(d), id(i), next(n) {}
 
-    static LinkedHashNode<T> *createLinkedHashNode(T *d, uint64 i, LinkedHashNode<T> *n = nullptr);
+    static LinkedHashNode<T> *createObj(T *d, uint64 i, LinkedHashNode<T> *n = nullptr);
 
 private:
     friend class LinkedHashTable<T>;
@@ -26,8 +26,8 @@ private:
 };
 
 template<typename T>
-LinkedHashNode<T> *LinkedHashNode<T>::createLinkedHashNode(T *d, uint64 i, LinkedHashNode<T> *n) {
-    LinkedHashNode<T> *obj = LinkedHashNode<T>::createObj();
+LinkedHashNode<T> *LinkedHashNode<T>::createObj(T *d, uint64 i, LinkedHashNode<T> *n) {
+    LinkedHashNode<T> *obj = KObject<LinkedHashNode<T>>::createObj();
     obj->data = d;
     obj->id = i;
     obj->next = n;

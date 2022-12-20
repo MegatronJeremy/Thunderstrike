@@ -5,15 +5,15 @@
 
 uint64 KSemaphore::ID = 0;
 
-KSemaphore *KSemaphore::createKSemaphore(int v) {
-    KSemaphore *kSemaphore = createObj();
+KSemaphore *KSemaphore::createObj(int v) {
+    KSemaphore *kSemaphore = KObject<KSemaphore>::createObj();
 
     kSemaphore->val = v;
 
     return kSemaphore;
 }
 
-void KSemaphore::defaultDtor() {
+void KSemaphore::deleteObj() {
     lock()
     while (!blockedThreadQueue.isEmpty()) {
         TCB *tcb = blockedThreadQueue.removeFirst();
@@ -23,8 +23,7 @@ void KSemaphore::defaultDtor() {
     val = 1;
     unlock()
 
-//    LinkedList<TCB>::deleteObj(blockedThreadQueue);
-//    LinkedHashNode<KSemaphore>::deleteObj(hashNode);
+    KObject::deleteObj();
 }
 
 void KSemaphore::block() {
@@ -62,3 +61,4 @@ int KSemaphore::signal() {
 
     return 0;
 }
+

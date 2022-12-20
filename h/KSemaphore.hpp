@@ -10,9 +10,9 @@ class TCB;
 // Kernel implementation of standard semaphore
 class KSemaphore : public KObject<KSemaphore> {
 public:
-    static KSemaphore *createKSemaphore(int v = 1);
+    static KSemaphore *createObj(int v = 1);
 
-    void defaultDtor() override;
+    void deleteObj() override;
 
     virtual int wait();
 

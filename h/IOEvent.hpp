@@ -6,11 +6,11 @@
 // Input/output event binary semaphore
 class IOEvent : public KSemaphore, public KObject<IOEvent> {
 public:
-    void defaultDtor() override;
-
     using KObject<IOEvent>::createObj;
 
     using KObject<IOEvent>::operator new;
+
+    using KObject<IOEvent>::operator delete;
 
     static IOEvent *createIOEvent(int val);
 

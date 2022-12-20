@@ -51,8 +51,6 @@ void *Cache::allocate() {
 void Cache::free(void *obj) {
     if (!obj) return;
 
-    if (dtor) dtor(obj);
-
     DummyMutex dummy(&mutex);
 
     Slot *slot = (Slot *) ((uint8 *) obj - sizeof(Slot));
@@ -95,6 +93,8 @@ int Cache::shrinkCache() {
 
     int i = 0;
     while ((slab = slabList[EMPTY].get()) != nullptr) {
+        slab->destroySlots(dtor);
+
         SlabAllocator::returnSlab(slab);
         i++;
     }
@@ -130,6 +130,17 @@ void Cache::Slab::putSlot(Cache::Slot *slot) {
 
     slotTail = (!slotTail ? slotHead : slotTail->next) = slot;
     slot->next = nullptr;
+}
+
+void Cache::Slab::destroySlots(Destructor dtor) {
+    if (!dtor) return;
+
+    Slot *curr = slotHead;
+    while (curr) {
+        Slot *old = curr;
+        dtor(old->slotSpace);
+        curr = curr->next;
+    }
 }
 
 Cache::Slab *Cache::SlabList::get() {

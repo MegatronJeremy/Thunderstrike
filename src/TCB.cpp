@@ -31,56 +31,15 @@ void TCB::initTCB(TCB::Body b, void *a, uint64 *tS, bool priv, Type t) {
     context = {(uint64) threadWrapper, (uint64) (tS + DEFAULT_STACK_SIZE)};
 
     status = WAITING;
-
-    kernelStack = (uint64 *) kmalloc(stackByteSize);
-
-    listNode = ListNode<TCB>::createListNode(this);
-    hashNode = LinkedHashNode<TCB>::createLinkedHashNode(this, id);
-    waitingToJoin = LinkedList<TCB>::createObj();
 }
 
-void TCB::defaultDtor() {
-    body = nullptr;
-    args = nullptr;
-
-    mfree(threadStack);
-    threadStack = nullptr;
-
-    privileged = true;
-
-    context = {0, 0};
-
-    priority = 1;
-
-    status = READY;
-
-    ssp = (uint64) (kernelStack + DEFAULT_STACK_SIZE);
-
-    type = KERNEL;
-
-    kfree(kernelStack);
-    kernelStack = nullptr;
-
-    ListNode<TCB>::deleteObj(listNode);
-    LinkedHashNode<TCB>::deleteObj(hashNode);
-    LinkedList<TCB>::deleteObj(waitingToJoin);
-
-    listNode = nullptr;
-    hashNode = nullptr;
-    waitingToJoin = nullptr;
-}
-
-TCB *TCB::createKernelThread() {
-    return createObj();
-}
-
-TCB *TCB::createThread(TCB::Body body, void *args, Type type, bool start) {
+TCB *TCB::createObj(TCB::Body body, void *args, Type type, bool start) {
     if (!body) return nullptr;
     auto *threadStack = (uint64 *) mmalloc(byteToBlocks(stackByteSize));
-    return createThread(body, args, threadStack, type, start);
+    return createObj(body, args, threadStack, type, start);
 }
 
-TCB *TCB::createThread(TCB::Body body, void *args, uint64 *threadStack, Type type, bool start) {
+TCB *TCB::createObj(TCB::Body body, void *args, uint64 *threadStack, Type type, bool start) {
     if (!body) return nullptr;
 
     bool prMode;
@@ -103,6 +62,28 @@ TCB *TCB::createThread(TCB::Body body, void *args, uint64 *threadStack, Type typ
     if (start) TCB::start(tcb);
 
     return tcb;
+}
+
+void TCB::deleteObj() {
+    body = nullptr;
+    args = nullptr;
+
+    mfree(threadStack);
+    threadStack = nullptr;
+
+    privileged = true;
+
+    context = {0, 0};
+
+    priority = 1;
+
+    status = READY;
+
+    ssp = (uint64) (kernelStack + DEFAULT_STACK_SIZE);
+
+    type = KERNEL;
+
+    KObject<TCB>::deleteObj();
 }
 
 int TCB::start(TCB *tcb) {
@@ -171,3 +152,11 @@ int TCB::join() const {
     return 0;
 }
 
+TCB::~TCB() {
+    kfree(kernelStack);
+
+    listNode->deleteObj();
+    hashNode->deleteObj();
+    waitingToJoin->deleteObj();
+    mutex->deleteObj();
+}

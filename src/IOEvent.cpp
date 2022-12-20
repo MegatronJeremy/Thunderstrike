@@ -12,10 +12,6 @@ IOEvent *IOEvent::createIOEvent(int val) {
     return obj;
 }
 
-void IOEvent::defaultDtor() {
-    KSemaphore::defaultDtor();
-}
-
 int IOEvent::wait() {
     lock()
     if (val == 0) block();

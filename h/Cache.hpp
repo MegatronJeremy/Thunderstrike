@@ -46,6 +46,8 @@ private:
 
         void putSlot(Slot *slot);
 
+        void destroySlots(Destructor dtor);
+
         Slab *next, *prev;
 
         SlabState state;

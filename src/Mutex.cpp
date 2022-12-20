@@ -2,9 +2,9 @@
 #include "../h/TCB.hpp"
 #include "../h/Riscv.hpp"
 
-void Mutex::defaultDtor() {
-    KSemaphore::defaultDtor();
+void Mutex::deleteObj() {
     holder = nullptr;
+    KSemaphore::deleteObj();
 }
 
 int Mutex::wait() {

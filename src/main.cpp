@@ -15,10 +15,10 @@ int main() {
     ThreadCollector::initThreadCollector();
     TimerInterrupt::initTimerInterrupt();
 
-    TCB *main = TCB::createKernelThread();
+    TCB *main = TCB::createObj();
     TCB::running = main;
 
-    TCB *uMain = TCB::createThread([](void *) { userMain(); }, nullptr);
+    TCB *uMain = TCB::createObj([](void *) { userMain(); }, nullptr);
     TCB::userMain = uMain;
 
     Riscv::w_stvec((uint64) &Riscv::supervisorTrap);

@@ -14,7 +14,7 @@ public:
 
     void operator=(const LinkedList &) = delete;
 
-    void defaultDtor() override;
+    void deleteObj() override;
 
     int getCount() const {
         return size;
@@ -81,9 +81,10 @@ private:
 };
 
 template<typename T>
-void LinkedList<T>::defaultDtor() {
+void LinkedList<T>::deleteObj() {
     head = tail = curr = nullptr;
     size = 0;
+    KObject<LinkedList<T>>::deleteObj();
 }
 
 template<typename T>

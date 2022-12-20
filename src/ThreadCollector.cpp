@@ -18,9 +18,9 @@ void ThreadCollector::initThreadCollector() {
 
     mutex = Mutex::createObj();
 
-    readyToDelete = KSemaphore::createKSemaphore(0);
+    readyToDelete = KSemaphore::createObj(0);
 
-    TCB::createThread([](void *) { ThreadCollector::run(); }, nullptr, TCB::KERNEL);
+    TCB::createObj([](void *) { ThreadCollector::run(); }, nullptr, TCB::KERNEL);
 }
 
 void ThreadCollector::put(TCB *tcb) {
@@ -33,7 +33,7 @@ void ThreadCollector::put(TCB *tcb) {
 void ThreadCollector::deleteThread() {
     DummyMutex dummy(mutex);
 
-    TCB::deleteObj(finishedThreads->removeFirst());
+    finishedThreads->removeFirst()->deleteObj();
 }
 
 [[noreturn]] void ThreadCollector::run() {

@@ -28,13 +28,13 @@ public:
 
     ~TCB() override;
 
-    void defaultDtor() override;
+    using KObject<TCB>::createObj;
 
-    static TCB *createKernelThread();
+    static TCB *createObj(Body body, void *args, Type type = USER, bool start = true);
 
-    static TCB *createThread(Body body, void *args, Type type = USER, bool start = true);
+    static TCB *createObj(Body body, void *args, uint64 *threadStack, Type type = USER, bool start = true);
 
-    static TCB *createThread(Body body, void *args, uint64 *threadStack, Type type = USER, bool start = true);
+    void deleteObj() override;
 
     static int start(TCB *thr);
 
@@ -157,7 +157,6 @@ public:
 
     static TCB *userMain;
 
-
 private:
 
     enum Status {
@@ -177,7 +176,6 @@ private:
 
     void initTCB(Body b, void *a, uint64 *tS, bool priv, Type t);
 
-
     static uint64 ID;
 
     static size_t stackByteSize;
@@ -194,7 +192,7 @@ private:
 
     uint64 *threadStack = nullptr;
 
-    uint64 *kernelStack = nullptr;
+    uint64 *kernelStack = (uint64 *) kmalloc(stackByteSize);
 
     bool privileged = true;
 
@@ -206,7 +204,7 @@ private:
 
     Status status = READY;
 
-    LinkedList<TCB> *waitingToJoin = nullptr;
+    LinkedList<TCB> *waitingToJoin = LinkedList<TCB>::createObj();
 
     Mutex *mutex = Mutex::createObj();
 
@@ -216,9 +214,9 @@ private:
 
     time_t blockedTime;
 
-    ListNode<TCB> *listNode = nullptr;
+    ListNode<TCB> *listNode = ListNode<TCB>::createObj(this);
 
-    LinkedHashNode<TCB> *hashNode = nullptr;
+    LinkedHashNode<TCB> *hashNode = LinkedHashNode<TCB>::createObj(this, id);
 
 };
 

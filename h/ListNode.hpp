@@ -16,7 +16,7 @@ public:
 
     void operator=(const ListNode &) = delete;
 
-    static ListNode *createListNode(T *d, ListNode *n = nullptr, ListNode *p = nullptr);
+    static ListNode *createObj(T *d, ListNode *n = nullptr, ListNode *p = nullptr);
 
 private:
     friend class LinkedList<T>;
@@ -27,8 +27,8 @@ private:
 };
 
 template<typename T>
-ListNode<T> *ListNode<T>::createListNode(T *d, ListNode *n, ListNode *p) {
-    ListNode *obj = ListNode<T>::createObj();
+ListNode<T> *ListNode<T>::createObj(T *d, ListNode *n, ListNode *p) {
+    ListNode *obj = KObject<ListNode<T>>::createObj();
     obj->data = d;
     obj->next = n;
     obj->prev = p;

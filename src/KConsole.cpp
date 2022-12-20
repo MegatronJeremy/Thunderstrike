@@ -30,25 +30,25 @@ void KConsole::initKConsole() {
     inputData = (REG) CONSOLE_RX_DATA;
     status = (REG) CONSOLE_STATUS;
 
-    outputBuffer = Buffer<char>::createBuffer();
-    inputBuffer = Buffer<char>::createBuffer();
+    outputBuffer = Buffer<char>::createObj();
+    inputBuffer = Buffer<char>::createObj();
 
     readyToRead = IOEvent::createIOEvent(0);
     readyToWrite = IOEvent::createIOEvent(0);
 
-    inputItemsAvailable = KSemaphore::createKSemaphore(0);
-    outputItemsAvailable = KSemaphore::createKSemaphore(0);
-    inputSlotsAvailable = KSemaphore::createKSemaphore(DEFAULT_BUFFER_SIZE);
-    outputSlotsAvailable = KSemaphore::createKSemaphore(DEFAULT_BUFFER_SIZE);
+    inputItemsAvailable = KSemaphore::createObj(0);
+    outputItemsAvailable = KSemaphore::createObj(0);
+    inputSlotsAvailable = KSemaphore::createObj(DEFAULT_BUFFER_SIZE);
+    outputSlotsAvailable = KSemaphore::createObj(DEFAULT_BUFFER_SIZE);
 
     mutexGet = Mutex::createObj();
     mutexPut = Mutex::createObj();
 
-    TCB::createThread([](void *) {
+    TCB::createObj([](void *) {
         KConsole::readFromConsole();
     }, nullptr, TCB::CONSOLE);
 
-    TCB::createThread([](void *) {
+    TCB::createObj([](void *) {
         KConsole::writeToConsole();
     }, nullptr, TCB::CONSOLE);
 }

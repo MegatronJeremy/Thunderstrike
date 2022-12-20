@@ -14,4 +14,3 @@ size_t byteToBlocks(size_t size) {
     return (size - 1) / MEM_BLOCK_SIZE + 1;
 }
 
-KObject::~KObject() = default;

@@ -12,11 +12,13 @@
 
 
 // Thread Control Block - kernel implementation of threads
-class TCB {
+class TCB : public KObject<TCB> {
 public:
     enum Type {
         KERNEL, CONSOLE, USER
     };
+
+    using Body = void (*)(void *);
 
     TCB() = delete;
 
@@ -24,7 +26,9 @@ public:
 
     void operator=(const TCB &) = delete;
 
-    using Body = void (*)(void *);
+    void defaultCtor() override;
+
+    void defaultDtor() override;
 
     static TCB *createKernelThread();
 
@@ -34,7 +38,7 @@ public:
 
     static int start(TCB *thr);
 
-    int join();
+    int join() const;
 
     static void yield() {
         __asm__ volatile ("ecall");
@@ -155,6 +159,7 @@ public:
 
     static void deleteTCB(void *);
 
+
 private:
 
     enum Status {
@@ -168,17 +173,12 @@ private:
 
     friend class Riscv;
 
-    static TCB *createTCB();
-
     static void threadWrapper();
 
     static void contextSwitch(Context *oldContext, Context *runningContext);
 
-    void initTCB(Body body, void *args, uint64 *threadStack, bool privileged, Type type);
+    void initTCB(Body b, void *a, uint64 *tS, bool priv, Type t);
 
-    void defaultCtor();
-
-    void defaultDtor();
 
     static kmem_cache_t *tcbCache;
 
@@ -210,7 +210,7 @@ private:
 
     Status status = READY;
 
-    LinkedList<TCB> *waitingToJoin = new LinkedList<TCB>;
+    LinkedList<TCB> *waitingToJoin;
 
     Mutex *mutex = new Mutex;
 
@@ -220,9 +220,9 @@ private:
 
     time_t blockedTime;
 
-    ListNode<TCB> *listNode = new ListNode<TCB>(this);
+    ListNode<TCB> *listNode;
 
-    LinkedHashNode<TCB> *hashNode = new LinkedHashNode<TCB>(this, id);
+    LinkedHashNode<TCB> *hashNode;
 
 };
 

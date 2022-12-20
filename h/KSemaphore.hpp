@@ -8,9 +8,13 @@
 class TCB;
 
 // Kernel implementation of standard semaphore
-class KSemaphore : public KObject {
+class KSemaphore : public KObject<KSemaphore> {
 public:
-    explicit KSemaphore(int val = 1);
+    static KSemaphore *createKSemaphore(int v = 1);
+
+    void defaultCtor() override;
+
+    void defaultDtor() override;
 
     virtual int wait();
 
@@ -21,10 +25,8 @@ public:
     }
 
     LinkedHashNode<KSemaphore> *getHashNode() {
-        return &hashNode;
+        return hashNode;
     }
-
-    ~KSemaphore() override;
 
 protected:
     void block();
@@ -33,12 +35,12 @@ protected:
 
     int val;
 
-    LinkedList<TCB> blockedThreadQueue;
+    LinkedList<TCB> *blockedThreadQueue;
 private:
     static uint64 ID;
     uint64 id = ID++;
 
-    LinkedHashNode<KSemaphore> hashNode;
+    LinkedHashNode<KSemaphore> *hashNode;
 
 };
 

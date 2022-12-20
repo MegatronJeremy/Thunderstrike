@@ -12,9 +12,9 @@ void TimerInterrupt::initTimerInterrupt() {
     if (initialised) return;
     initialised = true;
 
-    mutex = new Mutex;
+    mutex = Mutex::createObj();
 
-    blockedThreads = new LinkedList<TCB>;
+    blockedThreads = LinkedList<TCB>::createObj();
 }
 
 void TimerInterrupt::block(TCB *tcb, time_t time) {

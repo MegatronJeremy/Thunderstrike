@@ -19,28 +19,18 @@ size_t TCB::stackByteSize = DEFAULT_STACK_SIZE * sizeof(uint64);
 
 kmem_cache_t *TCB::tcbCache = nullptr;
 
-TCB *TCB::createTCB() {
-    TCB *tcb = (TCB *) kmem_cache_alloc(tcbCache);
-    if (!tcb) {
-        // try to shrink cache if no memory
-        kmem_cache_shrink(tcbCache);
-        tcb = (TCB *) kmem_cache_alloc(tcbCache);
-    }
-    return tcb;
-}
+void TCB::initTCB(TCB::Body b, void *a, uint64 *tS, bool priv, Type t) {
+    body = b;
 
-void TCB::initTCB(TCB::Body body, void *args, uint64 *threadStack, bool privileged, Type type) {
-    this->body = body;
+    args = a;
 
-    this->args = args;
+    threadStack = tS;
 
-    this->threadStack = threadStack;
+    privileged = priv;
 
-    this->privileged = privileged;
+    type = t;
 
-    this->type = type;
-
-    context = {(uint64) threadWrapper, (uint64) (threadStack + DEFAULT_STACK_SIZE)};
+    context = {(uint64) threadWrapper, (uint64) (tS + DEFAULT_STACK_SIZE)};
 
     status = WAITING;
 }
@@ -63,17 +53,17 @@ void TCB::defaultCtor() {
 
     status = READY;
 
-    waitingToJoin = new LinkedList<TCB>;
+    waitingToJoin = LinkedList<TCB>::createObj();
 
-    mutex = new Mutex;
+    mutex = Mutex::createObj();
 
     ssp = (uint64) (kernelStack + DEFAULT_STACK_SIZE);
 
     type = KERNEL;
 
-    listNode = new ListNode<TCB>(this);
+    listNode = ListNode<TCB>::createListNode(this);
 
-    hashNode = new LinkedHashNode<TCB>(this, id);
+    hashNode = LinkedHashNode<TCB>::createLinkedHashNode(this, id);
 }
 
 void TCB::defaultDtor() {
@@ -85,7 +75,7 @@ void TCB::defaultDtor() {
 }
 
 TCB *TCB::createKernelThread() {
-    return createTCB();
+    return createObj();
 }
 
 TCB *TCB::createThread(TCB::Body body, void *args, Type type, bool start) {
@@ -104,24 +94,12 @@ TCB *TCB::createThread(TCB::Body body, void *args, uint64 *threadStack, Type typ
             prMode = true;
             break;
         case (USER):
+        default:
             prMode = false;
             break;
-        default:
-            // invalid thread type
-            // mfree(threadStack)
-            return nullptr;
     }
 
-    if (!tcbCache)
-        tcbCache = kmem_cache_create("tcb", sizeof(TCB),
-                                     [](void *obj) {
-                                         ((TCB *) obj)->defaultCtor();
-                                     },
-                                     [](void *obj) {
-                                         ((TCB *) obj)->defaultDtor();
-                                     });
-
-    TCB *tcb = createTCB();
+    TCB *tcb = createObj();
     if (!tcb) return nullptr;
 
     tcb->initTCB(body, args, threadStack, prMode, type);
@@ -188,7 +166,7 @@ void TCB::threadWrapper() {
     thread_exit();
 }
 
-int TCB::join() {
+int TCB::join() const {
     DummyMutex dummy(mutex);
 
     if (isFinished()) {

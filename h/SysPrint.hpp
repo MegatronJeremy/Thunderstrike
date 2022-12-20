@@ -5,7 +5,7 @@
 #include "Mutex.hpp"
 
 // For printing system messages
-class PrintMutex : public KObject {
+class PrintMutex {
 public:
     static Mutex* getMutex() {
         static auto *mutex = new Mutex;

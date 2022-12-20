@@ -155,7 +155,7 @@ int Kernel::sem_open(uint64 *args) {
 
     int init = (int) args[1];
 
-    auto *sem = new KSemaphore(init);
+    auto *sem = KSemaphore::createKSemaphore(init);
     if (!sem) return -2;
 
     if (LinkedHashTable<KSemaphore>::insert(sem->getHashNode()) < 0)

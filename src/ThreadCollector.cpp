@@ -10,17 +10,15 @@ Mutex *ThreadCollector::mutex;
 
 KSemaphore *ThreadCollector::readyToDelete;
 
-TCB *ThreadCollector::threadCollector;
-
 void ThreadCollector::initThreadCollector() {
     if (init) return;
     init = true;
 
-    finishedThreads = new LinkedList<TCB>;
+    finishedThreads = LinkedList<TCB>::createObj();
 
     mutex = new Mutex;
 
-    readyToDelete = new KSemaphore(0);
+    readyToDelete = KSemaphore::createKSemaphore(0);
 
     TCB::createThread([](void *) { ThreadCollector::run(); }, nullptr, TCB::KERNEL);
 }
@@ -35,7 +33,7 @@ void ThreadCollector::put(TCB *tcb) {
 void ThreadCollector::deleteThread() {
     DummyMutex dummy(mutex);
 
-    TCB::deleteTCB(finishedThreads->removeFirst());
+    TCB::deleteObj(finishedThreads->removeFirst());
 }
 
 [[noreturn]] void ThreadCollector::run() {

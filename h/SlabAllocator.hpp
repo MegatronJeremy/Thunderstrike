@@ -11,9 +11,9 @@ public:
 
     static void initSlabAllocator(void *space, int blockNum);
 
-    static const ushort getOptimalBucket(size_t slotSize);
+    static ushort getOptimalBucket(size_t slotSize);
 
-    static const size_t getNumberOfSlots(size_t slotSize, ushort bucket);
+    static size_t getNumberOfSlots(size_t slotSize, ushort bucket);
 
     static Cache *getCacheHeader();
 

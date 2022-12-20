@@ -9,7 +9,7 @@ const uint64 Scheduler::timeSlicePriority[maxPriority + 1] = {
 
 bool Scheduler::init = false;
 
-LinkedList<TCB> *Scheduler::readyThreadQueue[2];
+LinkedList<TCB> **Scheduler::readyThreadQueue[2];
 
 Mutex *Scheduler::mutex;
 
@@ -19,11 +19,13 @@ void Scheduler::initScheduler() {
     if (init) return;
     init = true;
 
-    for (int i = 0; i < 2; i++) {
-        readyThreadQueue[i] = new LinkedList<TCB>[maxPriority + 1];
+    for (auto & i : readyThreadQueue) {
+        for (uint64 j = 0; j <= maxPriority; j++) {
+            i[j] = LinkedList<TCB>::createObj();
+        }
     }
 
-    mutex = new Mutex;
+    mutex = Mutex::createObj();
 }
 
 TCB *Scheduler::get() {
@@ -34,7 +36,7 @@ TCB *Scheduler::get() {
 
     do {
         for (uint64 j = 0; j <= maxPriority; j++) {
-            tcb = readyThreadQueue[active][j].removeFirst();
+            tcb = readyThreadQueue[active][j]->removeFirst();
             if (tcb) {
                 return tcb;
             }
@@ -59,6 +61,6 @@ void Scheduler::put(TCB *tcb, bool wasBlocked) {
     tcb->setPriority(pri);
     tcb->setTimeSlice(timeSlicePriority[pri]);
 
-    readyThreadQueue[set][pri].addLast(tcb->getListNode());
+    readyThreadQueue[set][pri]->addLast(tcb->getListNode());
 }
 

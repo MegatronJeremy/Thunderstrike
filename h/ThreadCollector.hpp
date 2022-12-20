@@ -25,8 +25,6 @@ private:
     static Mutex *mutex;
 
     static KSemaphore *readyToDelete;
-
-    static TCB *threadCollector;
 };
 
 #endif

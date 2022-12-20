@@ -32,7 +32,7 @@ void SlabAllocator::expandCacheDescriptors() {
     //TODO
     static const ushort optimalCacheBucket = getOptimalBucket(sizeof(Cache));
 
-    Cache *curr = (Cache *) mmalloc(byteToBlocks((1 << optimalCacheBucket) * BLOCK_SIZE));
+    auto *curr = (Cache *) mmalloc(byteToBlocks((1 << optimalCacheBucket) * BLOCK_SIZE));
     if (!curr) return;
 
     const size_t cacheDscPerBucket = getNumberOfSlots(sizeof(Cache), optimalCacheBucket);
@@ -151,7 +151,7 @@ void SlabAllocator::deallocateBuffer(const void *obj) {
     Cache::sFree(obj);
 }
 
-const ushort SlabAllocator::getOptimalBucket(size_t slotSize) {
+ushort SlabAllocator::getOptimalBucket(size_t slotSize) {
     ushort minBucket = MAX_BUCKET;
     size_t bucketSize = (1 << MAX_BUCKET) * BLOCK_SIZE;
 
@@ -173,6 +173,6 @@ const ushort SlabAllocator::getOptimalBucket(size_t slotSize) {
     return minBucket;
 }
 
-const size_t SlabAllocator::getNumberOfSlots(size_t slotSize, ushort bucket) {
+size_t SlabAllocator::getNumberOfSlots(size_t slotSize, ushort bucket) {
     return (1 << bucket) * BLOCK_SIZE / slotSize;
 }

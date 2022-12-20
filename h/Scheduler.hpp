@@ -23,7 +23,7 @@ private:
 
     static bool init;
 
-    static LinkedList<TCB> *readyThreadQueue[2];
+    static LinkedList<TCB> **readyThreadQueue[2];
 
     static Mutex *mutex;
 

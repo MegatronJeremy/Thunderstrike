@@ -9,7 +9,7 @@ public:
     using Constructor = void (*)(void *);
     using Destructor = void (*)(void *);
 
-    Cache(const char *name, const size_t objSize, Constructor ctor = nullptr, Destructor dtor = nullptr);
+    Cache(const char *name, size_t objSize, Constructor ctor = nullptr, Destructor dtor = nullptr);
 
     void *allocate();
 

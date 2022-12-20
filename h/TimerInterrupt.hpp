@@ -7,7 +7,7 @@
 class TCB;
 
 // Kernel object for handling timer interrupts and thread sleep requests
-class TimerInterrupt : public KObject {
+class TimerInterrupt {
 public:
     static void initTimerInterrupt();
 

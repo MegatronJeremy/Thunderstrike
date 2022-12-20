@@ -5,7 +5,7 @@
 
 class DummyMutex {
 public:
-    DummyMutex(Mutex *m) : mutex(m) { if (mutex) mutex->wait(); }
+    explicit DummyMutex(Mutex *m) : mutex(m) { if (mutex) mutex->wait(); }
 
     ~DummyMutex() { if (mutex) mutex->signal(); }
 

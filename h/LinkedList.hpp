@@ -6,13 +6,17 @@
 
 // Kernel template structure - doubly linked list of already allocated nodes
 template<typename T>
-class LinkedList : public KObject {
+class LinkedList : public KObject<LinkedList<T>> {
 public:
-    explicit LinkedList() = default;
+    LinkedList() = delete;
 
     LinkedList(const LinkedList &) = delete;
 
     void operator=(const LinkedList &) = delete;
+
+    void defaultCtor() override;
+
+    void defaultDtor() override;
 
     int getCount() const {
         return size;
@@ -71,14 +75,22 @@ public:
 
     void insertBeforeCurr(ListNode<T> *elem);
 
-    ~LinkedList() override;
-
 private:
     ListNode<T> *head = nullptr, *tail = nullptr, *curr = nullptr;
 
     uint64 size = 0;
 
 };
+
+
+template<typename T>
+void LinkedList<T>::defaultCtor() {
+    head = tail = curr = nullptr;
+    size = 0;
+}
+
+template<typename T>
+void LinkedList<T>::defaultDtor() {}
 
 template<typename T>
 void LinkedList<T>::addFirst(ListNode<T> *elem) {
@@ -172,13 +184,4 @@ void LinkedList<T>::insertBeforeCurr(ListNode<T> *elem) {
     else before->next = elem;
     size++;
 }
-
-template<typename T>
-LinkedList<T>::~LinkedList() {
-    head = nullptr;
-    tail = nullptr;
-    curr = nullptr;
-    size = 0;
-}
-
 #endif

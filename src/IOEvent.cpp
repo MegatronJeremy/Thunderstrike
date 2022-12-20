@@ -2,10 +2,23 @@
 #include "../h/Riscv.hpp"
 #include "../h/TCB.hpp"
 
-IOEvent::IOEvent(int val) : KSemaphore() {
+IOEvent *IOEvent::createIOEvent(int val) {
+    IOEvent *obj = KObject<IOEvent>::createObj();
+
     if (val < 0) val = 0;
     if (val > 1) val = 1;
-    this->val = val;
+    obj->val = val;
+
+    return obj;
+}
+
+void IOEvent::defaultCtor() {
+    KSemaphore::defaultCtor();
+    val = 0;
+}
+
+void IOEvent::defaultDtor() {
+    KSemaphore::defaultDtor();
 }
 
 int IOEvent::wait() {
@@ -28,10 +41,11 @@ int IOEvent::signal() {
         unlock();
         return -1;
     }
-    if (blockedThreadQueue.isEmpty())
+    if (blockedThreadQueue->isEmpty())
         val = 1;
     else
         deblock();
     unlock()
     return 0;
 }
+

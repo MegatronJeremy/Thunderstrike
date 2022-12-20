@@ -8,12 +8,19 @@ class LinkedList;
 
 // Template linked list node
 template<typename T>
-class ListNode : public KObject {
+class ListNode : public KObject<ListNode<T>> {
 public:
-    explicit ListNode(T *data, ListNode *next = nullptr, ListNode *prev = nullptr) :
-            data(data),
-            next(next),
-            prev(prev) {}
+    ListNode() = delete;
+
+    ListNode(const ListNode &) = delete;
+
+    void operator=(const ListNode &) = delete;
+
+    void defaultCtor() override;
+
+    void defaultDtor() override;
+
+    static ListNode *createListNode(T *d, ListNode *n = nullptr, ListNode *p = nullptr);
 
 private:
     friend class LinkedList<T>;
@@ -22,5 +29,25 @@ private:
     ListNode *next, *prev;
 
 };
+
+template<typename T>
+ListNode<T> *ListNode<T>::createListNode(T *d, ListNode *n, ListNode *p) {
+    ListNode *obj = ListNode<T>::createObj();
+    obj->data = d;
+    obj->next = n;
+    obj->prev = p;
+
+    return obj;
+}
+
+template<typename T>
+void ListNode<T>::defaultCtor() {
+    data = nullptr;
+    next = prev = nullptr;
+}
+
+template<typename T>
+void ListNode<T>::defaultDtor() {}
+
 
 #endif

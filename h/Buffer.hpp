@@ -9,11 +9,15 @@
 
 // Kernel template structure - buffer
 template<typename T>
-class Buffer : public KObject {
+class Buffer : public KObject<Buffer<T>> {
 public:
-    Buffer();
+    Buffer() = delete;
 
-    explicit Buffer(uint64 size);
+    void defaultCtor() override;
+
+    void defaultDtor() override;
+
+    static Buffer *createBuffer(uint64 sz = DEFAULT_BUFFER_SIZE);
 
     Buffer(const Buffer<T> &) = delete;
 
@@ -32,15 +36,28 @@ private:
     T *buffer;
 };
 
-template<typename T>
-Buffer<T>::Buffer() : Buffer(DEFAULT_BUFFER_SIZE) {}
 
 template<typename T>
-Buffer<T>::Buffer(uint64 size) {
-    size_t sz = sizeof(T) * size;
-    buffer = (T *) kmalloc(sz);
+void Buffer<T>::defaultCtor() {
+    front = back = 0;
+    size = 0;
+    buffer = nullptr;
 }
 
+template<typename T>
+void Buffer<T>::defaultDtor() {
+    kfree(buffer);
+}
+
+template<typename T>
+Buffer<T> *Buffer<T>::createBuffer(uint64 sz) {
+    Buffer *obj = Buffer<T>::createObj();
+
+    obj->size = sz;
+    obj->buffer = (T *) kmalloc(sz * sizeof(T));
+
+    return obj;
+}
 
 template<typename T>
 int Buffer<T>::addLast(T t) {

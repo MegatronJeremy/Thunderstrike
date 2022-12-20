@@ -2,6 +2,15 @@
 #include "../h/TCB.hpp"
 #include "../h/Riscv.hpp"
 
+void Mutex::defaultCtor() {
+    KSemaphore::defaultCtor();
+    holder = nullptr;
+}
+
+void Mutex::defaultDtor() {
+    KSemaphore::defaultDtor();
+}
+
 int Mutex::wait() {
     if (holder == TCB::running) return 0;
     lock()
@@ -20,11 +29,13 @@ int Mutex::wait() {
 int Mutex::signal() {
     if (holder != TCB::running) return -1;
     lock()
-    if (blockedThreadQueue.isEmpty())
+    if (blockedThreadQueue->isEmpty())
         holder = nullptr;
     else
         deblock();
     unlock()
     return 0;
 }
+
+
 

@@ -7,12 +7,25 @@ Cache::Cache(const char *name, const size_t objSize, Cache::Constructor ctor, Ca
         ctor(ctor), dtor(dtor),
         optimalBucket(SlabAllocator::getOptimalBucket(slotSize)),
         slotsPerSlab(SlabAllocator::getNumberOfSlots(slotSize, optimalBucket)) {
+    mutex = Mutex::createObj();
     SlabAllocator::addUsedCacheHeader(this);
     addEmptySlab();
 }
 
+Cache::Cache(const char *name, const size_t objSize, Cache::Constructor ctor, Cache::Destructor dtor, Mutex *mutex) :
+        name(name),
+        objSize(objSize),
+        ctor(ctor), dtor(dtor),
+        optimalBucket(SlabAllocator::getOptimalBucket(slotSize)),
+        slotsPerSlab(SlabAllocator::getNumberOfSlots(slotSize, optimalBucket)),
+        mutex(mutex) {
+    SlabAllocator::addUsedCacheHeader(this);
+    addEmptySlab();
+}
+
+
 void *Cache::allocate() {
-    DummyMutex dummy(&mutex);
+    DummyMutex dummy(mutex);
 
     Slab *slab = slabList[PARTIAL].get();
     if (!slab) {
@@ -51,7 +64,7 @@ void *Cache::allocate() {
 void Cache::free(void *obj) {
     if (!obj) return;
 
-    DummyMutex dummy(&mutex);
+    DummyMutex dummy(mutex);
 
     Slot *slot = (Slot *) ((uint8 *) obj - sizeof(Slot));
 
@@ -86,7 +99,7 @@ void Cache::sFree(const void *obj) {
 int Cache::shrinkCache() {
     if (!newSlabsAllocated) return 0;
 
-    DummyMutex dummy(&mutex);
+    DummyMutex dummy(mutex);
 
     newSlabsAllocated = false;
     Slab *slab;
@@ -108,7 +121,7 @@ void Cache::addEmptySlab() {
 
     initEmptySlab(slab);
 
-    DummyMutex dummy(&mutex);
+    DummyMutex dummy(mutex);
 
     numberOfSlabs++;
     cacheSizeBlocks += (1 << optimalBucket);
@@ -132,7 +145,7 @@ void Cache::Slab::putSlot(Cache::Slot *slot) {
     slot->next = nullptr;
 }
 
-void Cache::Slab::destroySlots(Destructor dtor) {
+void Cache::Slab::destroySlots(Destructor dtor) const {
     if (!dtor) return;
 
     Slot *curr = slotHead;
@@ -190,7 +203,10 @@ void *Cache::operator new(size_t) {
     return SlabAllocator::getCacheHeader();
 }
 
+void *Cache::operator new(size_t, void *addr) {
+    return addr;
+}
+
 void Cache::operator delete(void *obj) {
     SlabAllocator::returnCache((Cache *) obj);
 }
-

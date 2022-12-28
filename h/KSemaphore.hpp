@@ -10,6 +10,10 @@ class TCB;
 // Kernel implementation of standard semaphore
 class KSemaphore : public KObject<KSemaphore> {
 public:
+    KSemaphore() = default;
+
+    KSemaphore(LinkedList<TCB> *ll, LinkedHashNode<KSemaphore> *lhn);
+
     static KSemaphore *createObj(int v = 1);
 
     void deleteObj() override;
@@ -23,7 +27,7 @@ public:
     }
 
     LinkedHashNode<KSemaphore> *getHashNode() {
-        return &hashNode;
+        return hashNode;
     }
 
 protected:
@@ -34,15 +38,13 @@ protected:
     int val = 1;
 
     //TODO
-    LinkedList<TCB> blockedThreadQueue;
-    //= LinkedList<TCB>::createObj();
+    LinkedList<TCB> *blockedThreadQueue = LinkedList<TCB>::createObj();
 private:
     static uint64 ID;
     uint64 id = ID++;
 
     //TODO
-    LinkedHashNode<KSemaphore> hashNode = LinkedHashNode<KSemaphore>(this, id);
-    //= LinkedHashNode<KSemaphore>::createLinkedHashNode(this, id);
+    LinkedHashNode<KSemaphore> *hashNode = LinkedHashNode<KSemaphore>::createObj(this, id);
 
 };
 

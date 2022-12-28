@@ -212,7 +212,7 @@ private:
 
     Type type = KERNEL;
 
-    time_t blockedTime;
+    time_t blockedTime = 0;
 
     ListNode<TCB> *listNode = ListNode<TCB>::createObj(this);
 

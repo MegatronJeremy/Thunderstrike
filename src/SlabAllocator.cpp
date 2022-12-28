@@ -19,7 +19,17 @@ Cache *SlabAllocator::bufferCache[BUFFER_CACHE_SIZE] = {nullptr};
 void SlabAllocator::initSlabAllocator(void *space, int blockNum) {
     //TODO
     // init buddyAllocator (space, blockNum)
-    mutex = new(space) Mutex;
+    // and take one block (need to allocate with complete space)
+
+    void *allocatorHeaderSpace = space; // TODO - allocate with space from buddy
+
+    LinkedList<TCB> ll = new(allocatorHeaderSpace) LinkedList<TCB>;
+
+    allocatorHeaderSpace = (uint8 *) allocatorHeaderSpace + sizeof(LinkedList<TCB>);
+    LinkedHashNode<Mutex> lhn = new(allocatorHeaderSpace) LinkedHashNode<Mutex>;
+
+    allocatorHeaderSpace = (uint8 *) allocatorHeaderSpace + sizeof(LinkedHashNode<Mutex>);
+    mutex = new(allocatorHeaderSpace) Mutex(ll, lhn);
 
     expandCacheDescriptors();
 

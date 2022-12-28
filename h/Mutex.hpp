@@ -8,6 +8,8 @@ class TCB;
 // Mutex class - for synchronization of kernel critical sections
 class Mutex : public KSemaphore, public KObject<Mutex> {
 public:
+    Mutex(LinkedList<TCB> *ll, LinkedHashNode<KSemaphore> *lhn);
+
     void deleteObj() override;
 
     using KObject<Mutex>::createObj;

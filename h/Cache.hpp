@@ -11,6 +11,8 @@ public:
 
     Cache(const char *name, size_t objSize, Constructor ctor = nullptr, Destructor dtor = nullptr);
 
+    Cache(const char *name, size_t objSize, Constructor ctor = nullptr, Destructor dtor = nullptr, Mutex *mutex = nullptr);
+
     void *allocate();
 
     void free(void *obj);
@@ -20,6 +22,8 @@ public:
     int shrinkCache();
 
     void *operator new(size_t);
+
+    void *operator new(size_t, void *);
 
     void operator delete(void *);
 
@@ -46,7 +50,7 @@ private:
 
         void putSlot(Slot *slot);
 
-        void destroySlots(Destructor dtor);
+        void destroySlots(Destructor dtor) const;
 
         Slab *next, *prev;
 
@@ -95,7 +99,7 @@ private:
 
     SlabList slabList[3];
 
-    Mutex mutex;
+    Mutex *mutex = nullptr;
 
     bool newSlabsAllocated = false;
 };

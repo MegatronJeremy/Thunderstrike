@@ -2,6 +2,10 @@
 #include "../h/TCB.hpp"
 #include "../h/Riscv.hpp"
 
+Mutex::Mutex(LinkedList<TCB> *ll, LinkedHashNode<KSemaphore> *lhn)
+        : KSemaphore(ll, lhn) {}
+
+
 void Mutex::deleteObj() {
     holder = nullptr;
     KSemaphore::deleteObj();
@@ -25,7 +29,7 @@ int Mutex::wait() {
 int Mutex::signal() {
     if (holder != TCB::running) return -1;
     lock()
-    if (blockedThreadQueue.isEmpty())
+    if (blockedThreadQueue->isEmpty())
         holder = nullptr;
     else
         deblock();

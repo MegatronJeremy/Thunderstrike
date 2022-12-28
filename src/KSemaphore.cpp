@@ -5,6 +5,10 @@
 
 uint64 KSemaphore::ID = 0;
 
+
+KSemaphore::KSemaphore(LinkedList<TCB> *ll, LinkedHashNode<KSemaphore> *lhn) :
+        blockedThreadQueue(ll), hashNode(lhn) {}
+
 KSemaphore *KSemaphore::createObj(int v) {
     KSemaphore *kSemaphore = KObject<KSemaphore>::createObj();
 
@@ -15,8 +19,8 @@ KSemaphore *KSemaphore::createObj(int v) {
 
 void KSemaphore::deleteObj() {
     lock()
-    while (!blockedThreadQueue.isEmpty()) {
-        TCB *tcb = blockedThreadQueue.removeFirst();
+    while (!blockedThreadQueue->isEmpty()) {
+        TCB *tcb = blockedThreadQueue->removeFirst();
         tcb->setInterrupted();
         Scheduler::put(tcb);
     }
@@ -27,14 +31,14 @@ void KSemaphore::deleteObj() {
 }
 
 void KSemaphore::block() {
-    blockedThreadQueue.addLast(TCB::running->getListNode());
+    blockedThreadQueue->addLast(TCB::running->getListNode());
     TCB::running->setBlocked();
     TCB::dispatch();
 }
 
 void KSemaphore::deblock() {
-    if (blockedThreadQueue.isEmpty()) return;
-    TCB *tcb = blockedThreadQueue.removeFirst();
+    if (blockedThreadQueue->isEmpty()) return;
+    TCB *tcb = blockedThreadQueue->removeFirst();
     tcb->setReady();
     Scheduler::put(tcb);
 }
@@ -61,4 +65,3 @@ int KSemaphore::signal() {
 
     return 0;
 }
-

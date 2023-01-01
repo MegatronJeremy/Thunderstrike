@@ -16,6 +16,10 @@ Cache *SlabAllocator::slabDesc = nullptr;
 
 BuddyAllocator *SlabAllocator::buddyAllocator = nullptr;
 
+const char *SlabAllocator::bufferCacheNames[BUFFER_CACHE_SIZE] = {"size-5", "size-6", "size-7", "size-8", "size-9",
+                                                                  "size-10", "size-11", "size-12", "size-13",
+                                                                  "size-14", "size-15", "size-16", "size-17"};
+
 void SlabAllocator::initSlabAllocator(void *space, int blockNum) {
     buddyAllocator = new(space) BuddyAllocator(space, blockNum);
 
@@ -53,6 +57,10 @@ void SlabAllocator::initSlabAllocator(void *space, int blockNum) {
 
 void *SlabAllocator::balloc(size_t size) {
     return buddyAllocator->balloc(size);
+}
+
+int SlabAllocator::bfree(void *obj) {
+    return buddyAllocator->bfree(obj);
 }
 
 Cache *SlabAllocator::getCacheHeader() {
@@ -105,7 +113,7 @@ void *SlabAllocator::allocateBuffer(size_t bufferSize) {
 
     ushort ind = bucket - MIN_BUFFER_BUCKET;
     if (bufferCache[ind] == nullptr) {
-        const char *name = "size-";
+        const char *name = bufferCacheNames[ind];
         bufferCache[ind] = new Cache(name, size);
     }
 

@@ -65,6 +65,8 @@ public:
 
     void operator delete(void *);
 
+    ~Cache();
+
 private:
     // TODO better desegmentation
     friend class SlabAllocator;
@@ -72,6 +74,8 @@ private:
     class SlabList {
     public:
         Slab *get();
+
+        Slab *poll();
 
         void put(Slab *slab);
 

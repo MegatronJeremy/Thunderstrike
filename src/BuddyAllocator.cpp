@@ -21,11 +21,33 @@ BuddyAllocator::BuddyAllocator(void *space, int blockNum) :
 
     blockMap = new(buddySpace) Bitmap(2 * (2 * blockNum - 1), buddySpace);
     blockMap->reset();
-    blockMap->set(0);
+    setBlock(0, FREE);
 
     buddySpace += sizeof(Bitmap) + blockMap->size() / Bitmap::BYTE_SIZE_BITS;
 
     size = (size_t) buddySpace - (size_t) space;
+}
+
+void BuddyAllocator::setBlock(size_t i, BlockState state) {
+    if (bitState[state][0] == 1) blockMap->set(i);
+    else blockMap->reset(i);
+
+    if (bitState[state][1] == 1) blockMap->set(i + 1);
+    else blockMap->reset(i + 1);
+}
+
+bool BuddyAllocator::testBlock(size_t i, BlockState state) {
+    bool test;
+
+    test = blockMap->test(i);
+    if (bitState[state][0] == 0) test = !test;
+
+    if (!test) return false;
+
+    test = blockMap->test(i + 1);
+    if (bitState[state][1] == 0) test = !test;
+
+    return test;
 }
 
 void *BuddyAllocator::balloc(size_t size) {
@@ -46,20 +68,37 @@ void *BuddyAllocator::balloc(size_t size) {
     return blockToPtr(bucket, block);
 }
 
-void BuddyAllocator::bfree(void *) {
+int BuddyAllocator::bfree(void *obj) {
     DummyMutex dummy(&mutex);
 
-}
+    size_t startBlock = 2 * (ptrToBlock(obj) - 1);
 
-/**
- * 00 - block is part of a bigger block
- * 01 - block is split
- * 10 - block is free
- * 11 - block is allocated
- *
- * @param bucket
- * @return
- */
+    // block is not allocated block
+    if (startBlock >= blockMap->size() || !testBlock(startBlock, ALLOCATED))
+        return -1;
+
+    // try to coalesce
+    size_t i = startBlock;
+    setBlock(i, FREE);
+
+    while (i > 0) {
+        // find direct brother
+        size_t j = (i % 4 == 0) ? i - 2 : i + 2;
+
+        if (testBlock(i, FREE) && testBlock(j, FREE)) {
+            setBlock(i, INCLUDED);
+            setBlock(j, INCLUDED);
+        } else {
+            break;
+        }
+
+        // find parent if succesfully coalesced
+        i = ((i < j) ? i : j) / 2 - 1;
+        setBlock(i, FREE);
+    }
+
+    return 0;
+}
 
 bool BuddyAllocator::splitDownTo(uint bucket) {
     if (bucket == 0) return false;
@@ -76,7 +115,7 @@ bool BuddyAllocator::splitDownTo(uint bucket) {
         j = 2 * i + startBlock;
 
         // block is free -> node is set to 10
-        if (blockMap->test(j) && !blockMap->test(j + 1))
+        if (testBlock(j, FREE))
             break;
 
         i++;
@@ -88,17 +127,14 @@ bool BuddyAllocator::splitDownTo(uint bucket) {
     // split down
     while (upperBucket < bucket) {
         // block is split -> node is set to 01
-        blockMap->reset(j);
-        blockMap->set(j + 1);
+        setBlock(j, SPLIT);
 
         size_t leftChild = 2 * (j + 1);
         size_t rightChild = 2 * (j + 2);
 
-        blockMap->set(leftChild);
-        blockMap->reset(leftChild + 1);
-
-        blockMap->set(rightChild);
-        blockMap->reset(rightChild + 1);
+        // set the children free
+        setBlock(leftChild, FREE);
+        setBlock(rightChild, FREE);
 
         numOfBlocks[upperBucket]--;
         numOfBlocks[upperBucket + 1] += 2;
@@ -118,10 +154,9 @@ size_t BuddyAllocator::getFreeBlock(uint bucket) {
     for (size_t i = 0; i < nodes; i++) {
         size_t j = 2 * i + startBlock;
         // block is free -> node is set to 10
-        if (blockMap->test(j) && !blockMap->test(j + 1)) {
+        if (testBlock(j, FREE)) {
             // block is allocated -> node is set to 11
-            blockMap->set(j);
-            blockMap->set(j + 1);
+            setBlock(j, ALLOCATED);
 
             numOfBlocks[bucket]--;
 
@@ -136,7 +171,12 @@ void *BuddyAllocator::blockToPtr(uint bucket, size_t block) {
     return (void *) (space + (1ULL << (numOfBuckets - bucket - 1)) * block * BLOCK_SIZE);
 }
 
+size_t BuddyAllocator::ptrToBlock(void *ptr) {
+    return ((size_t) ptr - (size_t) space) / BLOCK_SIZE;
+}
+
 size_t BuddyAllocator::getSize() const {
     return size;
 }
+
 

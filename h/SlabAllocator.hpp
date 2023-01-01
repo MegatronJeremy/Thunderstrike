@@ -19,6 +19,8 @@ public:
 
     static void *balloc(size_t size);
 
+    static int bfree(void *obj);
+
     static Cache *getCacheHeader();
 
     static void addUsedCacheHeader(Cache *header);
@@ -43,6 +45,8 @@ private:
     static const ushort MIN_BUFFER_BUCKET = 5;
 
     static const ushort BUFFER_CACHE_SIZE = MAX_BUFFER_BUCKET - MIN_BUFFER_BUCKET + 1;
+
+    static const char *bufferCacheNames[BUFFER_CACHE_SIZE];
 
     static BuddyAllocator *buddyAllocator;
 

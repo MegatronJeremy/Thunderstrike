@@ -6,25 +6,22 @@
 class TCB;
 
 // Mutex class - for synchronization of kernel critical sections
-class Mutex : public KSemaphore, public KObject<Mutex> {
+class Mutex : public KObject<Mutex> {
 public:
-    Mutex(LinkedList<TCB> *ll, LinkedHashNode<KSemaphore> *lhn);
-
     void deleteObj() override;
 
-    using KObject<Mutex>::createObj;
+    int wait();
 
-    using KObject<Mutex>::operator new;
-
-    using KObject<Mutex>::operator delete;
-
-    int wait() override;
-
-    int signal() override;
+    int signal();
 
 private:
+    void block();
+
+    void deblock();
+
     TCB *holder = nullptr;
 
+    LinkedList<TCB> blockedThreadQueue;
 };
 
 #endif

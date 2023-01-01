@@ -1,91 +1,63 @@
 #include "../h/SlabAllocator.hpp"
 
+#include "../h/BuddyAllocator.hpp"
+
 Cache *SlabAllocator::usedCacheHead = nullptr;
 
 Cache *SlabAllocator::usedCacheTail = nullptr;
 
-Cache *SlabAllocator::freeCacheHead = nullptr;
+Mutex *SlabAllocator::mutex = nullptr;
 
-Cache *SlabAllocator::freeCacheTail = nullptr;
+Cache **SlabAllocator::bufferCache = nullptr;
 
-Cache::Slab *SlabAllocator::freeSlabHead = nullptr;
+Cache *SlabAllocator::cacheDesc = nullptr;
 
-Cache::Slab *SlabAllocator::freeSlabTail = nullptr;
+Cache *SlabAllocator::slabDesc = nullptr;
 
-Mutex *SlabAllocator::mutex;
-
-Cache *SlabAllocator::bufferCache[BUFFER_CACHE_SIZE] = {nullptr};
+BuddyAllocator *SlabAllocator::buddyAllocator = nullptr;
 
 void SlabAllocator::initSlabAllocator(void *space, int blockNum) {
-    //TODO
-    // init buddyAllocator (space, blockNum)
-    // and take one block (need to allocate with complete space)
+    buddyAllocator = new(space) BuddyAllocator(space, blockNum);
 
-    void *allocatorHeaderSpace = space; // TODO - allocate with space from buddy
+    uint8 *allocatorHeaderSpace = (uint8 *) space + buddyAllocator->getSize();
 
-    LinkedList<TCB> ll = new(allocatorHeaderSpace) LinkedList<TCB>;
+    // allocate header space at block 0 of the buddy allocator
+    balloc((size_t) allocatorHeaderSpace - (size_t) space
+           + sizeof(Mutex) + sizeof(Slab) + 2 * sizeof(Cache) +
+           sizeof(*bufferCache) * BUFFER_CACHE_SIZE);
 
-    allocatorHeaderSpace = (uint8 *) allocatorHeaderSpace + sizeof(LinkedList<TCB>);
-    LinkedHashNode<Mutex> lhn = new(allocatorHeaderSpace) LinkedHashNode<Mutex>;
+    mutex = new(allocatorHeaderSpace) Mutex;
+    allocatorHeaderSpace += sizeof(Mutex);
 
-    allocatorHeaderSpace = (uint8 *) allocatorHeaderSpace + sizeof(LinkedHashNode<Mutex>);
-    mutex = new(allocatorHeaderSpace) Mutex(ll, lhn);
+    Slab *slab = new(allocatorHeaderSpace) Slab;
+    allocatorHeaderSpace += sizeof(Slab);
 
-    expandCacheDescriptors();
+    slabDesc = new(allocatorHeaderSpace) Cache("slab", sizeof(Slab), slab,
+                                               [](void *obj) {
+                                                   new(obj) Slab;
+                                               },
+                                               [](void *obj) {
+                                                   delete (Slab *) obj;
+                                               });
 
-    expandSlabDescriptors();
+    allocatorHeaderSpace += sizeof(Cache);
+
+    cacheDesc = new(allocatorHeaderSpace) Cache("cache", sizeof(Cache));
+
+    allocatorHeaderSpace += sizeof(Cache);
+
+    bufferCache = (Cache **) allocatorHeaderSpace;
+    for (int i = 0; i < BUFFER_CACHE_SIZE; i++)
+        bufferCache[i] = nullptr;
 }
 
-void SlabAllocator::expandCacheDescriptors() {
-    DummyMutex dummy(mutex);
-
-    //TODO
-    static const ushort optimalCacheBucket = getOptimalBucket(sizeof(Cache));
-
-    auto *curr = (Cache *) mmalloc(byteToBlocks((1 << optimalCacheBucket) * BLOCK_SIZE));
-    if (!curr) return;
-
-    const size_t cacheDscPerBucket = getNumberOfSlots(sizeof(Cache), optimalCacheBucket);
-
-    for (size_t i = 0; i < cacheDscPerBucket; i++) {
-        curr->prev = freeCacheTail;
-        freeCacheTail = (!freeCacheTail ? freeCacheHead : freeCacheTail->next) = curr;
-        curr = (Cache *) ((uint8 *) curr + sizeof(Cache));
-    }
-    freeCacheTail->next = nullptr;
-}
-
-void SlabAllocator::expandSlabDescriptors() {
-    DummyMutex dummy(mutex);
-
-    //TODO
-    static const ushort optimalSlabBucket = getOptimalBucket(sizeof(Slab));
-
-    Slab *curr = (Slab *) mmalloc(byteToBlocks((1 << optimalSlabBucket) * BLOCK_SIZE));
-    if (!curr) return;
-
-    static size_t slabDscPerBucket = getNumberOfSlots(sizeof(Slab), optimalSlabBucket);
-
-    for (size_t i = 0; i < slabDscPerBucket; i++) {
-        freeSlabTail = (!freeSlabTail ? freeSlabHead : freeSlabTail->next) = curr;
-        curr = (Slab *) ((uint8 *) curr + sizeof(Slab));
-    }
-    freeSlabTail->next = nullptr;
+void *SlabAllocator::balloc(size_t size) {
+    return buddyAllocator->balloc(size);
 }
 
 Cache *SlabAllocator::getCacheHeader() {
-    DummyMutex dummy(mutex);
-
-    if (!freeCacheHead) expandCacheDescriptors();
-    if (!freeCacheHead) return nullptr;
-
-    Cache *ret = freeCacheHead;
-
-    // move head of free list
-    freeCacheHead = freeCacheHead->next;
-    (!freeCacheHead ? freeCacheTail : freeCacheHead->prev) = nullptr;
-
-    return ret;
+    Cache *cache = (Cache *) cacheDesc->allocate();
+    return cache;
 }
 
 void SlabAllocator::addUsedCacheHeader(Cache *cache) {
@@ -98,18 +70,8 @@ void SlabAllocator::addUsedCacheHeader(Cache *cache) {
 }
 
 Cache::Slab *SlabAllocator::getSlabHeader() {
-    DummyMutex dummy(mutex);
-
-    if (!freeSlabHead) expandSlabDescriptors();
-    if (!freeSlabHead) return nullptr;
-
-    Slab *ret = freeSlabHead;
-
-    // move head of free list
-    freeSlabHead = freeSlabHead->next;
-    if (!freeSlabHead) freeSlabTail = nullptr;
-
-    return ret;
+    Slab *slab = (Slab *) slabDesc->allocate();
+    return slab;
 }
 
 void SlabAllocator::returnCache(Cache *cache) {
@@ -121,20 +83,13 @@ void SlabAllocator::returnCache(Cache *cache) {
     (!cache->prev ? usedCacheHead : cache->prev->next) = cache->next;
     (!cache->next ? usedCacheTail : cache->next->prev) = cache->prev;
 
-    // add to free list
-    cache->prev = freeCacheTail;
-    freeCacheTail = (!freeCacheTail ? freeCacheHead : freeCacheTail->next) = cache;
-    freeCacheTail->next = nullptr;
+    cacheDesc->free(cache);
 }
 
 void SlabAllocator::returnSlab(Slab *slab) {
     if (!slab) return;
 
-    DummyMutex dummy(mutex);
-
-    // return to free list
-    freeSlabTail = (!freeSlabTail ? freeSlabHead : freeSlabTail->next) = slab;
-    freeSlabTail->next = nullptr;
+    slabDesc->free(slab);
 }
 
 void *SlabAllocator::allocateBuffer(size_t bufferSize) {
@@ -185,4 +140,12 @@ ushort SlabAllocator::getOptimalBucket(size_t slotSize) {
 
 size_t SlabAllocator::getNumberOfSlots(size_t slotSize, ushort bucket) {
     return (1 << bucket) * BLOCK_SIZE / slotSize;
+}
+
+void SlabAllocator::printAllCacheInfo() {
+    Cache *curr = usedCacheHead;
+    while (curr) {
+        curr->printCacheInfo();
+        curr = curr->next;
+    }
 }

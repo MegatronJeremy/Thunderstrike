@@ -43,11 +43,11 @@ template<typename T>
 LinkedHashNode<T> **LinkedHashTable<T>::hashTable = nullptr;
 
 template<typename T>
-inline Mutex *LinkedHashTable<T>::getMutex() {
+Mutex *LinkedHashTable<T>::getMutex() {
     static Mutex *mutex = Mutex::createObj();
 
     if (hashTable == nullptr) {
-        hashTable = (LinkedHashNode<T> **) kmalloc(DEFAULT_HASH_SIZE * sizeof(LinkedHashNode<T>));
+        hashTable = (LinkedHashNode<T> **) kmalloc(DEFAULT_HASH_SIZE * sizeof(LinkedHashNode<T> *));
         for (uint64 i = 0; i < DEFAULT_HASH_SIZE; i++) {
             hashTable[i] = nullptr;
         }

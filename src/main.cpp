@@ -8,8 +8,11 @@
 
 void userMain();
 
+using namespace MemorySegments;
+
 int main() {
-    kmem_init(MemorySegments::getKernelHeapStartAddr(), 0);
+    kmem_init(getKernelHeapStartAddr(),
+              bytesToPages(getKernelHeapSize()));
     Scheduler::initScheduler();
     KConsole::initKConsole();
     ThreadCollector::initThreadCollector();

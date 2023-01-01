@@ -3,22 +3,22 @@
 
 #include "../lib/hw.h"
 
-class MemorySegments {
-public:
-    static size_t getKernelHeapSize();
+namespace MemorySegments {
+    size_t getKernelHeapSize();
 
-    static size_t getUserHeapSize();
+    size_t getUserHeapSize();
 
-    static void *getUserHeapStartAddr();
+    void *getUserHeapStartAddr();
 
-    static void *getUserHeapEndAddr();
+    void *getUserHeapEndAddr();
 
-    static void *getKernelHeapStartAddr();
+    void *getKernelHeapStartAddr();
 
-    static void *getKernelHeapEndAddr();
+    void *getKernelHeapEndAddr();
 
-private:
-    static size_t getHeapSize();
+    size_t getHeapSize();
+
+    size_t bytesToPages(size_t size);
 };
 
 

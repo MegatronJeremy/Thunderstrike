@@ -44,7 +44,7 @@ private:
 
     BlockHeader *freeMemHead;
 
-    Mutex *mutex = Mutex::createObj();
+    Mutex mutex;
 
 };
 

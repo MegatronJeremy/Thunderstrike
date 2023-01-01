@@ -50,7 +50,8 @@ void kmem_cache_destroy(kmem_cache_t *cachep) {
 
 void kmem_cache_info(kmem_cache_t *cachep) {
     if (!cachep) return;
-    return;
+    Cache *cache = (Cache *) cachep;
+    cache->printCacheInfo();
 }
 
 int kmem_cache_error(kmem_cache_t *cachep) {

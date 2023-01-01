@@ -35,7 +35,7 @@ void TCB::initTCB(TCB::Body b, void *a, uint64 *tS, bool priv, Type t) {
 
 TCB *TCB::createObj(TCB::Body body, void *args, Type type, bool start) {
     if (!body) return nullptr;
-    auto *threadStack = (uint64 *) mmalloc(byteToBlocks(stackByteSize));
+    auto *threadStack = (uint64 *) mmalloc(byteToMemBlocks(stackByteSize));
     return createObj(body, args, threadStack, type, start);
 }
 
@@ -154,6 +154,7 @@ int TCB::join() const {
 
 TCB::~TCB() {
     kfree(kernelStack);
+    kernelStack = nullptr;
 
     listNode->deleteObj();
     hashNode->deleteObj();

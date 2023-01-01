@@ -9,7 +9,7 @@ int mfree(void *addr) {
     return MemoryAllocator::free(addr);
 }
 
-size_t byteToBlocks(size_t size) {
+size_t byteToMemBlocks(size_t size) {
     if (!size) return 0;
     return (size - 1) / MEM_BLOCK_SIZE + 1;
 }

@@ -5,8 +5,10 @@
 #include "../h/TimerInterrupt.hpp"
 #include "../h/KConsole.hpp"
 
+#include "../h/SlabAllocator.hpp"
+
 void Riscv::popSppSpie(bool prMode) {
-    if(prMode) ms_sstatus(SSTATUS_SPP);
+    if (prMode) ms_sstatus(SSTATUS_SPP);
     else mc_sstatus(SSTATUS_SPP);
     ms_sstatus(SSTATUS_SPIE);
     __asm__ volatile ("csrw sepc, ra");
@@ -14,8 +16,8 @@ void Riscv::popSppSpie(bool prMode) {
 }
 
 enum {
-    U_ECALL=0x0000000000000008UL, S_ECALL=0x0000000000000009UL,
-    TIMER_INTERRUPT=0x8000000000000001UL, EXTERNAL_INTERRUPT=0x8000000000000009UL
+    U_ECALL = 0x0000000000000008UL, S_ECALL = 0x0000000000000009UL,
+    TIMER_INTERRUPT = 0x8000000000000001UL, EXTERNAL_INTERRUPT = 0x8000000000000009UL
 };
 
 void Riscv::handleSupervisorTrap() {
@@ -95,6 +97,8 @@ void Riscv::handleSupervisorTrap() {
             kprintString("\nStval: 0x");
             kprintUnsigned(r_stval(), 16);
             kprintString("\n");
+
+            SlabAllocator::printAllCacheInfo();
 
             TCB::running = TCB::userMain;
             TCB::exit();

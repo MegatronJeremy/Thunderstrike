@@ -12,8 +12,6 @@ class KSemaphore : public KObject<KSemaphore> {
 public:
     KSemaphore() = default;
 
-    KSemaphore(LinkedList<TCB> *ll, LinkedHashNode<KSemaphore> *lhn);
-
     static KSemaphore *createObj(int v = 1);
 
     void deleteObj() override;

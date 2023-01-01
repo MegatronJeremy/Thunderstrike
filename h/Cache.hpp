@@ -5,36 +5,11 @@
 #include "../h/DummyMutex.hpp"
 
 class Cache {
-public:
+private:
     using Constructor = void (*)(void *);
     using Destructor = void (*)(void *);
 
-    Cache(const char *name, size_t objSize, Constructor ctor = nullptr, Destructor dtor = nullptr);
-
-    Cache(const char *name, size_t objSize, Constructor ctor = nullptr, Destructor dtor = nullptr, Mutex *mutex = nullptr);
-
-    void *allocate();
-
-    void free(void *obj);
-
-    static void sFree(const void *obj);
-
-    int shrinkCache();
-
-    void *operator new(size_t);
-
-    void *operator new(size_t, void *);
-
-    void operator delete(void *);
-
-private:
-    friend class SlabAllocator;
-
     struct Slab;
-
-    enum SlabState {
-        EMPTY = 0, PARTIAL = 1, FULL = 2
-    };
 
     struct Slot {
         Slab *parentSlab;
@@ -45,21 +20,54 @@ private:
         void *slotSpace;
     };
 
+    enum SlabState {
+        EMPTY = 0, PARTIAL = 1, FULL = 2
+    };
+
     struct Slab {
         Slot *getSlot();
 
         void putSlot(Slot *slot);
 
-        void destroySlots(Destructor dtor) const;
+        void destroySlots(Destructor dtor);
 
-        Slab *next, *prev;
+        void *operator new(size_t, void *addr) {
+            return addr;
+        }
 
-        SlabState state;
+        Slab *next = nullptr, *prev = nullptr;
 
-        Slot *slotHead, *slotTail;
+        SlabState state = EMPTY;
 
-        size_t slotNum;
+        Slot *slotHead = nullptr, *slotTail = nullptr;
+
+        size_t slotNum = 0;
     };
+
+public:
+    Cache(const char *name, size_t objSize, Constructor ctor = nullptr, Destructor dtor = nullptr);
+
+    Cache(const char *name, size_t objSize, Slab *slab, Constructor ctor = nullptr, Destructor dtor = nullptr);
+
+    void *allocate();
+
+    void free(void *obj);
+
+    static void sFree(const void *obj);
+
+    int shrinkCache();
+
+    void printCacheInfo();
+
+    void *operator new(size_t);
+
+    void *operator new(size_t, void *addr);
+
+    void operator delete(void *);
+
+private:
+    // TODO better desegmentation
+    friend class SlabAllocator;
 
     class SlabList {
     public:
@@ -74,6 +82,8 @@ private:
     };
 
     void addEmptySlab();
+
+    void addEmptySlab(Slab *slab);
 
     void initEmptySlab(Slab *slab);
 
@@ -91,7 +101,7 @@ private:
 
     const size_t slotsPerSlab;
 
-    size_t cacheSizeBlocks = 0;
+    size_t allocatedSlots = 0;
 
     size_t numberOfSlabs = 0;
 
@@ -99,9 +109,11 @@ private:
 
     SlabList slabList[3];
 
-    Mutex *mutex = nullptr;
+    Mutex mutex;
 
     bool newSlabsAllocated = false;
+
+    bool isCacheOfSlabs = false;
 };
 
 #endif

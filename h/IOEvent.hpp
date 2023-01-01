@@ -17,6 +17,7 @@ public:
     int wait() override;
 
     int signal() override;
+
 };
 
 #endif

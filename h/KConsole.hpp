@@ -1,10 +1,10 @@
 #ifndef _KCONSOLE_HPP
 #define _KCONSOLE_HPP
 
-#include "../h/KObject.hpp"
-#include "../h/Mutex.hpp"
-#include "../h/Buffer.hpp"
-#include "../h/IOEvent.hpp"
+#include "KObject.hpp"
+#include "Mutex.hpp"
+#include "Buffer.hpp"
+#include "IOEvent.hpp"
 
 typedef volatile uint8 *REG;
 

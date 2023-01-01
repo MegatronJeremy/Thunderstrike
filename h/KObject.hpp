@@ -2,13 +2,13 @@
 #define _KOBJECT_HPP
 
 #include "../lib/hw.h"
-#include "../h/slab.h"
+#include "slab.h"
 
 void *mmalloc(size_t);
 
 int mfree(void *);
 
-size_t byteToBlocks(size_t size);
+size_t byteToMemBlocks(size_t size);
 
 static constexpr uint64
 DEFAULT_BUFFER_SIZE = 2048;
@@ -44,25 +44,31 @@ kmem_cache_t *KObject<T>::objCache = nullptr;
 
 template<typename T>
 void KObject<T>::initCache() {
-    bool triedToShrink = false;
+    if (objCache) return;
 
-    while (!objCache) {
-        objCache = kmem_cache_create("name", sizeof(T),
-                                     [](void *obj) {
-                                         new(obj) T;
-                                     },
-                                     [](void *obj) {
-                                         delete (T *) obj;
-                                     });
+    // extract class name from pretty function name
+    const char *prettyName = __PRETTY_FUNCTION__;
+    int i = 0;
+    while (prettyName[i] != '=') i++;
+    int j = ++i;
+    while (prettyName[j] != ']') j++;
+    int len = j - i - 1;
 
-        if (!objCache && !triedToShrink) {
-            // try to shrink cache if no memory
-            triedToShrink = true;
-            kmem_cache_shrink(objCache);
-        } else {
-            break;
-        }
+    char *name = (char *) kmalloc(len + 1);
+    i++;
+    int k = 0;
+    while (i < j) {
+        name[k++] = prettyName[i++];
     }
+    name[k] = '\0';
+
+    objCache = kmem_cache_create(name, sizeof(T),
+                                 [](void *obj) {
+                                     new(obj) T;
+                                 },
+                                 [](void *obj) {
+                                     delete (T *) obj;
+                                 });
 }
 
 
@@ -70,20 +76,8 @@ template<typename T>
 T *KObject<T>::createObj() {
     if (!objCache) initCache();
 
-    bool triedToShrink = false;
-    T *obj = nullptr;
+    T *obj = (T *) kmem_cache_alloc(objCache);
 
-    while (!obj) {
-        obj = (T *) kmem_cache_alloc(objCache);
-
-        if (!objCache && !triedToShrink) {
-            // try to shrink cache if no memory
-            triedToShrink = true;
-            kmem_cache_shrink(objCache);
-        } else {
-            break;
-        }
-    }
     return obj;
 }
 

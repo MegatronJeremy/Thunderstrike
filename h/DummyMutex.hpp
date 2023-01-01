@@ -1,7 +1,7 @@
 #ifndef _DUMMYMUTEX_HPP
 #define _DUMMYMUTEX_HPP
 
-#include "../h/Mutex.hpp"
+#include "Mutex.hpp"
 
 class DummyMutex {
 public:

@@ -6,10 +6,9 @@
 #include "ListNode.hpp"
 #include "LinkedList.hpp"
 #include "LinkedHashNode.hpp"
-#include "../h/slab.h"
+#include "slab.h"
 
 #define OFFSETOF(TYPE, ELEMENT) ((size_t)&(((TYPE *)0)->ELEMENT))
-
 
 // Thread Control Block - kernel implementation of threads
 class TCB : public KObject<TCB> {
@@ -194,6 +193,8 @@ private:
 
     uint64 *kernelStack = (uint64 *) kmalloc(stackByteSize);
 
+    uint64 ssp = (uint64) (kernelStack + DEFAULT_STACK_SIZE);
+
     bool privileged = true;
 
     Context context = {0, 0};
@@ -207,8 +208,6 @@ private:
     LinkedList<TCB> *waitingToJoin = LinkedList<TCB>::createObj();
 
     Mutex *mutex = Mutex::createObj();
-
-    uint64 ssp = (uint64) (kernelStack + DEFAULT_STACK_SIZE);
 
     Type type = KERNEL;
 

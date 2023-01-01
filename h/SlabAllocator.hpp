@@ -2,8 +2,10 @@
 #define _SLABALLOCATOR_HPP
 
 #include "../lib/hw.h"
-#include "../h/Cache.hpp"
-#include "../h/DummyMutex.hpp"
+#include "Cache.hpp"
+#include "DummyMutex.hpp"
+
+class BuddyAllocator;
 
 class SlabAllocator {
 public:
@@ -14,6 +16,8 @@ public:
     static ushort getOptimalBucket(size_t slotSize);
 
     static size_t getNumberOfSlots(size_t slotSize, ushort bucket);
+
+    static void *balloc(size_t size);
 
     static Cache *getCacheHeader();
 
@@ -29,27 +33,26 @@ public:
 
     static void deallocateBuffer(const void *obj);
 
+    static void printAllCacheInfo();
+
     static const ushort MAX_BUCKET = 5;
 
 private:
-
-    static void expandCacheDescriptors();
-
-    static void expandSlabDescriptors();
-
     static const ushort MAX_BUFFER_BUCKET = 17;
 
     static const ushort MIN_BUFFER_BUCKET = 5;
 
     static const ushort BUFFER_CACHE_SIZE = MAX_BUFFER_BUCKET - MIN_BUFFER_BUCKET + 1;
 
-    static Cache *bufferCache[BUFFER_CACHE_SIZE];
+    static BuddyAllocator *buddyAllocator;
+
+    static Cache **bufferCache;
 
     static Cache *usedCacheHead, *usedCacheTail;
 
-    static Cache *freeCacheHead, *freeCacheTail;
+    static Cache *cacheDesc;
 
-    static Slab *freeSlabHead, *freeSlabTail;
+    static Cache *slabDesc;
 
     static Mutex *mutex;
 

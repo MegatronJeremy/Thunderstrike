@@ -1,10 +1,10 @@
 #ifndef _THREADCOLLECTOR_HPP
 #define _THREADCOLLECTOR_HPP
 
-class TCB;
-
 #include "Mutex.hpp"
 #include "LinkedList.hpp"
+
+class TCB;
 
 // Thread collector kernel thread - for deallocation of finished threads
 class ThreadCollector {

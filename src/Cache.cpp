@@ -1,31 +1,31 @@
 #include "../h/Cache.hpp"
 #include "../h/SlabAllocator.hpp"
+#include "../h/BuddyAllocator.hpp"
+#include "../h/SysPrint.hpp"
 
-Cache::Cache(const char *name, const size_t objSize, Cache::Constructor ctor, Cache::Destructor dtor) :
+Cache::Cache(const char *name, size_t objSize, Cache::Constructor ctor, Cache::Destructor dtor) :
         name(name),
         objSize(objSize),
         ctor(ctor), dtor(dtor),
         optimalBucket(SlabAllocator::getOptimalBucket(slotSize)),
         slotsPerSlab(SlabAllocator::getNumberOfSlots(slotSize, optimalBucket)) {
-    mutex = Mutex::createObj();
     SlabAllocator::addUsedCacheHeader(this);
     addEmptySlab();
 }
 
-Cache::Cache(const char *name, const size_t objSize, Cache::Constructor ctor, Cache::Destructor dtor, Mutex *mutex) :
+Cache::Cache(const char *name, size_t objSize, Slab *slab, Cache::Constructor ctor, Cache::Destructor dtor) :
         name(name),
         objSize(objSize),
         ctor(ctor), dtor(dtor),
         optimalBucket(SlabAllocator::getOptimalBucket(slotSize)),
         slotsPerSlab(SlabAllocator::getNumberOfSlots(slotSize, optimalBucket)),
-        mutex(mutex) {
+        isCacheOfSlabs(true) {
     SlabAllocator::addUsedCacheHeader(this);
-    addEmptySlab();
+    addEmptySlab(slab);
 }
 
-
 void *Cache::allocate() {
-    DummyMutex dummy(mutex);
+    DummyMutex dummy(&mutex);
 
     Slab *slab = slabList[PARTIAL].get();
     if (!slab) {
@@ -40,7 +40,8 @@ void *Cache::allocate() {
 
     // select a free slot
     Slot *slot = slab->getSlot();
-    slab->slotNum--;
+
+    allocatedSlots++;
 
     SlabState newState = EMPTY;
     if (slab->slotNum == 0) {
@@ -58,20 +59,27 @@ void *Cache::allocate() {
         slabList[newState].put(slab);
     }
 
+    if (isCacheOfSlabs && allocatedSlots == numberOfSlabs * slotsPerSlab) {
+        addEmptySlab((Slab *) slot->slotSpace);
+
+        return allocate();
+    }
+
     return slot->slotSpace;
 }
 
 void Cache::free(void *obj) {
     if (!obj) return;
 
-    DummyMutex dummy(mutex);
+    DummyMutex dummy(&mutex);
 
     Slot *slot = (Slot *) ((uint8 *) obj - sizeof(Slot));
 
     Slab *slab = slot->parentSlab;
 
     slab->putSlot(slot);
-    slab->slotNum++;
+
+    allocatedSlots--;
 
     SlabState newState = FULL;
     if (slab->slotNum == 1) {
@@ -99,7 +107,7 @@ void Cache::sFree(const void *obj) {
 int Cache::shrinkCache() {
     if (!newSlabsAllocated) return 0;
 
-    DummyMutex dummy(mutex);
+    DummyMutex dummy(&mutex);
 
     newSlabsAllocated = false;
     Slab *slab;
@@ -109,6 +117,9 @@ int Cache::shrinkCache() {
         slab->destroySlots(dtor);
 
         SlabAllocator::returnSlab(slab);
+
+        numberOfSlabs--;
+
         i++;
     }
     return i;
@@ -117,14 +128,17 @@ int Cache::shrinkCache() {
 void Cache::addEmptySlab() {
     Slab *slab = SlabAllocator::getSlabHeader();
 
+    addEmptySlab(slab);
+}
+
+void Cache::addEmptySlab(Slab *slab) {
     if (!slab) return;
+
+    DummyMutex dummy(&mutex);
 
     initEmptySlab(slab);
 
-    DummyMutex dummy(mutex);
-
     numberOfSlabs++;
-    cacheSizeBlocks += (1 << optimalBucket);
 }
 
 Cache::Slot *Cache::Slab::getSlot() {
@@ -135,6 +149,8 @@ Cache::Slot *Cache::Slab::getSlot() {
     slotHead = slotHead->next;
     if (!slotHead) slotTail = nullptr;
 
+    slotNum--;
+
     return ret;
 }
 
@@ -143,9 +159,11 @@ void Cache::Slab::putSlot(Cache::Slot *slot) {
 
     slotTail = (!slotTail ? slotHead : slotTail->next) = slot;
     slot->next = nullptr;
+
+    slotNum++;
 }
 
-void Cache::Slab::destroySlots(Destructor dtor) const {
+void Cache::Slab::destroySlots(Destructor dtor) {
     if (!dtor) return;
 
     Slot *curr = slotHead;
@@ -154,6 +172,8 @@ void Cache::Slab::destroySlots(Destructor dtor) const {
         dtor(old->slotSpace);
         curr = curr->next;
     }
+    slotHead = slotTail = nullptr;
+    slotNum = 0;
 }
 
 Cache::Slab *Cache::SlabList::get() {
@@ -164,7 +184,7 @@ void Cache::SlabList::put(Cache::Slab *slab) {
     if (!slab) return;
 
     slab->prev = tail;
-    (!tail ? head : tail->next) = slab;
+    tail = (!tail ? head : tail->next) = slab;
     slab->next = nullptr;
 }
 
@@ -176,13 +196,8 @@ void Cache::SlabList::remove(Cache::Slab *slab) {
 
 
 void Cache::initEmptySlab(Slab *slab) {
-    //TODO
-    Slot *curr = (Slot *) mmalloc(byteToBlocks(BLOCK_SIZE * (1 << optimalBucket)));
+    Slot *curr = (Slot *) SlabAllocator::balloc(BLOCK_SIZE * (1 << optimalBucket));
     if (!curr) return;
-
-    slab->slotNum = slotsPerSlab;
-    slab->state = EMPTY;
-    slab->slotHead = slab->slotTail = nullptr;
 
     for (ushort i = 0; i < slotsPerSlab; i++) {
         curr->parentSlab = slab;
@@ -209,4 +224,19 @@ void *Cache::operator new(size_t, void *addr) {
 
 void Cache::operator delete(void *obj) {
     SlabAllocator::returnCache((Cache *) obj);
+}
+
+void Cache::printCacheInfo() {
+    kprintString(name);
+    kprintString("\t");
+    kprintInteger(objSize);
+    kprintString("\t");
+    kprintInteger(numberOfSlabs * (1ULL << optimalBucket));
+    kprintString("\t");
+    kprintInteger(numberOfSlabs);
+    kprintString("\t");
+    kprintInteger(slotsPerSlab);
+    kprintString("\t");
+    kprintInteger(100 * allocatedSlots / (slotsPerSlab * numberOfSlabs));
+    kprintString("%\n");
 }

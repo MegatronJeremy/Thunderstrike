@@ -57,7 +57,11 @@ public:
 
     int shrinkCache();
 
-    void printCacheInfo();
+    void printCacheInfo() const;
+
+    const char *getName() const {
+        return name;
+    }
 
     void *operator new(size_t);
 

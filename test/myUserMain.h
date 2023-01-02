@@ -50,6 +50,7 @@ void myUserMain() {
     thread_t t6;
     thread_t t7;
     thread_t t8;
+    thread_t t9;
 
     PeriodicThread *p1 = new MyPeriodicTen();
     PeriodicThread *p2 = new MyPeriodicFive();
@@ -70,6 +71,8 @@ void myUserMain() {
     thread_create(&t6, &ProducerConsumer::consumeWrapper, obj);
     thread_create(&t7, &ProducerConsumer::consumeWrapper, obj);
     thread_create(&t8, &ProducerConsumer::consumeWrapper, obj);
+    thread_create(&t9, &ProducerConsumer::consumeWrapper, obj);
+
 
     time_sleep(50);
 

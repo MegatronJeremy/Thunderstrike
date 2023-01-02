@@ -69,16 +69,20 @@ void *BuddyAllocator::balloc(size_t size) {
 }
 
 int BuddyAllocator::bfree(void *obj) {
+    size_t block = ptrToBlock(obj);
+
+    // block is out of range
+    if (block == 0) return -1;
+
+    size_t i = 2 * (block - 1);
+
     DummyMutex dummy(&mutex);
 
-    size_t startBlock = 2 * (ptrToBlock(obj) - 1);
-
     // block is not allocated block
-    if (startBlock >= blockMap->size() || !testBlock(startBlock, ALLOCATED))
-        return -1;
+    if (i >= blockMap->size() || !testBlock(i, ALLOCATED))
+        return -2;
 
     // try to coalesce
-    size_t i = startBlock;
     setBlock(i, FREE);
 
     while (i > 0) {
@@ -172,6 +176,7 @@ void *BuddyAllocator::blockToPtr(uint bucket, size_t block) {
 }
 
 size_t BuddyAllocator::ptrToBlock(void *ptr) {
+    if ((size_t) ptr < (size_t) space) return 0;
     return ((size_t) ptr - (size_t) space) / BLOCK_SIZE;
 }
 

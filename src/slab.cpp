@@ -11,6 +11,7 @@ void kmem_init(void *space, int block_num) {
 kmem_cache_t *kmem_cache_create(const char *name, size_t size,
                                 void (*ctor)(void *),
                                 void (*dtor)(void *)) {
+    if (SlabAllocator::contains(name)) return nullptr;
     Cache *cache = new Cache(name, size, ctor, dtor);
     kmem_cache_t *ret = (kmem_cache_t *) cache;
     return ret;

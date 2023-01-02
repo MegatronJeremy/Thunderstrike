@@ -1,6 +1,9 @@
 #include "../h/SlabAllocator.hpp"
 
 #include "../h/BuddyAllocator.hpp"
+#include "../h/String.hpp"
+
+using namespace String;
 
 Cache *SlabAllocator::usedCacheHead = nullptr;
 
@@ -56,14 +59,17 @@ void SlabAllocator::initSlabAllocator(void *space, int blockNum) {
 }
 
 void *SlabAllocator::balloc(size_t size) {
+    if (!buddyAllocator) return nullptr;
     return buddyAllocator->balloc(size);
 }
 
 int SlabAllocator::bfree(void *obj) {
+    if (!buddyAllocator) return -1;
     return buddyAllocator->bfree(obj);
 }
 
 Cache *SlabAllocator::getCacheHeader() {
+    if (!cacheDesc) return nullptr;
     Cache *cache = (Cache *) cacheDesc->allocate();
     return cache;
 }
@@ -78,12 +84,13 @@ void SlabAllocator::addUsedCacheHeader(Cache *cache) {
 }
 
 Cache::Slab *SlabAllocator::getSlabHeader() {
+    if (!slabDesc) return nullptr;
     Slab *slab = (Slab *) slabDesc->allocate();
     return slab;
 }
 
 void SlabAllocator::returnCache(Cache *cache) {
-    if (!cache) return;
+    if (!cache || !cacheDesc) return;
 
     DummyMutex dummy(mutex);
 
@@ -95,7 +102,7 @@ void SlabAllocator::returnCache(Cache *cache) {
 }
 
 void SlabAllocator::returnSlab(Slab *slab) {
-    if (!slab) return;
+    if (!slab || !slabDesc) return;
 
     slabDesc->free(slab);
 }
@@ -109,13 +116,16 @@ void *SlabAllocator::allocateBuffer(size_t bufferSize) {
         bucket++;
     }
 
-    if (bufferSize > size) return nullptr;
+    if (bufferSize > size || !mutex) return nullptr;
 
     ushort ind = bucket - MIN_BUFFER_BUCKET;
+
+    mutex->wait();
     if (bufferCache[ind] == nullptr) {
         const char *name = bufferCacheNames[ind];
         bufferCache[ind] = new Cache(name, size);
     }
+    mutex->signal();
 
     return bufferCache[ind]->allocate();
 }
@@ -156,4 +166,17 @@ void SlabAllocator::printAllCacheInfo() {
         curr->printCacheInfo();
         curr = curr->next;
     }
+}
+
+bool SlabAllocator::contains(const char *name) {
+    DummyMutex dummy(mutex);
+
+    Cache *curr = usedCacheHead;
+    while (curr) {
+        if (strcmp(curr->getName(), name) == 0) {
+            return true;
+        }
+        curr = curr->next;
+    }
+    return false;
 }

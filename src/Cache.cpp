@@ -249,7 +249,7 @@ Cache::~Cache() {
     numberOfSlabs = 0;
 }
 
-void Cache::printCacheInfo() {
+void Cache::printCacheInfo() const {
     kprintString(name);
     kprintString("\t");
     kprintInteger(objSize);

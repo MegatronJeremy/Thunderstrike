@@ -62,13 +62,20 @@ void KObject<T>::initCache() {
     }
     name[k] = '\0';
 
-    objCache = kmem_cache_create(name, sizeof(T),
-                                 [](void *obj) {
-                                     new(obj) T;
-                                 },
-                                 [](void *obj) {
-                                     delete (T *) obj;
-                                 });
+    kmem_cache_t *cacheS = kmem_cache_create(name, sizeof(T),
+                                             [](void *obj) {
+                                                 new(obj) T;
+                                             },
+                                             [](void *obj) {
+                                                 delete (T *) obj;
+                                             });
+
+    if (cacheS == nullptr) {
+        kfree(name);
+        return;
+    }
+
+    objCache = cacheS;
 }
 
 

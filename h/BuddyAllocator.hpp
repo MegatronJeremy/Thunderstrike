@@ -38,9 +38,11 @@ private:
 
     bool testBlock(size_t i, BlockState state);
 
-    bool splitDownTo(uint bucket);
+    bool splitDownTo(int bucket);
 
     size_t getFreeBlock(uint bucket);
+
+    int containsAllocatedBlock(uint bucket, size_t i);
 
     void *blockToPtr(uint bucket, size_t block);
 

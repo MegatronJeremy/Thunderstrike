@@ -164,13 +164,13 @@ void Cache::Slab::putSlot(Cache::Slot *slot) {
 }
 
 void Cache::Slab::destroySlots(Destructor dtor) {
-    if (!dtor) return;
-
-    Slot *curr = slotHead;
-    while (curr) {
-        Slot *old = curr;
-        dtor(old->slotSpace);
-        curr = curr->next;
+    if (dtor != nullptr) {
+        Slot *curr = slotHead;
+        while (curr) {
+            Slot *old = curr;
+            dtor(old->slotSpace);
+            curr = curr->next;
+        }
     }
     SlabAllocator::bfree(slotHead);
 

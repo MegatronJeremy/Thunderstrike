@@ -1,0 +1,4 @@
+Test radi u korisnickom modu. Kreira objekte dok se ne popuni memorija. Voditi racuna o ispravnom vracanju 0 (nullptr) kod svih funkcija za alokaciju.
+U C++ forsirati kompajler da vraca 0, a da ne ocekuje bacanje izuzetaka (npr. koristiti flag -fcheck-new).
+
+Implementirati printf ili zameniti necim sto ispisuje iste podatke.

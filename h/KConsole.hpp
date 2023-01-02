@@ -19,6 +19,8 @@ public:
 
     static void consoleHandler();
 
+    static void flush();
+
 private:
     static bool initialised;
 

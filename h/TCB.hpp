@@ -19,7 +19,9 @@ public:
 
     using Body = void (*)(void *);
 
-    TCB() = default;
+    TCB() {
+        for (int i = 0; i < 32; i++) context[i] = 0;
+    }
 
     TCB(const TCB &) = delete;
 
@@ -162,10 +164,7 @@ private:
         READY, FINISHED, BLOCKED, IDLE, INTERRUPTED, WAITING
     };
 
-    struct Context {
-        uint64 ra;
-        uint64 sp;
-    };
+    using Context = uint64[32];
 
     friend class Riscv;
 
@@ -173,7 +172,7 @@ private:
 
     static void contextSwitch(Context *oldContext, Context *runningContext);
 
-    void initTCB(Body b, void *a, uint64 *tS, bool priv, Type t);
+    int initTCB(Body b, void *a, uint64 *tS, bool priv, Type t);
 
     static uint64 ID;
 
@@ -191,13 +190,13 @@ private:
 
     uint64 *threadStack = nullptr;
 
-    uint64 *kernelStack = (uint64 *) kmalloc(stackByteSize);
+    uint64 *kernelStack = nullptr;
 
-    uint64 ssp = (uint64) (kernelStack + DEFAULT_STACK_SIZE);
+    uint64 ssp = 0;
 
     bool privileged = true;
 
-    Context context = {0, 0};
+    Context context;
 
     uint64 timeSlice = DEFAULT_TIME_SLICE;
 

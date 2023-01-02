@@ -96,3 +96,9 @@ void KConsole::writeToConsole() {
         }
     }
 }
+
+void KConsole::flush() {
+    while (outputItemsAvailable->tryWait()) {
+        *outputData = outputBuffer->removeFirst();
+    }
+}

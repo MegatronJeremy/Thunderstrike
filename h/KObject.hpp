@@ -13,6 +13,7 @@ size_t byteToMemBlocks(size_t size);
 static constexpr uint64
 DEFAULT_BUFFER_SIZE = 2048;
 
+
 static constexpr uint64
 DEFAULT_HASH_SIZE = 1499;
 

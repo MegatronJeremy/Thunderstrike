@@ -49,6 +49,19 @@ int KSemaphore::signal() {
     return 0;
 }
 
+bool KSemaphore::tryWait() {
+    lock()
+    bool ret;
+    if (val <= 0) {
+        ret = false;
+    } else {
+        val--;
+        ret = true;
+    }
+    unlock()
+    return ret;
+}
+
 void KSemaphore::block() {
     blockedThreadQueue->addLast(TCB::running->getListNode());
     TCB::running->setBlocked();
@@ -61,3 +74,4 @@ void KSemaphore::deblock() {
     tcb->setReady();
     Scheduler::put(tcb);
 }
+

@@ -69,21 +69,32 @@ void *BuddyAllocator::balloc(size_t size) {
 }
 
 int BuddyAllocator::bfree(void *obj) {
-    size_t block = ptrToBlock(obj);
-
-    // block is out of range
-    if (block == 0) return -1;
-
-    size_t i = 2 * (block - 1);
+    size_t i = ptrToBlock(obj);
 
     DummyMutex dummy(&mutex);
 
-    // block is not allocated block
-    if (i >= blockMap->size() || !testBlock(i, ALLOCATED))
-        return -2;
+    // block is out of range
+    if (i == 0 || i >= blockMap->size())
+        return -1;
+
+    // find the bucket of the block
+    int bucket = numOfBuckets - 1;
+
+    int ret = 0;
+
+    while (bucket > 0 && (ret = containsAllocatedBlock(bucket, i)) == -1) {
+        bucket--;
+    }
+
+    if (ret < 0 || bucket < 0) return -2;
+
+    // bucket found, node in bitmap found
+    size_t nodes = 1ULL << bucket;
+    i = 2 * i + 2 * (nodes - 1);
 
     // try to coalesce
     setBlock(i, FREE);
+    numOfBlocks[bucket]++;
 
     while (i > 0) {
         // find direct brother
@@ -92,6 +103,7 @@ int BuddyAllocator::bfree(void *obj) {
         if (testBlock(i, FREE) && testBlock(j, FREE)) {
             setBlock(i, INCLUDED);
             setBlock(j, INCLUDED);
+            numOfBlocks[bucket--] -= 2;
         } else {
             break;
         }
@@ -99,17 +111,19 @@ int BuddyAllocator::bfree(void *obj) {
         // find parent if succesfully coalesced
         i = ((i < j) ? i : j) / 2 - 1;
         setBlock(i, FREE);
+        numOfBlocks[bucket]++;
     }
 
     return 0;
 }
 
-bool BuddyAllocator::splitDownTo(uint bucket) {
+bool BuddyAllocator::splitDownTo(int bucket) {
     if (bucket == 0) return false;
 
-    uint upperBucket = bucket - 1;
+    int upperBucket = bucket - 1;
 
     while (upperBucket >= 0 && numOfBlocks[upperBucket] == 0) upperBucket--;
+    if (upperBucket < 0) return false;
 
     size_t nodes = (1ULL << upperBucket);
     size_t startBlock = 2 * (nodes - 1);
@@ -167,6 +181,17 @@ size_t BuddyAllocator::getFreeBlock(uint bucket) {
             return i;
         }
     }
+
+    return 0;
+}
+
+int BuddyAllocator::containsAllocatedBlock(uint bucket, size_t i) {
+    size_t nodes = (1ULL << bucket);
+    if (i > nodes) return -2;
+
+    size_t startBlock = 2 * (nodes - 1);
+
+    if (!testBlock(2 * i + startBlock, ALLOCATED)) return -1;
 
     return 0;
 }

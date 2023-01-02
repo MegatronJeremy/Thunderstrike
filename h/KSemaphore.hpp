@@ -20,6 +20,8 @@ public:
 
     virtual int signal();
 
+    bool tryWait();
+
     uint64 getId() const {
         return id;
     }

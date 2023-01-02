@@ -1,17 +1,17 @@
 #include "../h/SysPrint.hpp"
 #include "../h/Kernel.hpp"
+#include "../h/DummyMutex.hpp"
 
 void kprintString(char const *string) {
-    PrintMutex::wait();
+    DummyMutex dummy(PrintMutex::getMutex());
     while (*string != '\0') {
         Kernel::putc(*string);
         string++;
     }
-    PrintMutex::signal();
 }
 
 void kprintInteger(int integer, int base) {
-    PrintMutex::wait();
+    DummyMutex dummy(PrintMutex::getMutex());
     static char digits[] = "0123456789abcdef";
     char buf[16];
     int i, neg;
@@ -33,11 +33,10 @@ void kprintInteger(int integer, int base) {
 
     while (--i >= 0)
         Kernel::putc(buf[i]);
-    PrintMutex::signal();
 }
 
 void kprintUnsigned(uint64 x, int base) {
-    PrintMutex::wait();
+    DummyMutex dummy(PrintMutex::getMutex());
     static char digits[] = "0123456789abcdef";
     char buf[16];
 
@@ -48,5 +47,4 @@ void kprintUnsigned(uint64 x, int base) {
 
     while (--i >= 0)
         Kernel::putc(buf[i]);
-    PrintMutex::signal();
 }

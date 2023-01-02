@@ -17,31 +17,42 @@ uint64 TCB::timeSliceCounter = 0;
 
 size_t TCB::stackByteSize = DEFAULT_STACK_SIZE * sizeof(uint64);
 
-void TCB::initTCB(TCB::Body b, void *a, uint64 *tS, bool priv, Type t) {
+int TCB::initTCB(TCB::Body b, void *a, uint64 *tS, bool priv, Type t) {
     body = b;
 
     args = a;
 
     threadStack = tS;
 
+    kernelStack = (uint64 *) kmalloc(stackByteSize);
+
+    if (kernelStack == nullptr) return -1;
+
+    ssp = (uint64) (kernelStack + DEFAULT_STACK_SIZE);
+
     privileged = priv;
 
     type = t;
 
-    context = {(uint64) threadWrapper, (uint64) (tS + DEFAULT_STACK_SIZE)};
+    if (body != nullptr) {
+        context[1] = (uint64) threadWrapper;
+        context[2] = (uint64) (tS + DEFAULT_STACK_SIZE);
+    }
 
     status = WAITING;
+
+    return 0;
 }
 
 TCB *TCB::createObj(TCB::Body body, void *args, Type type, bool start) {
-    if (!body) return nullptr;
     auto *threadStack = (uint64 *) mmalloc(byteToMemBlocks(stackByteSize));
-    return createObj(body, args, threadStack, type, start);
+
+    TCB *tcb = createObj(body, args, threadStack, type, start);
+
+    return tcb;
 }
 
 TCB *TCB::createObj(TCB::Body body, void *args, uint64 *threadStack, Type type, bool start) {
-    if (!body) return nullptr;
-
     bool prMode;
     switch (type) {
         case (KERNEL):
@@ -55,9 +66,15 @@ TCB *TCB::createObj(TCB::Body body, void *args, uint64 *threadStack, Type type, 
     }
 
     TCB *tcb = createObj();
-    if (!tcb) return nullptr;
+    if (!tcb) {
+        mfree(threadStack);
+        return nullptr;
+    }
 
-    tcb->initTCB(body, args, threadStack, prMode, type);
+    if (tcb->initTCB(body, args, threadStack, prMode, type) < 0) {
+        tcb->deleteObj();
+        return nullptr;
+    }
 
     if (start) TCB::start(tcb);
 
@@ -73,13 +90,16 @@ void TCB::deleteObj() {
 
     privileged = true;
 
-    context = {0, 0};
+    for (int i = 0; i < 32; i++) context[i] = 0;
+
+    kfree(kernelStack);
+    kernelStack = nullptr;
+
+    ssp = 0;
 
     priority = 1;
 
     status = READY;
-
-    ssp = (uint64) (kernelStack + DEFAULT_STACK_SIZE);
 
     type = KERNEL;
 
@@ -136,7 +156,10 @@ void TCB::threadWrapper() {
     Riscv::popSppSpie(running->privileged);
     running->body(running->args);
 
-    thread_exit();
+    if (!running->isPrivileged())
+        thread_exit();
+    else
+        TCB::exit();
 }
 
 int TCB::join() const {
@@ -153,9 +176,6 @@ int TCB::join() const {
 }
 
 TCB::~TCB() {
-    kfree(kernelStack);
-    kernelStack = nullptr;
-
     listNode->deleteObj();
     hashNode->deleteObj();
     waitingToJoin->deleteObj();

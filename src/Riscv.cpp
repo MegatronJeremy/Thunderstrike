@@ -98,8 +98,6 @@ void Riscv::handleSupervisorTrap() {
             kprintUnsigned(r_stval(), 16);
             kprintString("\n");
 
-            SlabAllocator::printAllCacheInfo();
-
             TCB::running = TCB::userMain;
             TCB::exit();
 

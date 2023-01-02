@@ -1,0 +1,3 @@
+Test radi u sistemskom modu. Pretpostavlja da je kmem_init vec pozvan.
+
+Implementirati printf ili zameniti necim sto ispisuje iste podatke.

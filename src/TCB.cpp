@@ -90,7 +90,7 @@ void TCB::deleteObj() {
 
     privileged = true;
 
-    for (int i = 0; i < 32; i++) context[i] = 0;
+    for (int i = 0; i < REG_NUM; i++) context[i] = 0;
 
     kfree(kernelStack);
     kernelStack = nullptr;
@@ -147,7 +147,7 @@ void TCB::dispatch(bool wasBlocked) {
 
     TCB::timeSliceCounter = 0;
 
-    TCB::contextSwitch(&old->context, &running->context);
+    TCB::contextSwitch(old->context, running->context);
 
     unlock()
 }
@@ -176,6 +176,7 @@ int TCB::join() const {
 }
 
 TCB::~TCB() {
+    kfree(context);
     listNode->deleteObj();
     hashNode->deleteObj();
     waitingToJoin->deleteObj();

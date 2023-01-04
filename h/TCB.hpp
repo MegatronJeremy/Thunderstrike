@@ -20,7 +20,7 @@ public:
     using Body = void (*)(void *);
 
     TCB() {
-        for (int i = 0; i < 32; i++) context[i] = 0;
+        for (int i = 0; i < REG_NUM; i++) context[i] = 0;
     }
 
     TCB(const TCB &) = delete;
@@ -164,13 +164,15 @@ private:
         READY, FINISHED, BLOCKED, IDLE, INTERRUPTED, WAITING
     };
 
-    using Context = uint64[32];
+    static const int REG_NUM = 32;
+
+    using Context = uint64 *;
 
     friend class Riscv;
 
     static void threadWrapper();
 
-    static void contextSwitch(Context *oldContext, Context *runningContext);
+    static void contextSwitch(Context oldContext, Context runningContext);
 
     int initTCB(Body b, void *a, uint64 *tS, bool priv, Type t);
 
@@ -196,7 +198,7 @@ private:
 
     bool privileged = true;
 
-    Context context;
+    Context context = (Context) kmalloc(REG_NUM * sizeof(*context));
 
     uint64 timeSlice = DEFAULT_TIME_SLICE;
 

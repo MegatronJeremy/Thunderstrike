@@ -1,7 +1,7 @@
 .align 4
-.global _ZN3TCB13contextSwitchEPA32_mS1_
-.type _ZN3TCB13contextSwitchEPA32_mS1_, @function
-_ZN3TCB13contextSwitchEPA32_mS1_:
+.global _ZN3TCB13contextSwitchEPmS0_
+.type _ZN3TCB13contextSwitchEPmS0_, @function
+_ZN3TCB13contextSwitchEPmS0_:
     # a0    &old->context
     # a1    &running->context
 

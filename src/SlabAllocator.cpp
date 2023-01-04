@@ -168,15 +168,15 @@ void SlabAllocator::printAllCacheInfo() {
     }
 }
 
-bool SlabAllocator::contains(const char *name) {
+Cache *SlabAllocator::find(const char *name) {
     DummyMutex dummy(mutex);
 
     Cache *curr = usedCacheHead;
     while (curr) {
         if (strcmp(curr->getName(), name) == 0) {
-            return true;
+            return curr;
         }
         curr = curr->next;
     }
-    return false;
+    return nullptr;
 }

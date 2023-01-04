@@ -2,6 +2,7 @@
 #include "../h/SlabAllocator.hpp"
 #include "../h/BuddyAllocator.hpp"
 #include "../h/SysPrint.hpp"
+#include "../h/MemorySegments.hpp"
 
 Cache::Cache(const char *name, size_t objSize, Cache::Constructor ctor, Cache::Destructor dtor) :
         name(name),
@@ -69,7 +70,10 @@ void *Cache::allocate() {
 }
 
 void Cache::free(void *obj) {
-    if (!obj) return;
+    if (!obj ||
+        (size_t) obj < (size_t) MemorySegments::getKernelHeapStartAddr() ||
+        (size_t) obj >= (size_t) MemorySegments::getKernelHeapEndAddr())
+        return;
 
     DummyMutex dummy(&mutex);
 
@@ -97,7 +101,10 @@ void Cache::free(void *obj) {
 }
 
 void Cache::sFree(const void *obj) {
-    if (!obj) return;
+    if (!obj ||
+        (size_t) obj < (size_t) MemorySegments::getKernelHeapStartAddr() ||
+        (size_t) obj >= (size_t) MemorySegments::getKernelHeapEndAddr())
+        return;
 
     Slot *slot = (Slot *) ((uint8 *) obj - sizeof(Slot));
     Cache *cache = slot->parentCache;

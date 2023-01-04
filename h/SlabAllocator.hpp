@@ -17,7 +17,7 @@ public:
 
     static size_t getNumberOfSlots(size_t slotSize, ushort bucket);
 
-    static bool contains(const char *name);
+    static Cache *find(const char *name);
 
     static void *balloc(size_t size);
 

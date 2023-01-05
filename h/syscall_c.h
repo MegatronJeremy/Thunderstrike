@@ -22,7 +22,8 @@ enum {
     THREAD_CREATE_SUSPENDED = 0x14, THREAD_START = 0x15,
     SEM_OPEN = 0x21, SEM_CLOSE = 0x22, SEM_WAIT = 0x23, SEM_SIGNAL = 0x24,
     TIME_SLEEP = 0x31,
-    GETC = 0x41, PUTC = 0x42
+    GETC = 0x41, PUTC = 0x42,
+    PRINT_STRING = 0x43, PRINT_INT = 0x44, PRINT_UNSIGNED = 0x45
 };
 
 #ifdef __cplusplus
@@ -69,6 +70,12 @@ int time_sleep(time_t);
 char getc();
 
 void putc(char);
+
+void printS(char const *string);
+
+void printI(int integer, int base);
+
+void printU(uint64 uint, int base);
 
 #ifdef __cplusplus
 }

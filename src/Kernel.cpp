@@ -3,7 +3,6 @@
 #include "../h/Riscv.hpp"
 #include "../h/TCB.hpp"
 #include "../h/TimerInterrupt.hpp"
-#include "../h/SysPrint.hpp"
 #include "../h/LinkedHashTable.hpp"
 #include "../h/KConsole.hpp"
 #include "../h/syscall_c.h"
@@ -69,10 +68,20 @@ void Kernel::handleSystemCall() {
         case (PUTC):
             putc(arg);
             break;
+        case (PRINT_STRING):
+            print((const char *) arg);
+            break;
+        case (PRINT_INT):
+            print((int) ((uint64 *) arg)[0], (int) ((uint64 *) arg)[1]);
+            break;
+        case (PRINT_UNSIGNED):
+            print((uint64) ((uint64 *) arg)[0], (int) ((uint64 *) arg)[1]);
+            break;
         default:
-            kprintString("Unknown system call: 0x");
-            kprintUnsigned(code, 16);
-            kprintString("\n");
+            DummyMutex dummy(String::getPrintMutex());
+            String::kprint("Unknown system call: 0x");
+            String::kprint(code, 16);
+            String::kprint("\n");
             return;
     }
 }
@@ -209,5 +218,17 @@ char Kernel::getc() {
 
 void Kernel::putc(char chr) {
     KConsole::putc(chr);
+}
+
+void Kernel::print(const char *string) {
+    String::kprint(string);
+}
+
+void Kernel::print(int integer, int base) {
+    String::kprint(integer, base);
+}
+
+void Kernel::print(uint64 uint, int base) {
+    String::kprint(uint, base);
 }
 

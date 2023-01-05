@@ -1,5 +1,5 @@
 #include "../../../h/slab.h"
-#include "../../../h/SysPrint.hpp"
+#include "../../../h/String.h"
 
 #define RUN_NUM (5)
 #define ITERATIONS (1000)
@@ -28,8 +28,8 @@ void memset(const void *data, int size, int value) {
 void construct(void *data) {
     static int i = 1;
 //	printf("%d Shared object constructed.\n", i++);
-    kprintInteger(i++);
-    kprintString(" Shared object constructed.\n");
+    String::kprint(i++);
+    String::kprint(" Shared object constructed.\n");
     memset(data, shared_size, MASK);
 }
 
@@ -63,8 +63,8 @@ void work(void *pdata) {
             objs[size].cache = data.shared;
             if (!check(objs[size].data, shared_size)) {
 //                printf("Value not correct!");
-                kprintString(CACHE_NAMES[data.id]);
-                kprintString(" Value not correct 1!\n");
+                String::kprint(CACHE_NAMES[data.id]);
+                String::kprint(" Value not correct 1!\n");
             }
         } else {
             objs[size].data = kmem_cache_alloc(cache);
@@ -80,8 +80,8 @@ void work(void *pdata) {
     for (int i = 0; i < size; i++) {
         if (!check(objs[i].data, (cache == objs[i].cache) ? object_size : shared_size)) {
 //            printf("Value not correct!");
-            kprintString(CACHE_NAMES[data.id]);
-            kprintString(" Value not correct 2!\n");
+            String::kprint(CACHE_NAMES[data.id]);
+            String::kprint(" Value not correct 2!\n");
         }
         kmem_cache_free(objs[i].cache, objs[i].data);
     }

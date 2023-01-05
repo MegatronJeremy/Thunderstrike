@@ -27,7 +27,7 @@ int main() {
     TCB *main = TCB::createObj(nullptr, nullptr, nullptr, TCB::KERNEL, false);
     TCB::running = main;
 
-    TCB *uMain = TCB::createObj([](void *) { userMain(); }, nullptr);
+    TCB *uMain = TCB::createObj([](void *) { userMain1(); }, nullptr);
     TCB::userMain = uMain;
 
     Riscv::w_stvec((uint64) &Riscv::supervisorTrap);
@@ -36,6 +36,7 @@ int main() {
     TCB::yield();
 
     SlabAllocator::printAllCacheInfo();
+    SlabAllocator::printAllCacheError();
 
     KConsole::flush();
 

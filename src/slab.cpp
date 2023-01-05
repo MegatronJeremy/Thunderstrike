@@ -12,9 +12,7 @@ kmem_cache_t *kmem_cache_create(const char *name, size_t size,
                                 void (*ctor)(void *),
                                 void (*dtor)(void *)) {
     Cache *cache;
-    if ((cache = SlabAllocator::find(name)) != nullptr) {
-        kfree(name);
-    } else {
+    if ((cache = SlabAllocator::find(name)) == nullptr) {
         cache = new Cache(name, size, ctor, dtor);
     }
     kmem_cache_t *ret = (kmem_cache_t *) cache;
@@ -44,7 +42,7 @@ void *kmalloc(size_t size) {
 }
 
 void kfree(const void *objp) {
-    return SlabAllocator::deallocateBuffer(objp);
+    SlabAllocator::deallocateBuffer(objp);
 }
 
 void kmem_cache_destroy(kmem_cache_t *cachep) {

@@ -13,7 +13,6 @@ private:
 
     struct Slot {
         Slab *parentSlab;
-        Cache *parentCache;
 
         Slot *next;
 
@@ -39,15 +38,16 @@ private:
 
         SlabState state = EMPTY;
 
+        Cache *parentCache = nullptr;
+
         Slot *slotHead = nullptr, *slotTail = nullptr;
 
         size_t slotNum = 0;
     };
 
 public:
-    Cache(const char *name, size_t objSize, Constructor ctor = nullptr, Destructor dtor = nullptr);
-
-    Cache(const char *name, size_t objSize, Slab *slab, Constructor ctor = nullptr, Destructor dtor = nullptr);
+    Cache(const char *name, size_t objSize, Constructor ctor = nullptr, Destructor dtor = nullptr,
+          Slab *slab = nullptr);
 
     void *allocate();
 
@@ -59,8 +59,10 @@ public:
 
     void printCacheInfo() const;
 
+    void printCacheError() const;
+
     const char *getName() const {
-        return name;
+        return cacheName;
     }
 
     void *operator new(size_t);
@@ -74,6 +76,10 @@ public:
 private:
     // TODO better desegmentation
     friend class SlabAllocator;
+
+    enum ErrorCode {
+        NO_ERROR, NO_SLAB_AVAIL, NO_SLAB_SPACE, INVALID_FREE_OBJ
+    };
 
     class SlabList {
     public:
@@ -89,21 +95,19 @@ private:
         Slab *head = nullptr, *tail = nullptr;
     };
 
-    void addEmptySlab();
-
-    void addEmptySlab(Slab *slab);
+    void addEmptySlab(Slab *slab = nullptr);
 
     void initEmptySlab(Slab *slab);
 
-    const char *name;
+    static const int CACHE_NAME_SIZE = 30;
+
+    char cacheName[CACHE_NAME_SIZE + 1];
 
     const size_t objSize;
 
     Constructor ctor;
 
     Destructor dtor;
-
-    const size_t slotSize = objSize + sizeof(Slot);
 
     const ushort optimalBucket;
 
@@ -112,6 +116,8 @@ private:
     size_t allocatedSlots = 0;
 
     size_t numberOfSlabs = 0;
+
+    ErrorCode errorCode = NO_ERROR;
 
     Cache *next = nullptr, *prev = nullptr;
 

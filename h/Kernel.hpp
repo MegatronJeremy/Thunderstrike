@@ -36,6 +36,12 @@ public:
 
     static void putc(char);
 
+    static void print(char const *string);
+
+    static void print(int integer, int base = 10);
+
+    static void print(uint64 uint, int base = 10);
+
 private:
     Kernel() = default;
 

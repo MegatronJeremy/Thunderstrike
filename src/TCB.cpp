@@ -90,7 +90,7 @@ void TCB::deleteObj() {
 
     privileged = true;
 
-    for (int i = 0; i < REG_NUM; i++) context[i] = 0;
+    String::memset(context, 0, sizeof(*context) * REG_NUM);
 
     kfree(kernelStack);
     kernelStack = nullptr;

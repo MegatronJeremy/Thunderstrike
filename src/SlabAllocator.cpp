@@ -1,7 +1,7 @@
 #include "../h/SlabAllocator.hpp"
 
 #include "../h/BuddyAllocator.hpp"
-#include "../h/String.hpp"
+#include "../h/String.h"
 
 using namespace String;
 
@@ -19,9 +19,10 @@ Cache *SlabAllocator::slabDesc = nullptr;
 
 BuddyAllocator *SlabAllocator::buddyAllocator = nullptr;
 
-const char *SlabAllocator::bufferCacheNames[BUFFER_CACHE_SIZE] = {"size-5", "size-6", "size-7", "size-8", "size-9",
-                                                                  "size-10", "size-11", "size-12", "size-13",
-                                                                  "size-14", "size-15", "size-16", "size-17"};
+const char *SlabAllocator::bufferCacheNames[BUFFER_CACHE_SIZE] = {"size-32", "size-64", "size-128", "size-256",
+                                                                  "size-512", "size-1024", "size-2048",
+                                                                  "size-4096", "size-8192", "size-16384",
+                                                                  "size-32768", "size-65536", "size-131072"};
 
 void SlabAllocator::initSlabAllocator(void *space, int blockNum) {
     buddyAllocator = new(space) BuddyAllocator(space, blockNum);
@@ -39,13 +40,13 @@ void SlabAllocator::initSlabAllocator(void *space, int blockNum) {
     Slab *slab = new(allocatorHeaderSpace) Slab;
     allocatorHeaderSpace += sizeof(Slab);
 
-    slabDesc = new(allocatorHeaderSpace) Cache("slab", sizeof(Slab), slab,
+    slabDesc = new(allocatorHeaderSpace) Cache("slab", sizeof(Slab),
                                                [](void *obj) {
                                                    new(obj) Slab;
                                                },
                                                [](void *obj) {
                                                    delete (Slab *) obj;
-                                               });
+                                               }, slab);
 
     allocatorHeaderSpace += sizeof(Cache);
 
@@ -164,6 +165,15 @@ void SlabAllocator::printAllCacheInfo() {
     Cache *curr = usedCacheHead;
     while (curr) {
         curr->printCacheInfo();
+        curr = curr->next;
+    }
+}
+
+
+void SlabAllocator::printAllCacheError() {
+    Cache *curr = usedCacheHead;
+    while (curr) {
+        curr->printCacheError();
         curr = curr->next;
     }
 }

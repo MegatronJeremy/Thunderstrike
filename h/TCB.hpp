@@ -7,6 +7,7 @@
 #include "LinkedList.hpp"
 #include "LinkedHashNode.hpp"
 #include "slab.h"
+#include "String.h"
 
 #define OFFSETOF(TYPE, ELEMENT) ((size_t)&(((TYPE *)0)->ELEMENT))
 
@@ -20,7 +21,7 @@ public:
     using Body = void (*)(void *);
 
     TCB() {
-        for (int i = 0; i < REG_NUM; i++) context[i] = 0;
+        String::memset(context, 0, sizeof(*context) * REG_NUM);
     }
 
     TCB(const TCB &) = delete;

@@ -79,3 +79,15 @@ char Console::getc() {
 void Console::putc(char c) {
     ::putc(c);
 }
+
+void Console::print(const char *string) {
+    ::printS(string);
+}
+
+void Console::print(int integer, int base) {
+    ::printI(integer, base);
+}
+
+void Console::print(uint64 uint, int base) {
+    ::printU(uint, base);
+}

@@ -1,26 +1,21 @@
 #include "../h/Cache.hpp"
 #include "../h/SlabAllocator.hpp"
 #include "../h/BuddyAllocator.hpp"
-#include "../h/SysPrint.hpp"
 #include "../h/MemorySegments.hpp"
 
-Cache::Cache(const char *name, size_t objSize, Cache::Constructor ctor, Cache::Destructor dtor) :
-        name(name),
-        objSize(objSize),
-        ctor(ctor), dtor(dtor),
-        optimalBucket(SlabAllocator::getOptimalBucket(slotSize)),
-        slotsPerSlab(SlabAllocator::getNumberOfSlots(slotSize, optimalBucket)) {
-    SlabAllocator::addUsedCacheHeader(this);
-    addEmptySlab();
-}
+using namespace String;
 
-Cache::Cache(const char *name, size_t objSize, Slab *slab, Cache::Constructor ctor, Cache::Destructor dtor) :
-        name(name),
+Cache::Cache(const char *name, size_t objSize, Cache::Constructor ctor, Cache::Destructor dtor, Slab *slab) :
         objSize(objSize),
         ctor(ctor), dtor(dtor),
-        optimalBucket(SlabAllocator::getOptimalBucket(slotSize)),
-        slotsPerSlab(SlabAllocator::getNumberOfSlots(slotSize, optimalBucket)),
-        isCacheOfSlabs(true) {
+        optimalBucket(SlabAllocator::getOptimalBucket(objSize + sizeof(Slot))),
+        slotsPerSlab(SlabAllocator::getNumberOfSlots(objSize + sizeof(Slot), optimalBucket)),
+        isCacheOfSlabs(slab != nullptr) {
+
+    memset(cacheName, ' ', sizeof(*cacheName) * CACHE_NAME_SIZE);
+    strcpy(cacheName, name);
+    cacheName[CACHE_NAME_SIZE] = '\0';
+
     SlabAllocator::addUsedCacheHeader(this);
     addEmptySlab(slab);
 }
@@ -37,7 +32,9 @@ void *Cache::allocate() {
         newSlabsAllocated = true;
         slab = slabList[EMPTY].get();
     }
-    if (!slab) return nullptr;
+    if (!slab) {
+        return nullptr;
+    }
 
     // select a free slot
     Slot *slot = slab->getSlot();
@@ -72,8 +69,10 @@ void *Cache::allocate() {
 void Cache::free(void *obj) {
     if (!obj ||
         (size_t) obj < (size_t) MemorySegments::getKernelHeapStartAddr() ||
-        (size_t) obj >= (size_t) MemorySegments::getKernelHeapEndAddr())
+        (size_t) obj >= (size_t) MemorySegments::getKernelHeapEndAddr()) {
+        errorCode = INVALID_FREE_OBJ;
         return;
+    }
 
     DummyMutex dummy(&mutex);
 
@@ -103,11 +102,12 @@ void Cache::free(void *obj) {
 void Cache::sFree(const void *obj) {
     if (!obj ||
         (size_t) obj < (size_t) MemorySegments::getKernelHeapStartAddr() ||
-        (size_t) obj >= (size_t) MemorySegments::getKernelHeapEndAddr())
+        (size_t) obj >= (size_t) MemorySegments::getKernelHeapEndAddr()) {
         return;
+    }
 
     Slot *slot = (Slot *) ((uint8 *) obj - sizeof(Slot));
-    Cache *cache = slot->parentCache;
+    Cache *cache = slot->parentSlab->parentCache;
     cache->free(slot->slotSpace);
 }
 
@@ -129,19 +129,18 @@ int Cache::shrinkCache() {
 
         i++;
     }
-    return i;
-}
-
-void Cache::addEmptySlab() {
-    Slab *slab = SlabAllocator::getSlabHeader();
-
-    addEmptySlab(slab);
+    return i * (1ULL) << optimalBucket;
 }
 
 void Cache::addEmptySlab(Slab *slab) {
-    if (!slab) return;
-
     DummyMutex dummy(&mutex);
+
+    if (!slab) slab = SlabAllocator::getSlabHeader();
+
+    if (!slab) {
+        errorCode = NO_SLAB_AVAIL;
+        return;
+    }
 
     initEmptySlab(slab);
 
@@ -214,18 +213,22 @@ void Cache::SlabList::remove(Cache::Slab *slab) {
 
 void Cache::initEmptySlab(Slab *slab) {
     Slot *curr = (Slot *) SlabAllocator::balloc(BLOCK_SIZE * (1 << optimalBucket));
-    if (!curr) return;
+    if (!curr) {
+        errorCode = NO_SLAB_SPACE;
+        return;
+    }
+
+    slab->parentCache = this;
 
     for (ushort i = 0; i < slotsPerSlab; i++) {
         curr->parentSlab = slab;
-        curr->parentCache = this;
         curr->slotSpace = (uint8 *) curr + sizeof(Slot);
 
         if (ctor) ctor(curr->slotSpace);
 
         slab->putSlot(curr);
 
-        curr = (Slot *) ((uint8 *) curr + slotSize);
+        curr = (Slot *) ((uint8 *) curr + objSize + sizeof(Slot));
     }
 
     slabList[EMPTY].put(slab);
@@ -243,6 +246,40 @@ void Cache::operator delete(void *obj) {
     SlabAllocator::returnCache((Cache *) obj);
 }
 
+void Cache::printCacheInfo() const {
+    DummyMutex dummy(getPrintMutex());
+    kprint(cacheName);
+    kprint(objSize);
+    kprint("\t");
+    kprint(numberOfSlabs * (1UL << optimalBucket));
+    kprint("\t");
+    kprint(numberOfSlabs);
+    kprint("\t");
+    kprint(slotsPerSlab);
+    kprint("\t");
+    kprint(100 * allocatedSlots / (slotsPerSlab * numberOfSlabs));
+    kprint("%\n");
+}
+
+void Cache::printCacheError() const {
+    DummyMutex dummy(getPrintMutex());
+    kprint(cacheName);
+    switch (errorCode) {
+        case NO_ERROR:
+            kprint("No error in this cache.\n");
+            break;
+        case NO_SLAB_AVAIL:
+            kprint("No slab descriptor was available.\n");
+            break;
+        case NO_SLAB_SPACE:
+            kprint("No space for slots was available.\n");
+            break;
+        case INVALID_FREE_OBJ:
+            kprint("Invalid pointer to cache free was passed.\n");
+            break;
+    }
+}
+
 Cache::~Cache() {
     for (int i = 0; i < 2; i++) {
         Slab *slab;
@@ -254,19 +291,4 @@ Cache::~Cache() {
         }
     }
     numberOfSlabs = 0;
-}
-
-void Cache::printCacheInfo() const {
-    kprintString(name);
-    kprintString("\t");
-    kprintInteger(objSize);
-    kprintString("\t");
-    kprintInteger(numberOfSlabs * (1ULL << optimalBucket));
-    kprintString("\t");
-    kprintInteger(numberOfSlabs);
-    kprintString("\t");
-    kprintInteger(slotsPerSlab);
-    kprintString("\t");
-    kprintInteger(100 * allocatedSlots / (slotsPerSlab * numberOfSlabs));
-    kprintString("%\n");
 }

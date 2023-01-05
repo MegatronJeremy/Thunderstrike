@@ -1,6 +1,5 @@
 #include "../../../h/syscall_c.h"
 #include "../../../h/syscall_cpp.hpp"
-#include "../../../test/printing.hpp"
 
 struct thread_data {
     int id;
@@ -15,9 +14,9 @@ public:
 
     virtual void run() {
 //        printf("Started thread id:%d\n", id);
-        printString("Started thread id:");
-        printInt(id);
-        printString("\n");
+        printS("Started thread id:");
+        printI(id, 10);
+        printS("\n");
 
         ForkThread *thread = new ForkThread(id + 1);
         ForkThread **threads = (ForkThread **) mem_alloc(sizeof(ForkThread *) * id);
@@ -52,9 +51,9 @@ public:
         }
 
 //        printf("Finished thread id:%d\n", id);
-        printString("Finished thread id:");
-        printInt(id);
-        printString("\n");
+        printS("Finished thread id:");
+        printI(id, 10);
+        printS("\n");
 
         finished = true;
     }
@@ -79,5 +78,5 @@ void userMain1() {
     }
 
 //    printf("User main finished\n");
-    printString("User main finished\n");
+    printS("User main finished\n");
 }

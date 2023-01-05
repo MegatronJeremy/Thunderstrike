@@ -3,6 +3,7 @@
 
 #include "../lib/hw.h"
 #include "slab.h"
+#include "String.h"
 
 void *mmalloc(size_t);
 
@@ -12,7 +13,6 @@ size_t byteToMemBlocks(size_t size);
 
 static constexpr uint64
 DEFAULT_BUFFER_SIZE = 2048;
-
 
 static constexpr uint64
 DEFAULT_HASH_SIZE = 1499;
@@ -50,18 +50,15 @@ void KObject<T>::initCache() {
     // extract class name from pretty function name
     const char *prettyName = __PRETTY_FUNCTION__;
     int i = 0;
-    while (prettyName[i] != '=') i++;
+    while (prettyName[i++] != '=');
     int j = ++i;
-    while (prettyName[j] != ']') j++;
-    int len = j - i - 1;
+    while (prettyName[++j] != ']');
+    int len = j - i;
 
     char *name = (char *) kmalloc(len + 1);
-    i++;
-    int k = 0;
-    while (i < j) {
-        name[k++] = prettyName[i++];
-    }
-    name[k] = '\0';
+
+    String::strncpy(name, &prettyName[i], len);
+    name[len] = '\0';
 
     objCache = kmem_cache_create(name, sizeof(T),
                                  [](void *obj) {
@@ -70,6 +67,8 @@ void KObject<T>::initCache() {
                                  [](void *obj) {
                                      delete (T *) obj;
                                  });
+
+    kfree(name);
 }
 
 

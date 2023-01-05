@@ -5,7 +5,6 @@
 
 namespace Math {
     int ceilLogBase2(size_t x);
-
 }
 
 #endif

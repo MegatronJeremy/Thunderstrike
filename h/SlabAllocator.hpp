@@ -39,6 +39,8 @@ public:
 
     static void printAllCacheInfo();
 
+    static void printAllCacheError();
+
     static const ushort MAX_BUCKET = 5;
 
 private:

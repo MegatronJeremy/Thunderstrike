@@ -73,3 +73,17 @@ char getc() {
 void putc(char chr) {
     callSupervisorTrap(PUTC, chr);
 }
+
+void printS(char const *string) {
+    callSupervisorTrap(PRINT_STRING, (uint64) string);
+}
+
+void printI(int integer, int base) {
+    uint64 args[] = {(uint64) integer, (uint64) base};
+    callSupervisorTrap(PRINT_INT, (uint64) args);
+}
+
+void printU(uint64 x, int base) {
+    uint64 args[] = {(uint64) x, (uint64) base};
+    callSupervisorTrap(PRINT_UNSIGNED, (uint64) args);
+}

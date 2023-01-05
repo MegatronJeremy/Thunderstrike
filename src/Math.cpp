@@ -25,5 +25,4 @@ int Math::ceilLogBase2(size_t x) {
     }
 
     return y;
-
 }

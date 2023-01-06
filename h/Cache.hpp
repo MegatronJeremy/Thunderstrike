@@ -1,8 +1,8 @@
 #ifndef _CACHE_HPP
 #define _CACHE_HPP
 
-#include "../h/slab.h"
-#include "../h/DummyMutex.hpp"
+#include "slab.h"
+#include "DummyMutex.hpp"
 
 class Cache {
 private:

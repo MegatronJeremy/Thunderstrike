@@ -1,7 +1,7 @@
 #include "../h/SlabAllocator.hpp"
 
 #include "../h/BuddyAllocator.hpp"
-#include "../h/String.h"
+#include "../h/Math.h"
 
 using namespace String;
 
@@ -139,19 +139,18 @@ ushort SlabAllocator::getOptimalBucket(size_t slotSize) {
     ushort minBucket = MAX_BUCKET;
     size_t bucketSize = (1 << MAX_BUCKET) * BLOCK_SIZE;
 
-    if (slotSize > bucketSize) return 0;
+    if (slotSize > bucketSize) return Math::ceilLogBase2((slotSize - 1) / BLOCK_SIZE + 1);
 
     size_t minFragment = bucketSize % slotSize;
 
     bucketSize = BLOCK_SIZE;
-    for (ushort bck = 0; bck < MAX_BUCKET; bck++) {
+    for (ushort bck = 0; bck < MAX_BUCKET; bck++, bucketSize <<= 1) {
         if (bucketSize < slotSize) continue;
         size_t currFragment = bucketSize % slotSize;
         if (currFragment < minFragment) {
             minFragment = currFragment;
             minBucket = bck;
         }
-        bucketSize <<= 1;
     }
 
     return minBucket;
@@ -176,6 +175,29 @@ void SlabAllocator::printAllCacheError() {
         curr->printCacheError();
         curr = curr->next;
     }
+}
+
+void SlabAllocator::printBlocksFreed() {
+    size_t blocksFreed = 0, t;
+    do {
+        t = SlabAllocator::shrinkAllCaches();
+        blocksFreed += t;
+    } while (t > 0);
+
+    DummyMutex dummy(getPrintMutex());
+    kprint("Blocks freed: ");
+    kprint(blocksFreed);
+    kprint("\n");
+}
+
+size_t SlabAllocator::shrinkAllCaches() {
+    Cache *curr = usedCacheHead;
+    size_t blocksFreed = 0;
+    while (curr) {
+        blocksFreed += curr->shrinkCache();
+        curr = curr->next;
+    }
+    return blocksFreed;
 }
 
 Cache *SlabAllocator::find(const char *name) {

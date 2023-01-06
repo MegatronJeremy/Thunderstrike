@@ -1,4 +1,4 @@
-#include "../h/Math.hpp"
+#include "../h/Math.h"
 
 int Math::ceilLogBase2(size_t x) {
     static const size_t t[6] = {

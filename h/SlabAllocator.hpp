@@ -41,9 +41,13 @@ public:
 
     static void printAllCacheError();
 
-    static const ushort MAX_BUCKET = 5;
+    static size_t shrinkAllCaches();
+
+    static void printBlocksFreed();
 
 private:
+    static const ushort MAX_BUCKET = 5;
+
     static const ushort MAX_BUFFER_BUCKET = 17;
 
     static const ushort MIN_BUFFER_BUCKET = 5;

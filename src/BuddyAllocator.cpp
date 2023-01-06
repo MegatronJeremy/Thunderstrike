@@ -1,7 +1,7 @@
 #include "../h/BuddyAllocator.hpp"
 #include "../h/SlabAllocator.hpp"
 #include "../h/MemorySegments.hpp"
-#include "../h/Math.hpp"
+#include "../h/Math.h"
 
 using namespace Math;
 

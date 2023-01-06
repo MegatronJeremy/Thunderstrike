@@ -1,6 +1,6 @@
 #include "../h/MemorySegments.hpp"
 #include "../h/slab.h"
-#include "../h/Math.hpp"
+#include "../h/Math.h"
 
 using namespace Math;
 

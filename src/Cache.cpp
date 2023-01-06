@@ -249,6 +249,7 @@ void Cache::operator delete(void *obj) {
 void Cache::printCacheInfo() const {
     DummyMutex dummy(getPrintMutex());
     kprint(cacheName);
+    kprint("\t");
     kprint(objSize);
     kprint("\t");
     kprint(numberOfSlabs * (1UL << optimalBucket));
@@ -264,6 +265,7 @@ void Cache::printCacheInfo() const {
 void Cache::printCacheError() const {
     DummyMutex dummy(getPrintMutex());
     kprint(cacheName);
+    kprint("\t");
     switch (errorCode) {
         case NO_ERROR:
             kprint("No error in this cache.\n");

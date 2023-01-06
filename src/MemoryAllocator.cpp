@@ -13,6 +13,8 @@ MemoryAllocator::MemoryAllocator() {
                                   sizeof(MemoryAllocator) - sizeof(BlockHeader));
     freeMemHead->free = true;
     freeMemHead->next = nullptr;
+
+    mutex = Mutex::createObj();
 }
 
 void *MemoryAllocator::operator new(size_t) {
@@ -46,7 +48,7 @@ void *MemoryAllocator::mmalloc(size_t size) {
     // Initial check
     if (!size) return nullptr;
 
-    DummyMutex dummy(&mutex);
+    DummyMutex dummy(mutex);
 
     // Rounding size to size of memory blocks
     size *= MEM_BLOCK_SIZE;
@@ -92,7 +94,7 @@ int MemoryAllocator::mfree(void *addr) {
         return -1;
     }
 
-    DummyMutex dummy(&mutex);
+    DummyMutex dummy(mutex);
 
     // Return to header
     auto *elem = (BlockHeader *) ((uint8 *) addr - sizeof(BlockHeader));

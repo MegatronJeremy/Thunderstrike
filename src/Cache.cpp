@@ -12,12 +12,11 @@ Cache::Cache(const char *name, size_t objSize, Cache::Constructor ctor, Cache::D
         slotsPerSlab(SlabAllocator::getNumberOfSlots(objSize + sizeof(Slot), optimalBucket)),
         isCacheOfSlabs(slab != nullptr) {
 
-    memset(cacheName, ' ', sizeof(*cacheName) * CACHE_NAME_SIZE);
-    strcpy(cacheName, name);
+    strncpy(cacheName, name, CACHE_NAME_SIZE, ' ');
     cacheName[CACHE_NAME_SIZE] = '\0';
 
     SlabAllocator::addUsedCacheHeader(this);
-    addEmptySlab(slab);
+    if (slab != nullptr) addEmptySlab(slab);
 }
 
 void *Cache::allocate() {
@@ -74,29 +73,9 @@ void Cache::free(void *obj) {
         return;
     }
 
-    DummyMutex dummy(&mutex);
-
     Slot *slot = (Slot *) ((uint8 *) obj - sizeof(Slot));
 
-    Slab *slab = slot->parentSlab;
-
-    slab->putSlot(slot);
-
-    allocatedSlots--;
-
-    SlabState newState = FULL;
-    if (slab->slotNum == 1) {
-        newState = PARTIAL;
-    } else if (slab->slotNum == slotsPerSlab) {
-        newState = EMPTY;
-    }
-
-    if (newState != FULL) {
-        // move to new state list
-        slabList[slab->state].remove(slab);
-        slab->state = newState;
-        slabList[newState].put(slab);
-    }
+    Cache::free(slot);
 }
 
 void Cache::sFree(const void *obj) {
@@ -107,8 +86,33 @@ void Cache::sFree(const void *obj) {
     }
 
     Slot *slot = (Slot *) ((uint8 *) obj - sizeof(Slot));
+
     Cache *cache = slot->parentSlab->parentCache;
-    cache->free(slot->slotSpace);
+    cache->free(slot);
+}
+
+void Cache::free(Slot *slot) {
+    DummyMutex dummy(&mutex);
+
+    Slab *slab = slot->parentSlab;
+
+    slab->putSlot(slot);
+
+    allocatedSlots--;
+
+    SlabState newState = FULL;
+    if (slab->slotNum == slotsPerSlab) {
+        newState = EMPTY;
+    } else if (slab->slotNum == 1) {
+        newState = PARTIAL;
+    }
+
+    if (newState != FULL) {
+        // move to new state list
+        slabList[slab->state].remove(slab);
+        slab->state = newState;
+        slabList[newState].put(slab);
+    }
 }
 
 int Cache::shrinkCache() {
@@ -121,7 +125,7 @@ int Cache::shrinkCache() {
 
     int i = 0;
     while ((slab = slabList[EMPTY].poll()) != nullptr) {
-        slab->destroySlots(dtor);
+        destroySlots(slab);
 
         SlabAllocator::returnSlab(slab);
 
@@ -129,7 +133,7 @@ int Cache::shrinkCache() {
 
         i++;
     }
-    return i * (1ULL) << optimalBucket;
+    return i * (1ULL << optimalBucket);
 }
 
 void Cache::addEmptySlab(Slab *slab) {
@@ -169,19 +173,19 @@ void Cache::Slab::putSlot(Cache::Slot *slot) {
     slotNum++;
 }
 
-void Cache::Slab::destroySlots(Destructor dtor) {
+void Cache::destroySlots(Slab *slab) {
     if (dtor != nullptr) {
-        Slot *curr = slotHead;
+        Slot *curr = slab->slotHead;
         while (curr) {
             Slot *old = curr;
             dtor(old->slotSpace);
             curr = curr->next;
         }
     }
-    SlabAllocator::bfree(slotHead);
+    SlabAllocator::bfree(slab->slotHead);
 
-    slotHead = slotTail = nullptr;
-    slotNum = 0;
+    slab->slotHead = slab->slotTail = nullptr;
+    slab->slotNum = 0;
 }
 
 Cache::Slab *Cache::SlabList::get() {
@@ -271,13 +275,19 @@ void Cache::printCacheError() const {
             kprint("No error in this cache.\n");
             break;
         case NO_SLAB_AVAIL:
-            kprint("No slab descriptor was available.\n");
+            kprint("No slab descriptor available.\n");
             break;
         case NO_SLAB_SPACE:
-            kprint("No space for slots was available.\n");
+            kprint("No space for slab allocation.\n");
             break;
         case INVALID_FREE_OBJ:
-            kprint("Invalid pointer to cache free was passed.\n");
+            kprint("Invalid pointer was passed to cache free.\n");
+            break;
+        case NO_SLOT_SPACE:
+            kprint("No space for slot allocaiton.\n");
+            break;
+        case NO_SLOT_AVAIL:
+            kprint("No slot descriptor available.\n");
             break;
     }
 }
@@ -287,7 +297,20 @@ Cache::~Cache() {
         Slab *slab;
 
         while ((slab = slabList[i].poll()) != nullptr) {
-            slab->destroySlots(dtor);
+
+            // should not call virtual function from destructor
+            if (dtor != nullptr) {
+                Slot *curr = slab->slotHead;
+                while (curr) {
+                    Slot *old = curr;
+                    dtor(old->slotSpace);
+                    curr = curr->next;
+                }
+            }
+            SlabAllocator::bfree(slab->slotHead);
+
+            slab->slotHead = slab->slotTail = nullptr;
+            slab->slotNum = 0;
 
             SlabAllocator::returnSlab(slab);
         }

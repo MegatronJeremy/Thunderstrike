@@ -2,7 +2,9 @@
 #include "../h/Riscv.hpp"
 #include "../h/TCB.hpp"
 
-IOEvent *IOEvent::createIOEvent(int val) {
+IOEvent::IOEvent() : KSemaphore(*KSemaphore::createObj()) {}
+
+IOEvent *IOEvent::createObj(int val) {
     IOEvent *obj = KObject<IOEvent>::createObj();
 
     if (val < 0) val = 0;

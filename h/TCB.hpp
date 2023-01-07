@@ -5,7 +5,7 @@
 #include "DummyMutex.hpp"
 #include "ListNode.hpp"
 #include "LinkedList.hpp"
-#include "LinkedHashNode.hpp"
+#include "MapEntry.hpp"
 #include "slab.h"
 #include "String.h"
 
@@ -50,7 +50,7 @@ public:
 
     static void exit();
 
-    uint64 getId() const {
+    int getId() const {
         return id;
     }
 
@@ -135,8 +135,8 @@ public:
         return listNode;
     }
 
-    LinkedHashNode<TCB> *getHashNode() {
-        return hashNode;
+    MapEntry<int, TCB *> *getMapEntry() {
+        return entry;
     }
 
     Type getType() const {
@@ -177,7 +177,7 @@ private:
 
     int initTCB(Body b, void *a, uint64 *tS, bool priv, Type t);
 
-    static uint64 ID;
+    static int ID;
 
     static size_t stackByteSize;
 
@@ -185,7 +185,7 @@ private:
 
     static uint64 timeSliceCounter;
 
-    uint64 id = ID++;
+    int id = ID++;
 
     Body body = nullptr;
 
@@ -217,7 +217,7 @@ private:
 
     ListNode<TCB> *listNode = ListNode<TCB>::createObj(this);
 
-    LinkedHashNode<TCB> *hashNode = LinkedHashNode<TCB>::createObj(this, id);
+    MapEntry<int, TCB *> *entry = MapEntry<int, TCB *>::createObj(id, this);
 
 };
 

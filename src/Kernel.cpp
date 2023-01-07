@@ -3,7 +3,7 @@
 #include "../h/Riscv.hpp"
 #include "../h/TCB.hpp"
 #include "../h/TimerInterrupt.hpp"
-#include "../h/LinkedHashTable.hpp"
+#include "../h/HashMap.hpp"
 #include "../h/KConsole.hpp"
 #include "../h/syscall_c.h"
 
@@ -107,7 +107,7 @@ int Kernel::thread_create(uint64 *args) {
     TCB *thr = TCB::createObj(body, arg, stack);
     if (!thr) return -4;
 
-    if (LinkedHashTable<TCB>::insert(thr->getHashNode()) < 0)
+    if (HashMap<int, TCB *>::put(thr->getMapEntry()) < 0)
         return -5;
     *handle = thr->getId();
 
@@ -116,7 +116,7 @@ int Kernel::thread_create(uint64 *args) {
 
 int Kernel::thread_exit() {
     int ret = -1;
-    if (LinkedHashTable<TCB>::remove(TCB::running->getId()) < 0)
+    if (HashMap<int, TCB *>::remove(TCB::running->getId()) < 0)
         ret = -2;
 
     TCB::exit();
@@ -141,7 +141,7 @@ int Kernel::thread_create_suspended(uint64 *args) {
     TCB *thr = TCB::createObj(body, arg, stack, TCB::USER, false);
     if (!thr) return -4;
 
-    if (LinkedHashTable<TCB>::insert(thr->getHashNode()) < 0)
+    if (HashMap<int, TCB *>::put(thr->getMapEntry()) < 0)
         return -5;
     *handle = thr->getId();
 
@@ -149,7 +149,7 @@ int Kernel::thread_create_suspended(uint64 *args) {
 }
 
 int Kernel::thread_start(uint64 id) {
-    TCB *thr = LinkedHashTable<TCB>::get(id);
+    TCB *thr = HashMap<int, TCB *>::get(id);
     if (!thr) return -1;
 
     if (TCB::start(thr) < 0)
@@ -167,7 +167,7 @@ int Kernel::sem_open(uint64 *args) {
     auto *sem = KSemaphore::createObj(init);
     if (!sem) return -2;
 
-    if (LinkedHashTable<KSemaphore>::insert(sem->getHashNode()) < 0)
+    if (HashMap<int, KSemaphore *>::put(sem->getMapEntry()) < 0)
         return -3;
     *handle = sem->getId();
 
@@ -175,10 +175,10 @@ int Kernel::sem_open(uint64 *args) {
 }
 
 int Kernel::sem_close(uint64 id) {
-    KSemaphore *sem = LinkedHashTable<KSemaphore>::get(id);
+    KSemaphore *sem = HashMap<int, KSemaphore *>::get(id);
     if (!sem) return -1;
 
-    if (LinkedHashTable<KSemaphore>::remove(id) < 0)
+    if (HashMap<int, KSemaphore *>::remove(id) < 0)
         return -2;
 
     sem->deleteObj();
@@ -187,7 +187,7 @@ int Kernel::sem_close(uint64 id) {
 }
 
 int Kernel::sem_wait(uint64 id) {
-    KSemaphore *sem = LinkedHashTable<KSemaphore>::get(id);
+    KSemaphore *sem = HashMap<int, KSemaphore *>::get(id);
     if (!sem) return -1;
 
     if (sem->wait() < 0)
@@ -197,7 +197,7 @@ int Kernel::sem_wait(uint64 id) {
 }
 
 int Kernel::sem_signal(uint64 id) {
-    KSemaphore *sem = LinkedHashTable<KSemaphore>::get(id);
+    KSemaphore *sem = HashMap<int, KSemaphore *>::get(id);
     if (!sem) return -1;
 
     if (sem->signal() < 0)

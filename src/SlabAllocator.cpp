@@ -2,6 +2,7 @@
 
 #include "../h/BuddyAllocator.hpp"
 #include "../h/Math.h"
+#include "../h/HashMap.hpp"
 
 using namespace String;
 
@@ -13,9 +14,11 @@ Mutex *SlabAllocator::mutex = nullptr;
 
 Cache **SlabAllocator::bufferCache = nullptr;
 
-Cache *SlabAllocator::cacheDesc = nullptr;
+Cache *SlabAllocator::cacheCache = nullptr;
 
-Cache *SlabAllocator::slabDesc = nullptr;
+Cache *SlabAllocator::slabCache = nullptr;
+
+Cache *SlabAllocator::slotCache = nullptr;
 
 BuddyAllocator *SlabAllocator::buddyAllocator = nullptr;
 
@@ -26,33 +29,46 @@ const char *SlabAllocator::bufferCacheNames[BUFFER_CACHE_SIZE] = {"size-32", "si
 
 void SlabAllocator::initSlabAllocator(void *space, int blockNum) {
     buddyAllocator = new(space) BuddyAllocator(space, blockNum);
-
     uint8 *allocatorHeaderSpace = (uint8 *) space + buddyAllocator->getSize();
 
     // allocate header space at block 0 of the buddy allocator
-    balloc((size_t) allocatorHeaderSpace - (size_t) space
-           + sizeof(Mutex) + sizeof(Slab) + 2 * sizeof(Cache) +
-           sizeof(*bufferCache) * BUFFER_CACHE_SIZE);
+    balloc(sizeof(MapEntry<void *, Slot *> *) * DEFAULT_HASH_SIZE +
+           buddyAllocator->getSize() +
+           2 * sizeof(Mutex) + sizeof(Slab) + 2 * sizeof(Cache) + sizeof(MapCache) +
+           sizeof(*bufferCache) * BUFFER_CACHE_SIZE
+    );
 
     mutex = new(allocatorHeaderSpace) Mutex;
     allocatorHeaderSpace += sizeof(Mutex);
 
+    Mutex *hashMutex = new(allocatorHeaderSpace) Mutex;
+    allocatorHeaderSpace += sizeof(Mutex);
+
+    HashMap<void *, MapCache::Slot *>::initHashTable(allocatorHeaderSpace, hashMutex);
+    allocatorHeaderSpace += sizeof(MapEntry<void *, Slot *> *) * DEFAULT_HASH_SIZE;
+
     Slab *slab = new(allocatorHeaderSpace) Slab;
     allocatorHeaderSpace += sizeof(Slab);
-
-    slabDesc = new(allocatorHeaderSpace) Cache("slab", sizeof(Slab),
-                                               [](void *obj) {
-                                                   new(obj) Slab;
-                                               },
-                                               [](void *obj) {
-                                                   delete (Slab *) obj;
-                                               }, slab);
-
+    slabCache = new(allocatorHeaderSpace) Cache("slab", sizeof(Slab),
+                                                [](void *obj) {
+                                                    new(obj) Slab;
+                                                },
+                                                [](void *obj) {
+                                                    delete (Slab *) obj;
+                                                }, slab);
     allocatorHeaderSpace += sizeof(Cache);
 
-    cacheDesc = new(allocatorHeaderSpace) Cache("cache", sizeof(Cache));
-
+    slotCache = new(allocatorHeaderSpace) Cache("slot", sizeof(Slot),
+                                                [](void *obj) {
+                                                    new(obj) Slot;
+                                                },
+                                                [](void *obj) {
+                                                    delete (Slot *) obj;
+                                                });
     allocatorHeaderSpace += sizeof(Cache);
+
+    cacheCache = new(allocatorHeaderSpace) MapCache("cache", sizeof(MapCache));
+    allocatorHeaderSpace += sizeof(MapCache);
 
     bufferCache = (Cache **) allocatorHeaderSpace;
     for (int i = 0; i < BUFFER_CACHE_SIZE; i++)
@@ -69,12 +85,6 @@ int SlabAllocator::bfree(void *obj) {
     return buddyAllocator->bfree(obj);
 }
 
-Cache *SlabAllocator::getCacheHeader() {
-    if (!cacheDesc) return nullptr;
-    Cache *cache = (Cache *) cacheDesc->allocate();
-    return cache;
-}
-
 void SlabAllocator::addUsedCacheHeader(Cache *cache) {
     DummyMutex dummy(mutex);
 
@@ -84,14 +94,26 @@ void SlabAllocator::addUsedCacheHeader(Cache *cache) {
     usedCacheTail->next = nullptr;
 }
 
+Cache *SlabAllocator::getCacheHeader() {
+    if (!cacheCache) return nullptr;
+    Cache *cache = (Cache *) cacheCache->allocate();
+    return cache;
+}
+
 Cache::Slab *SlabAllocator::getSlabHeader() {
-    if (!slabDesc) return nullptr;
-    Slab *slab = (Slab *) slabDesc->allocate();
+    if (!slabCache) return nullptr;
+    Slab *slab = (Slab *) slabCache->allocate();
     return slab;
 }
 
+MapCache::Slot *SlabAllocator::getSlotHeader() {
+    if (!slotCache) return nullptr;
+    Slot *slot = (Slot *) slotCache->allocate();
+    return slot;
+}
+
 void SlabAllocator::returnCache(Cache *cache) {
-    if (!cache || !cacheDesc) return;
+    if (!cache || !cacheCache) return;
 
     DummyMutex dummy(mutex);
 
@@ -99,13 +121,19 @@ void SlabAllocator::returnCache(Cache *cache) {
     (!cache->prev ? usedCacheHead : cache->prev->next) = cache->next;
     (!cache->next ? usedCacheTail : cache->next->prev) = cache->prev;
 
-    cacheDesc->free(cache);
+    cacheCache->free(cache);
 }
 
 void SlabAllocator::returnSlab(Slab *slab) {
-    if (!slab || !slabDesc) return;
+    if (!slab || !slabCache) return;
 
-    slabDesc->free(slab);
+    slabCache->free(slab);
+}
+
+void SlabAllocator::returnSlot(Slot *slot) {
+    if (!slot || !slotCache) return;
+
+    slotCache->free(slot);
 }
 
 void *SlabAllocator::allocateBuffer(size_t bufferSize) {
@@ -124,7 +152,7 @@ void *SlabAllocator::allocateBuffer(size_t bufferSize) {
     mutex->wait();
     if (bufferCache[ind] == nullptr) {
         const char *name = bufferCacheNames[ind];
-        bufferCache[ind] = new Cache(name, size);
+        bufferCache[ind] = new MapCache(name, size);
     }
     mutex->signal();
 
@@ -132,22 +160,22 @@ void *SlabAllocator::allocateBuffer(size_t bufferSize) {
 }
 
 void SlabAllocator::deallocateBuffer(const void *obj) {
-    Cache::sFree(obj);
+    MapCache::sFree(obj);
 }
 
-ushort SlabAllocator::getOptimalBucket(size_t slotSize) {
+ushort SlabAllocator::getOptimalBucket(size_t objSize) {
     ushort minBucket = MAX_BUCKET;
     size_t bucketSize = (1 << MAX_BUCKET) * BLOCK_SIZE;
 
-    if (slotSize > bucketSize) return Math::ceilLogBase2((slotSize - 1) / BLOCK_SIZE + 1);
+    if (objSize > bucketSize) return 0;
 
-    size_t minFragment = bucketSize % slotSize;
+    size_t minFragment = bucketSize % objSize;
 
     bucketSize = BLOCK_SIZE;
     for (ushort bck = 0; bck < MAX_BUCKET; bck++, bucketSize <<= 1) {
-        if (bucketSize < slotSize) continue;
-        size_t currFragment = bucketSize % slotSize;
-        if (currFragment < minFragment) {
+        if (bucketSize < objSize) continue;
+        size_t currFragment = bucketSize % objSize;
+        if (currFragment < minFragment || (currFragment == minFragment && bck < minBucket)) {
             minFragment = currFragment;
             minBucket = bck;
         }
@@ -167,7 +195,6 @@ void SlabAllocator::printAllCacheInfo() {
         curr = curr->next;
     }
 }
-
 
 void SlabAllocator::printAllCacheError() {
     Cache *curr = usedCacheHead;

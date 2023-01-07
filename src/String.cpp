@@ -31,7 +31,7 @@ char *String::strcpy(char *dst, const char *src) {
 }
 
 
-char *String::strncpy(char *dst, const char *src, size_t num) {
+char *String::strncpy(char *dst, const char *src, size_t num, char fill) {
     if (dst == nullptr) return nullptr;
 
     char *start = dst;
@@ -42,7 +42,7 @@ char *String::strncpy(char *dst, const char *src, size_t num) {
     }
 
     while (num > 0) {
-        *dst++ = '\0';
+        *dst++ = fill;
         num--;
     }
 

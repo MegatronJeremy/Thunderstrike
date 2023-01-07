@@ -5,18 +5,18 @@
 #include "DummyMutex.hpp"
 
 class Cache {
-private:
+protected:
     using Constructor = void (*)(void *);
     using Destructor = void (*)(void *);
 
     struct Slab;
 
     struct Slot {
-        Slab *parentSlab;
+        Slab *parentSlab = nullptr;
 
-        Slot *next;
+        Slot *next = nullptr;
 
-        void *slotSpace;
+        void *slotSpace = nullptr;
     };
 
     enum SlabState {
@@ -28,11 +28,11 @@ private:
 
         void putSlot(Slot *slot);
 
-        void destroySlots(Destructor dtor);
-
         void *operator new(size_t, void *addr) {
             return addr;
         }
+
+        void operator delete(void *) {}
 
         Slab *next = nullptr, *prev = nullptr;
 
@@ -43,15 +43,19 @@ private:
         Slot *slotHead = nullptr, *slotTail = nullptr;
 
         size_t slotNum = 0;
+
+        void *startSpace = nullptr;
     };
 
 public:
     Cache(const char *name, size_t objSize, Constructor ctor = nullptr, Destructor dtor = nullptr,
           Slab *slab = nullptr);
 
-    void *allocate();
+    virtual void *allocate();
 
-    void free(void *obj);
+    virtual void free(void *obj);
+
+    void free(Slot *slot);
 
     static void sFree(const void *obj);
 
@@ -71,15 +75,19 @@ public:
 
     void operator delete(void *);
 
-    ~Cache();
+    virtual ~Cache();
 
-private:
+protected:
     // TODO better desegmentation
     friend class SlabAllocator;
 
     enum ErrorCode {
-        NO_ERROR, NO_SLAB_AVAIL, NO_SLAB_SPACE, INVALID_FREE_OBJ
+        NO_ERROR, NO_SLAB_AVAIL, NO_SLAB_SPACE, INVALID_FREE_OBJ, NO_SLOT_SPACE, NO_SLOT_AVAIL
     };
+
+    virtual void destroySlots(Slab *slab);
+
+    virtual void initEmptySlab(Slab *slab);
 
     class SlabList {
     public:
@@ -97,7 +105,6 @@ private:
 
     void addEmptySlab(Slab *slab = nullptr);
 
-    void initEmptySlab(Slab *slab);
 
     static const int CACHE_NAME_SIZE = 30;
 
@@ -109,9 +116,9 @@ private:
 
     Destructor dtor;
 
-    const ushort optimalBucket;
+    ushort optimalBucket;
 
-    const size_t slotsPerSlab;
+    size_t slotsPerSlab;
 
     size_t allocatedSlots = 0;
 

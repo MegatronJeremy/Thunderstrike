@@ -3,7 +3,7 @@
 #include "../h/TCB.hpp"
 #include "../h/Scheduler.hpp"
 
-uint64 KSemaphore::ID = 0;
+int KSemaphore::ID = 0;
 
 KSemaphore *KSemaphore::createObj(int v) {
     KSemaphore *kSemaphore = KObject<KSemaphore>::createObj();

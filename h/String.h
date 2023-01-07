@@ -12,7 +12,7 @@ namespace String {
 
     char *strcpy(char *dst, const char *src);
 
-    char *strncpy(char *dst, const char *src, size_t num);
+    char *strncpy(char *dst, const char *src, size_t num, char fill = '\0');
 
     void kprint(char const *string);
 

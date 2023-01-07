@@ -3,7 +3,7 @@
 
 #include "KObject.hpp"
 #include "LinkedList.hpp"
-#include "LinkedHashNode.hpp"
+#include "MapEntry.hpp"
 
 class TCB;
 
@@ -22,12 +22,12 @@ public:
 
     bool tryWait();
 
-    uint64 getId() const {
+    int getId() const {
         return id;
     }
 
-    LinkedHashNode<KSemaphore> *getHashNode() {
-        return hashNode;
+    MapEntry<int, KSemaphore *> *getMapEntry() {
+        return entry;
     }
 
 protected:
@@ -37,14 +37,12 @@ protected:
 
     int val = 1;
 
-    //TODO
     LinkedList<TCB> *blockedThreadQueue = LinkedList<TCB>::createObj();
 private:
-    static uint64 ID;
-    uint64 id = ID++;
+    static int ID;
+    int id = ID++;
 
-    //TODO
-    LinkedHashNode<KSemaphore> *hashNode = LinkedHashNode<KSemaphore>::createObj(this, id);
+    MapEntry<int, KSemaphore *> *entry = MapEntry<int, KSemaphore *>::createObj(id, this);
 
 };
 

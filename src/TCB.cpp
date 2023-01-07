@@ -9,7 +9,7 @@ TCB *TCB::running = nullptr;
 
 TCB *TCB::userMain = nullptr;
 
-uint64 TCB::ID = 0;
+int TCB::ID = 0;
 
 uint64 TCB::offsSSP = OFFSETOF(TCB, ssp);
 
@@ -178,7 +178,7 @@ int TCB::join() const {
 TCB::~TCB() {
     kfree(context);
     listNode->deleteObj();
-    hashNode->deleteObj();
+    entry->deleteObj();
     waitingToJoin->deleteObj();
     mutex->deleteObj();
 }

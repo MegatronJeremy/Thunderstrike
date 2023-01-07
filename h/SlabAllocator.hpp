@@ -2,18 +2,19 @@
 #define _SLABALLOCATOR_HPP
 
 #include "../lib/hw.h"
-#include "Cache.hpp"
+#include "MapCache.hpp"
 #include "DummyMutex.hpp"
 
 class BuddyAllocator;
 
 class SlabAllocator {
 public:
-    using Slab = Cache::Slab;
+    using Slab = MapCache::Slab;
+    using Slot = MapCache::Slot;
 
     static void initSlabAllocator(void *space, int blockNum);
 
-    static ushort getOptimalBucket(size_t slotSize);
+    static ushort getOptimalBucket(size_t objSize);
 
     static size_t getNumberOfSlots(size_t slotSize, ushort bucket);
 
@@ -23,15 +24,19 @@ public:
 
     static int bfree(void *obj);
 
-    static Cache *getCacheHeader();
-
     static void addUsedCacheHeader(Cache *header);
 
+    static Cache *getCacheHeader();
+
     static Slab *getSlabHeader();
+
+    static Slot *getSlotHeader();
 
     static void returnCache(Cache *);
 
     static void returnSlab(Slab *);
+
+    static void returnSlot(Slot *);
 
     static void *allocateBuffer(size_t bufferSize);
 
@@ -62,9 +67,11 @@ private:
 
     static Cache *usedCacheHead, *usedCacheTail;
 
-    static Cache *cacheDesc;
+    static Cache *cacheCache;
 
-    static Cache *slabDesc;
+    static Cache *slabCache;
+
+    static Cache *slotCache;
 
     static Mutex *mutex;
 

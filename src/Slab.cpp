@@ -13,7 +13,7 @@ kmem_cache_t *kmem_cache_create(const char *name, size_t size,
                                 void (*dtor)(void *)) {
     Cache *cache;
     if ((cache = SlabAllocator::find(name)) == nullptr) {
-        cache = new Cache(name, size, ctor, dtor);
+        cache = new MapCache(name, size, ctor, dtor);
     }
     kmem_cache_t *ret = (kmem_cache_t *) cache;
     return ret;
@@ -59,5 +59,7 @@ void kmem_cache_info(kmem_cache_t *cachep) {
 
 int kmem_cache_error(kmem_cache_t *cachep) {
     if (!cachep) return -1;
+    Cache *cache = (Cache *) cachep;
+    cache->printCacheError();
     return 0;
 }

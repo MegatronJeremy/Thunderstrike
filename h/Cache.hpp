@@ -11,12 +11,36 @@ protected:
 
     struct Slab;
 
+    enum SlotState {
+        FREE, ALLOCATED
+    };
+
     struct Slot {
+        virtual void setSlotFree() {
+            state = FREE;
+        }
+
+        virtual void setSlotAllocated() {
+            state = ALLOCATED;
+        }
+
+        virtual void destroy();
+
+        void *operator new(size_t, void *addr) {
+            return addr;
+        }
+
+        void operator delete(void *) {}
+
         Slab *parentSlab = nullptr;
 
         Slot *next = nullptr;
 
         void *slotSpace = nullptr;
+
+        SlotState state = FREE;
+
+        virtual ~Slot() = default;
     };
 
     enum SlabState {
@@ -48,12 +72,14 @@ protected:
     };
 
 public:
-    Cache(const char *name, size_t objSize, Constructor ctor = nullptr, Destructor dtor = nullptr,
-          Slab *slab = nullptr);
+    Cache() = default;
 
-    virtual void *allocate();
+    virtual void initCache(const char *name, size_t objSize, Constructor ctor = nullptr, Destructor dtor = nullptr,
+                           Slab *slab = nullptr);
 
-    virtual void free(void *obj);
+    void *allocate();
+
+    void free(void *obj);
 
     void free(Slot *slot);
 
@@ -69,13 +95,15 @@ public:
         return cacheName;
     }
 
-    void *operator new(size_t);
+    void *operator new(size_t, void *addr) {
+        return addr;
+    }
 
-    void *operator new(size_t, void *addr);
+    void operator delete(void *) {}
 
-    void operator delete(void *);
+    void destroyCache();
 
-    virtual ~Cache();
+    virtual ~Cache() = default;
 
 protected:
     // TODO better desegmentation
@@ -84,10 +112,6 @@ protected:
     enum ErrorCode {
         NO_ERROR, NO_SLAB_AVAIL, NO_SLAB_SPACE, INVALID_FREE_OBJ, NO_SLOT_SPACE, NO_SLOT_AVAIL
     };
-
-    virtual void destroySlots(Slab *slab);
-
-    virtual void initEmptySlab(Slab *slab);
 
     class SlabList {
     public:
@@ -103,14 +127,25 @@ protected:
         Slab *head = nullptr, *tail = nullptr;
     };
 
+    virtual size_t getPartitionSize() {
+        return objSize + sizeof(Slot);
+    }
+
+    void destroySlots(Slab *slab);
+
+    void initEmptySlab(Slab *slab);
+
+    virtual void populateSlab(Slab *slab, uint8 *space);
+
     void addEmptySlab(Slab *slab = nullptr);
 
+    virtual Slot *getSlot(void *obj);
 
     static const int CACHE_NAME_SIZE = 30;
 
     char cacheName[CACHE_NAME_SIZE + 1];
 
-    const size_t objSize;
+    size_t objSize;
 
     Constructor ctor;
 

@@ -4,34 +4,30 @@
 #include "Cache.hpp"
 
 class MapCache : public Cache {
+public:
+    static void sFree(const void *obj);
+
 private:
     friend class SlabAllocator;
 
     struct Slot : public Cache::Slot {
+        void setSlotAllocated() override;
+
+        void setSlotFree() override;
+
+        void destroy() override;
+
         MapEntry<void *, Slot *> entry;
-
-        void *operator new(size_t, void *addr) {
-            return addr;
-        }
-
-        void operator delete(void *) {};
     };
 
-public:
-    MapCache(const char *name, size_t objSize, Constructor ctor = nullptr, Destructor dtor = nullptr);
+    size_t getPartitionSize() override {
+        return objSize;
+    }
 
-    void *allocate() override;
+    void populateSlab(Slab *slab, uint8 *space) override;
 
-    void free(void *obj) override;
+    Slot *getSlot(void *obj) override;
 
-    static void sFree(const void *obj);
-
-    ~MapCache() override;
-
-private:
-    void destroySlots(Cache::Slab *slab) override;
-
-    void initEmptySlab(Cache::Slab *slab) override;
 };
 
 #endif

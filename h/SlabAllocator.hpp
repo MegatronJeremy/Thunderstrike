@@ -9,8 +9,10 @@ class BuddyAllocator;
 
 class SlabAllocator {
 public:
-    using Slab = MapCache::Slab;
+    using Slab = Cache::Slab;
     using Slot = MapCache::Slot;
+    using Constructor = Cache::Constructor;
+    using Destructor = Cache::Destructor;
 
     static void initSlabAllocator(void *space, int blockNum);
 
@@ -18,15 +20,13 @@ public:
 
     static size_t getNumberOfSlots(size_t slotSize, ushort bucket);
 
-    static Cache *find(const char *name);
-
     static void *balloc(size_t size);
 
     static int bfree(void *obj);
 
     static void addUsedCacheHeader(Cache *header);
 
-    static Cache *getCacheHeader();
+    static Cache *createCache(const char *name, size_t objSize, Constructor ctor = nullptr, Destructor dtor = nullptr);
 
     static Slab *getSlabHeader();
 
@@ -51,6 +51,10 @@ public:
     static void printBlocksFreed();
 
 private:
+    static Cache *find(const char *name);
+
+    static bool initialised;
+
     static const ushort MAX_BUCKET = 5;
 
     static const ushort MAX_BUFFER_BUCKET = 17;

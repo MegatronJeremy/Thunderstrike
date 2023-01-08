@@ -1,5 +1,4 @@
 #include "../h/SlabAllocator.hpp"
-#include "../h/slab.h"
 
 struct kmem_cache_s {
 };
@@ -11,10 +10,7 @@ void kmem_init(void *space, int block_num) {
 kmem_cache_t *kmem_cache_create(const char *name, size_t size,
                                 void (*ctor)(void *),
                                 void (*dtor)(void *)) {
-    Cache *cache;
-    if ((cache = SlabAllocator::find(name)) == nullptr) {
-        cache = new MapCache(name, size, ctor, dtor);
-    }
+    Cache *cache = SlabAllocator::createCache(name, size, ctor, dtor);
     kmem_cache_t *ret = (kmem_cache_t *) cache;
     return ret;
 }
@@ -48,7 +44,7 @@ void kfree(const void *objp) {
 void kmem_cache_destroy(kmem_cache_t *cachep) {
     if (!cachep) return;
     Cache *cache = (Cache *) cachep;
-    delete cache;
+    SlabAllocator::returnCache(cache);
 }
 
 void kmem_cache_info(kmem_cache_t *cachep) {

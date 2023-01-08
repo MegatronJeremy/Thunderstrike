@@ -3,8 +3,11 @@
 #include "../h/BuddyAllocator.hpp"
 #include "../h/Math.h"
 #include "../h/HashMap.hpp"
+#include "../h/Riscv.hpp"
 
 using namespace String;
+
+bool SlabAllocator::initialised = false;
 
 Cache *SlabAllocator::usedCacheHead = nullptr;
 
@@ -28,8 +31,17 @@ const char *SlabAllocator::bufferCacheNames[BUFFER_CACHE_SIZE] = {"size-32", "si
                                                                   "size-32768", "size-65536", "size-131072"};
 
 void SlabAllocator::initSlabAllocator(void *space, int blockNum) {
+    lock()
+    if (initialised) {
+        unlock()
+        return;
+    }
+
     buddyAllocator = new(space) BuddyAllocator(space, blockNum);
     uint8 *allocatorHeaderSpace = (uint8 *) space + buddyAllocator->getSize();
+
+    mutex = new(allocatorHeaderSpace) Mutex;
+    allocatorHeaderSpace += sizeof(Mutex);
 
     // allocate header space at block 0 of the buddy allocator
     balloc(sizeof(MapEntry<void *, Slot *> *) * DEFAULT_HASH_SIZE +
@@ -37,9 +49,6 @@ void SlabAllocator::initSlabAllocator(void *space, int blockNum) {
            2 * sizeof(Mutex) + sizeof(Slab) + 2 * sizeof(Cache) + sizeof(MapCache) +
            sizeof(*bufferCache) * BUFFER_CACHE_SIZE
     );
-
-    mutex = new(allocatorHeaderSpace) Mutex;
-    allocatorHeaderSpace += sizeof(Mutex);
 
     Mutex *hashMutex = new(allocatorHeaderSpace) Mutex;
     allocatorHeaderSpace += sizeof(Mutex);
@@ -49,30 +58,43 @@ void SlabAllocator::initSlabAllocator(void *space, int blockNum) {
 
     Slab *slab = new(allocatorHeaderSpace) Slab;
     allocatorHeaderSpace += sizeof(Slab);
-    slabCache = new(allocatorHeaderSpace) Cache("slab", sizeof(Slab),
-                                                [](void *obj) {
-                                                    new(obj) Slab;
-                                                },
-                                                [](void *obj) {
-                                                    delete (Slab *) obj;
-                                                }, slab);
+
+    slabCache = new(allocatorHeaderSpace) Cache;
+    slabCache->initCache("slab", sizeof(Slab),
+                         [](void *obj) {
+                             new(obj) Slab;
+                         },
+                         [](void *obj) {
+                             delete (Slab *) obj;
+                         }, slab);
     allocatorHeaderSpace += sizeof(Cache);
 
-    slotCache = new(allocatorHeaderSpace) Cache("slot", sizeof(Slot),
-                                                [](void *obj) {
-                                                    new(obj) Slot;
-                                                },
-                                                [](void *obj) {
-                                                    delete (Slot *) obj;
-                                                });
+    slotCache = new(allocatorHeaderSpace) Cache;
+    slotCache->initCache("slot", sizeof(Slot),
+                         [](void *obj) {
+                             new(obj) Slot;
+                         },
+                         [](void *obj) {
+                             delete (Slot *) obj;
+                         });
     allocatorHeaderSpace += sizeof(Cache);
 
-    cacheCache = new(allocatorHeaderSpace) MapCache("cache", sizeof(MapCache));
+    cacheCache = new(allocatorHeaderSpace) MapCache;
+    cacheCache->initCache("cache", sizeof(MapCache),
+                          [](void *obj) {
+                              new(obj) MapCache;
+                          },
+                          [](void *obj) {
+                              delete (MapCache *) obj;
+                          });
     allocatorHeaderSpace += sizeof(MapCache);
 
     bufferCache = (Cache **) allocatorHeaderSpace;
     for (int i = 0; i < BUFFER_CACHE_SIZE; i++)
         bufferCache[i] = nullptr;
+
+    initialised = true;
+    unlock()
 }
 
 void *SlabAllocator::balloc(size_t size) {
@@ -88,15 +110,24 @@ int SlabAllocator::bfree(void *obj) {
 void SlabAllocator::addUsedCacheHeader(Cache *cache) {
     DummyMutex dummy(mutex);
 
-    // add to used list
+    // add to used cache list
     cache->prev = usedCacheTail;
     usedCacheTail = (!usedCacheTail ? usedCacheHead : usedCacheTail->next) = cache;
     usedCacheTail->next = nullptr;
 }
 
-Cache *SlabAllocator::getCacheHeader() {
+Cache *SlabAllocator::createCache(const char *name, size_t objSize, Constructor ctor, Destructor dtor) {
+    DummyMutex dummy(mutex);
+
     if (!cacheCache) return nullptr;
-    Cache *cache = (Cache *) cacheCache->allocate();
+
+    Cache *cache = find(name);
+
+    if (cache != nullptr) return cache;
+
+    cache = (Cache *) cacheCache->allocate();
+    cache->initCache(name, objSize, ctor, dtor);
+
     return cache;
 }
 
@@ -113,27 +144,28 @@ MapCache::Slot *SlabAllocator::getSlotHeader() {
 }
 
 void SlabAllocator::returnCache(Cache *cache) {
-    if (!cache || !cacheCache) return;
-
     DummyMutex dummy(mutex);
+
+    if (!cache || !cacheCache) return;
 
     // remove from used list
     (!cache->prev ? usedCacheHead : cache->prev->next) = cache->next;
     (!cache->next ? usedCacheTail : cache->next->prev) = cache->prev;
 
-    cacheCache->free(cache);
+    cache->destroyCache();
+    cacheCache->free((void *) cache);
 }
 
 void SlabAllocator::returnSlab(Slab *slab) {
     if (!slab || !slabCache) return;
 
-    slabCache->free(slab);
+    slabCache->free((void *) slab);
 }
 
 void SlabAllocator::returnSlot(Slot *slot) {
     if (!slot || !slotCache) return;
 
-    slotCache->free(slot);
+    slotCache->free((void *) slot);
 }
 
 void *SlabAllocator::allocateBuffer(size_t bufferSize) {
@@ -149,12 +181,8 @@ void *SlabAllocator::allocateBuffer(size_t bufferSize) {
 
     ushort ind = bucket - MIN_BUFFER_BUCKET;
 
-    mutex->wait();
-    if (bufferCache[ind] == nullptr) {
-        const char *name = bufferCacheNames[ind];
-        bufferCache[ind] = new MapCache(name, size);
-    }
-    mutex->signal();
+    const char *name = bufferCacheNames[ind];
+    bufferCache[ind] = createCache(name, size);
 
     return bufferCache[ind]->allocate();
 }

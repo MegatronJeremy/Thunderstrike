@@ -5,18 +5,25 @@
 
 using namespace String;
 
-Cache::Cache(const char *name, size_t objSize, Cache::Constructor ctor, Cache::Destructor dtor, Slab *slab) :
-        objSize(objSize),
-        ctor(ctor), dtor(dtor),
-        optimalBucket(SlabAllocator::getOptimalBucket(objSize + sizeof(Slot))),
-        slotsPerSlab(SlabAllocator::getNumberOfSlots(objSize + sizeof(Slot), optimalBucket)),
-        isCacheOfSlabs(slab != nullptr) {
+void Cache::initCache(const char *name, size_t objSize, Constructor ctor, Destructor dtor, Slab *slab) {
+    Cache::objSize = objSize;
+    Cache::ctor = ctor;
+    Cache::dtor = dtor;
+    Cache::optimalBucket = SlabAllocator::getOptimalBucket(getPartitionSize());
+    Cache::slotsPerSlab = SlabAllocator::getNumberOfSlots(getPartitionSize(), optimalBucket);
+    isCacheOfSlabs = (slab != nullptr);
 
     strncpy(cacheName, name, CACHE_NAME_SIZE, ' ');
     cacheName[CACHE_NAME_SIZE] = '\0';
 
+    allocatedSlots = 0;
+    numberOfSlabs = 0;
+    errorCode = NO_ERROR;
+    next = prev = nullptr;
+    newSlabsAllocated = false;
+
     SlabAllocator::addUsedCacheHeader(this);
-    if (slab != nullptr) addEmptySlab(slab);
+    addEmptySlab(slab);
 }
 
 void *Cache::allocate() {
@@ -37,6 +44,8 @@ void *Cache::allocate() {
 
     // select a free slot
     Slot *slot = slab->getSlot();
+
+    slot->setSlotAllocated();
 
     allocatedSlots++;
 
@@ -66,16 +75,14 @@ void *Cache::allocate() {
 }
 
 void Cache::free(void *obj) {
-    if (!obj ||
-        (size_t) obj < (size_t) MemorySegments::getKernelHeapStartAddr() ||
-        (size_t) obj >= (size_t) MemorySegments::getKernelHeapEndAddr()) {
+    Slot *slot = getSlot(obj);
+
+    if (!slot) {
         errorCode = INVALID_FREE_OBJ;
         return;
     }
 
-    Slot *slot = (Slot *) ((uint8 *) obj - sizeof(Slot));
-
-    Cache::free(slot);
+    free(slot);
 }
 
 void Cache::sFree(const void *obj) {
@@ -98,6 +105,8 @@ void Cache::free(Slot *slot) {
 
     slab->putSlot(slot);
 
+    slot->setSlotFree();
+
     allocatedSlots--;
 
     SlabState newState = FULL;
@@ -116,9 +125,9 @@ void Cache::free(Slot *slot) {
 }
 
 int Cache::shrinkCache() {
-    if (!newSlabsAllocated) return 0;
-
     DummyMutex dummy(&mutex);
+
+    if (!newSlabsAllocated) return 0;
 
     newSlabsAllocated = false;
     Slab *slab;
@@ -174,15 +183,13 @@ void Cache::Slab::putSlot(Cache::Slot *slot) {
 }
 
 void Cache::destroySlots(Slab *slab) {
-    if (dtor != nullptr) {
-        Slot *curr = slab->slotHead;
-        while (curr) {
-            Slot *old = curr;
-            dtor(old->slotSpace);
-            curr = curr->next;
-        }
+    Slot *curr = slab->slotHead;
+    while (curr) {
+        Slot *old = curr;
+        curr = curr->next;
+        old->destroy();
     }
-    SlabAllocator::bfree(slab->slotHead);
+    SlabAllocator::bfree(slab->startSpace);
 
     slab->slotHead = slab->slotTail = nullptr;
     slab->slotNum = 0;
@@ -215,39 +222,66 @@ void Cache::SlabList::remove(Cache::Slab *slab) {
     slab->prev = slab->next = nullptr;
 }
 
+void Cache::Slot::destroy() {
+    Destructor dtor = parentSlab->parentCache->dtor;
+    if (dtor) dtor(slotSpace);
+}
+
 void Cache::initEmptySlab(Slab *slab) {
-    Slot *curr = (Slot *) SlabAllocator::balloc(BLOCK_SIZE * (1 << optimalBucket));
-    if (!curr) {
+    uint8 *space = (uint8 *) SlabAllocator::balloc(BLOCK_SIZE * (1 << optimalBucket));
+    if (!space) {
         errorCode = NO_SLAB_SPACE;
         return;
     }
 
     slab->parentCache = this;
+    slab->startSpace = space;
 
-    for (ushort i = 0; i < slotsPerSlab; i++) {
-        curr->parentSlab = slab;
-        curr->slotSpace = (uint8 *) curr + sizeof(Slot);
-
-        if (ctor) ctor(curr->slotSpace);
-
-        slab->putSlot(curr);
-
-        curr = (Slot *) ((uint8 *) curr + objSize + sizeof(Slot));
-    }
+    populateSlab(slab, space);
 
     slabList[EMPTY].put(slab);
 }
 
-void *Cache::operator new(size_t) {
-    return SlabAllocator::getCacheHeader();
+void Cache::populateSlab(Slab *slab, uint8 *space) {
+    Slot *curr = (Slot *) new(space) Slot;
+    for (ushort i = 0; i < slotsPerSlab; i++) {
+        curr->parentSlab = slab;
+        curr->state = FREE;
+
+        space = space + sizeof(Slot);
+        curr->slotSpace = space;
+
+        if (ctor) ctor(space);
+
+        slab->putSlot(curr);
+
+        space = space + objSize;
+        if (i < slotsPerSlab - 1)
+            curr = (Slot *) new(space) Slot;
+    }
 }
 
-void *Cache::operator new(size_t, void *addr) {
-    return addr;
+Cache::Slot *Cache::getSlot(void *obj) {
+    if (!obj ||
+        (size_t) obj < (size_t) MemorySegments::getKernelHeapStartAddr() ||
+        (size_t) obj >= (size_t) MemorySegments::getKernelHeapEndAddr()) {
+        return nullptr;
+    }
+
+    return (Slot *) ((uint8 *) obj - sizeof(Slot));
 }
 
-void Cache::operator delete(void *obj) {
-    SlabAllocator::returnCache((Cache *) obj);
+void Cache::destroyCache() {
+    for (int i = 0; i < 2; i++) {
+        Slab *slab;
+
+        while ((slab = slabList[i].poll()) != nullptr) {
+            destroySlots(slab);
+
+            SlabAllocator::returnSlab(slab);
+        }
+    }
+    numberOfSlabs = 0;
 }
 
 void Cache::printCacheInfo() const {
@@ -290,30 +324,4 @@ void Cache::printCacheError() const {
             kprint("No slot descriptor available.\n");
             break;
     }
-}
-
-Cache::~Cache() {
-    for (int i = 0; i < 2; i++) {
-        Slab *slab;
-
-        while ((slab = slabList[i].poll()) != nullptr) {
-
-            // should not call virtual function from destructor
-            if (dtor != nullptr) {
-                Slot *curr = slab->slotHead;
-                while (curr) {
-                    Slot *old = curr;
-                    dtor(old->slotSpace);
-                    curr = curr->next;
-                }
-            }
-            SlabAllocator::bfree(slab->slotHead);
-
-            slab->slotHead = slab->slotTail = nullptr;
-            slab->slotNum = 0;
-
-            SlabAllocator::returnSlab(slab);
-        }
-    }
-    numberOfSlabs = 0;
 }

@@ -6,8 +6,6 @@
 // Input/output event binary semaphore
 class IOEvent : public KSemaphore, public KObject<IOEvent> {
 public:
-    IOEvent();
-
     using KObject<IOEvent>::createObj;
 
     using KObject<IOEvent>::operator new;

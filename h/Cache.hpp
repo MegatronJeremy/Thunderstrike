@@ -74,8 +74,12 @@ protected:
 public:
     Cache() = default;
 
-    virtual void initCache(const char *name, size_t objSize, Constructor ctor = nullptr, Destructor dtor = nullptr,
-                           Slab *slab = nullptr);
+    void initCache(const char *name, size_t objS);
+
+    void initCache(const char *name, size_t objS, Constructor ct, Destructor dt);
+
+    virtual void initCache(const char *name, size_t objS, Constructor ct, Destructor dt,
+                           Slab *slab);
 
     void *allocate();
 
@@ -134,18 +138,18 @@ protected:
 
     virtual Slot *getSlot(void *obj);
 
-    size_t objSize;
+    size_t objSize{};
 
-    size_t slotsPerSlab;
+    size_t slotsPerSlab{};
 
-    Constructor ctor;
+    Constructor ctor{};
 
-    Destructor dtor;
+    Destructor dtor{};
 
     ErrorCode errorCode = NO_ERROR;
 
 private:
-    void destroySlots(Slab *slab);
+    static void destroySlots(Slab *slab);
 
     int initEmptySlab(Slab *slab);
 
@@ -153,9 +157,9 @@ private:
 
     static const int CACHE_NAME_SIZE = 30;
 
-    char cacheName[CACHE_NAME_SIZE + 1];
+    char cacheName[CACHE_NAME_SIZE + 1]{};
 
-    ushort optimalBucket;
+    ushort optimalBucket = 0;
 
     size_t allocatedSlots = 0;
 

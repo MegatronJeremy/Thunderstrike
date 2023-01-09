@@ -47,7 +47,7 @@ void SlabAllocator::initSlabAllocator(void *space, int blockNum) {
     balloc(sizeof(MapEntry<void *, Slot *> *) * DEFAULT_HASH_SIZE +
            buddyAllocator->getSize() +
            2 * sizeof(Mutex) + sizeof(Slab) + 2 * sizeof(Cache) + sizeof(MapCache) +
-           sizeof(*bufferCache) * BUFFER_CACHE_SIZE
+           sizeof(Cache *) * BUFFER_CACHE_SIZE
     );
 
     Mutex *hashMutex = new(allocatorHeaderSpace) Mutex;

@@ -5,7 +5,7 @@
 
 void MapCache::populateSlab(Cache::Slab *slab, uint8 *space) {
     Slot *curr = SlabAllocator::getSlotHeader();
-    for (ushort i = 0; i < slotsPerSlab; i++) {
+    for (size_t i = 0; i < slotsPerSlab; i++) {
         if (!curr) {
             errorCode = NO_SLOT_AVAIL;
             break;

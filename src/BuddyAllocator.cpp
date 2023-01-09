@@ -50,12 +50,12 @@ bool BuddyAllocator::testBlock(size_t i, BlockState state) {
     return test;
 }
 
-void *BuddyAllocator::balloc(size_t size) {
+void *BuddyAllocator::balloc(size_t sz) {
     DummyMutex dummy(&mutex);
 
-    int n = MemorySegments::bytesToPages(size);
+    size_t n = MemorySegments::bytesToPages(sz);
 
-    int bucket = numOfBuckets - ceilLogBase2(n) - 1;
+    int bucket = (int) numOfBuckets - ceilLogBase2(n) - 1;
 
     if (bucket < 0) return nullptr;
 
@@ -63,7 +63,7 @@ void *BuddyAllocator::balloc(size_t size) {
         return nullptr;
     }
 
-    int block = getFreeBlock(bucket);
+    size_t block = getFreeBlock(bucket);
 
     return blockToPtr(bucket, block);
 }
@@ -78,7 +78,7 @@ int BuddyAllocator::bfree(void *obj) {
         return -1;
 
     // find the bucket of the block
-    int bucket = numOfBuckets - 1;
+    int bucket = (int) numOfBuckets - 1;
 
     int ret = 0;
 

@@ -110,7 +110,7 @@ public:
     }
 
     void setBlockedTime(time_t time) {
-        this->blockedTime = time;
+        blockedTime = time;
     }
 
     void decBlockedTime(time_t time = 1) {
@@ -142,16 +142,16 @@ public:
         return type;
     }
 
-    void setTimeSlice(uint64 timeSlice) {
-        this->timeSlice = timeSlice;
+    void setTimeSlice(uint64 tS) {
+        this->timeSlice = tS;
     }
 
     uint64 getPriority() const {
         return priority;
     }
 
-    void setPriority(uint64 priority) {
-        this->priority = priority;
+    void setPriority(uint64 p) {
+        this->priority = p;
     }
 
     static TCB *running;

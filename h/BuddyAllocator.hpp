@@ -8,7 +8,7 @@ class BuddyAllocator {
 public:
     BuddyAllocator(void *space, int blockNum);
 
-    void *balloc(size_t size);
+    void *balloc(size_t sz);
 
     int bfree(void *);
 

@@ -5,12 +5,20 @@
 
 using namespace String;
 
-void Cache::initCache(const char *name, size_t objSize, Constructor ctor, Destructor dtor, Slab *slab) {
-    Cache::objSize = objSize;
-    Cache::ctor = ctor;
-    Cache::dtor = dtor;
-    Cache::optimalBucket = SlabAllocator::getOptimalBucket(getPartitionSize());
-    Cache::slotsPerSlab = SlabAllocator::getNumberOfSlots(getPartitionSize(), optimalBucket);
+void Cache::initCache(const char *name, size_t objS) {
+    initCache(name, objS, nullptr, nullptr, nullptr);
+}
+
+void Cache::initCache(const char *name, size_t objS, Constructor ct, Destructor dt) {
+    initCache(name, objS, ct, dt, nullptr);
+}
+
+void Cache::initCache(const char *name, size_t objS, Constructor ct, Destructor dt, Slab *slab) {
+    objSize = objS;
+    ctor = ct;
+    dtor = dt;
+    optimalBucket = SlabAllocator::getOptimalBucket(getPartitionSize());
+    slotsPerSlab = SlabAllocator::getNumberOfSlots(getPartitionSize(), optimalBucket);
     isCacheOfSlabs = (slab != nullptr);
 
     strncpy(cacheName, name, CACHE_NAME_SIZE, ' ');
@@ -150,7 +158,7 @@ int Cache::shrinkCache() {
 
         i++;
     }
-    return i * (1ULL << optimalBucket);
+    return (int) (i * (1ULL << optimalBucket));
 }
 
 void Cache::addEmptySlab(Slab *slab) {
@@ -230,8 +238,8 @@ void Cache::SlabList::remove(Cache::Slab *slab) {
 }
 
 void Cache::Slot::destroy() {
-    Destructor dtor = parentSlab->parentCache->dtor;
-    if (dtor) dtor(slotSpace);
+    Destructor dt = parentSlab->parentCache->dtor;
+    if (dt) dt(slotSpace);
 }
 
 int Cache::initEmptySlab(Slab *slab) {
@@ -254,7 +262,7 @@ int Cache::initEmptySlab(Slab *slab) {
 
 void Cache::populateSlab(Slab *slab, uint8 *space) {
     Slot *curr = (Slot *) new(space) Slot;
-    for (ushort i = 0; i < slotsPerSlab; i++) {
+    for (size_t i = 0; i < slotsPerSlab; i++) {
         curr->parentSlab = slab;
         curr->state = FREE;
 

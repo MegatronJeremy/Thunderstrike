@@ -18,16 +18,16 @@ public:
         return key;
     }
 
-    void setKey(E key) {
-        MapEntry::key = key;
+    void setKey(E k) {
+        key = k;
     }
 
     T getValue() const {
         return value;
     }
 
-    void setValue(T value) {
-        MapEntry::value = value;
+    void setValue(T v) {
+        value = v;
     }
 
     MapEntry *getNext() const {
@@ -38,8 +38,8 @@ public:
         return next;
     }
 
-    void setNext(MapEntry *next) {
-        MapEntry::next = next;
+    void setNext(MapEntry *n) {
+        next = n;
     }
 
 

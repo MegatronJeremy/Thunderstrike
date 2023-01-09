@@ -15,8 +15,7 @@ void userMain2();
 using namespace MemorySegments;
 
 int main() {
-    kmem_init(getKernelHeapStartAddr(),
-              bytesToPages(getKernelHeapSize()));
+    kmem_init(getKernelHeapStartAddr(), (int) bytesToPages(getKernelHeapSize()));
     Scheduler::initScheduler();
     KConsole::initKConsole();
     ThreadCollector::initThreadCollector();

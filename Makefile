@@ -56,7 +56,7 @@ ifneq ($(shell ${CC} -dumpspecs 2>/dev/null | grep -e '[^f]nopie'),)
 CFLAGS += -fno-pie -nopie
 endif
 
-CXXFLAGS  = -Wall -Werror -Og -ggdb
+CXXFLAGS  = -Wall -Werror -Og -ggdb -fcheck-new
 CXXFLAGS += -fno-rtti
 CXXFLAGS += -nostdlib -std=c++11
 CXXFLAGS += -march=rv64ima -mabi=lp64 -mcmodel=medany -mno-relax

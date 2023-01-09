@@ -106,7 +106,6 @@ public:
     virtual ~Cache() = default;
 
 protected:
-    // TODO better desegmentation
     friend class SlabAllocator;
 
     enum ErrorCode {
@@ -131,29 +130,30 @@ protected:
         return objSize + sizeof(Slot);
     }
 
-    void destroySlots(Slab *slab);
-
-    void initEmptySlab(Slab *slab);
-
     virtual void populateSlab(Slab *slab, uint8 *space);
 
-    void addEmptySlab(Slab *slab = nullptr);
-
     virtual Slot *getSlot(void *obj);
+
+    size_t objSize;
+
+    size_t slotsPerSlab;
+
+private:
+    void destroySlots(Slab *slab);
+
+    int initEmptySlab(Slab *slab);
+
+    void addEmptySlab(Slab *slab = nullptr);
 
     static const int CACHE_NAME_SIZE = 30;
 
     char cacheName[CACHE_NAME_SIZE + 1];
-
-    size_t objSize;
 
     Constructor ctor;
 
     Destructor dtor;
 
     ushort optimalBucket;
-
-    size_t slotsPerSlab;
 
     size_t allocatedSlots = 0;
 
@@ -165,11 +165,14 @@ protected:
 
     SlabList slabList[3];
 
-    Mutex mutex;
-
     bool newSlabsAllocated = false;
 
+    bool cacheShrunk = false;
+
     bool isCacheOfSlabs = false;
+
+    Mutex mutex;
+
 };
 
 #endif

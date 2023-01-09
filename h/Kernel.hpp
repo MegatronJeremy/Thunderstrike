@@ -22,6 +22,8 @@ public:
 
     static int thread_start(uint64 id);
 
+    static int thread_destroy(uint64 id);
+
     static int sem_open(uint64 *args);
 
     static int sem_close(uint64 id);

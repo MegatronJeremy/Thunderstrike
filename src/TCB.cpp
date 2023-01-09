@@ -39,7 +39,7 @@ int TCB::initTCB(TCB::Body b, void *a, uint64 *tS, bool priv, Type t) {
         context[2] = (uint64) (tS + DEFAULT_STACK_SIZE);
     }
 
-    status = WAITING;
+    status = AWAITING_START;
 
     return 0;
 }
@@ -107,7 +107,7 @@ void TCB::deleteObj() {
 }
 
 int TCB::start(TCB *tcb) {
-    if (!tcb->isWaiting()) return -1;
+    if (!tcb->isAwaitingStart()) return -1;
 
     tcb->setReady();
     Scheduler::put(tcb);

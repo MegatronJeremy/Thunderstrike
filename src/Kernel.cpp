@@ -41,6 +41,10 @@ void Kernel::handleSystemCall() {
             thread_start(arg);
             Riscv::pushRegisterA0(context);
             break;
+        case (THREAD_DESTROY):
+            thread_destroy(arg);
+            Riscv::pushRegisterA0(context);
+            break;
         case (SEM_OPEN):
             sem_open((uint64 *) arg);
             Riscv::pushRegisterA0(context);
@@ -154,6 +158,23 @@ int Kernel::thread_start(uint64 id) {
 
     if (TCB::start(thr) < 0)
         return -2;
+
+    return 0;
+}
+
+int Kernel::thread_destroy(uint64 id) {
+    TCB *thr = HashMap<int, TCB *>::get(id);
+    if (!thr) return -1;
+
+    if (!thr->isAwaitingStart())
+        return -2;
+
+    thr->setFinished();
+
+    if (HashMap<int, TCB *>::remove(id) < 0)
+        return -3;
+
+    thr->deleteObj();
 
     return 0;
 }

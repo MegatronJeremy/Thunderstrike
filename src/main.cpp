@@ -6,8 +6,6 @@
 #include "../h/KConsole.hpp"
 #include "../h/MemorySegments.hpp"
 
-#include "../h/SlabAllocator.hpp"
-
 void userMain();
 
 void userMain1();
@@ -27,18 +25,13 @@ int main() {
     TCB *main = TCB::createObj(nullptr, nullptr, nullptr, TCB::KERNEL, false);
     TCB::running = main;
 
-    TCB *uMain = TCB::createObj([](void *) { userMain2(); }, nullptr, TCB::KERNEL);
+    TCB *uMain = TCB::createObj([](void *) { userMain(); }, nullptr);
     TCB::userMain = uMain;
 
     Riscv::w_stvec((uint64) &Riscv::supervisorTrap);
 
     uMain->join();
     TCB::yield();
-
-    SlabAllocator::printAllCacheInfo();
-    SlabAllocator::printAllCacheError();
-    SlabAllocator::printBlocksFreed();
-    SlabAllocator::printAllCacheInfo();
 
     KConsole::flush();
 

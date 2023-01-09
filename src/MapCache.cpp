@@ -36,6 +36,8 @@ void MapCache::sFree(const void *obj) {
 
     Cache *cache = slot->parentSlab->parentCache;
     cache->free(slot);
+
+    cache->shrinkCache();
 }
 
 MapCache::Slot *MapCache::getSlot(void *obj) {

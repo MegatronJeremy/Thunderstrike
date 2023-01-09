@@ -6,7 +6,6 @@
 #include "ListNode.hpp"
 #include "LinkedList.hpp"
 #include "MapEntry.hpp"
-#include "slab.h"
 #include "String.h"
 
 #define OFFSETOF(TYPE, ELEMENT) ((size_t)&(((TYPE *)0)->ELEMENT))
@@ -98,8 +97,8 @@ public:
         status = INTERRUPTED;
     }
 
-    bool isWaiting() const {
-        return status == WAITING;
+    bool isAwaitingStart() const {
+        return status == AWAITING_START;
     }
 
     uint64 getTimeSlice() const {
@@ -162,7 +161,7 @@ public:
 private:
 
     enum Status {
-        READY, FINISHED, BLOCKED, IDLE, INTERRUPTED, WAITING
+        READY, FINISHED, BLOCKED, IDLE, INTERRUPTED, AWAITING_START
     };
 
     static const int REG_NUM = 32;

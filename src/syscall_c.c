@@ -44,6 +44,10 @@ int thread_start(thread_t handle) {
     return (int) callSupervisorTrap(THREAD_START, (uint64) handle);
 }
 
+int thread_destroy(thread_t handle) {
+    return (int) callSupervisorTrap(THREAD_DESTROY, (uint64) handle);
+}
+
 int sem_open(sem_t *handle, unsigned init) {
     uint64 args[] = {(uint64) handle, (uint64) init};
 

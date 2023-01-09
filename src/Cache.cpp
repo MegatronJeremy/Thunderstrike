@@ -21,6 +21,7 @@ void Cache::initCache(const char *name, size_t objSize, Constructor ctor, Destru
     errorCode = NO_ERROR;
     next = prev = nullptr;
     newSlabsAllocated = false;
+    cacheShrunk = false;
 
     SlabAllocator::addUsedCacheHeader(this);
     addEmptySlab(slab);
@@ -96,6 +97,8 @@ void Cache::sFree(const void *obj) {
 
     Cache *cache = slot->parentSlab->parentCache;
     cache->free(slot);
+
+    cache->shrinkCache();
 }
 
 void Cache::free(Slot *slot) {
@@ -127,9 +130,14 @@ void Cache::free(Slot *slot) {
 int Cache::shrinkCache() {
     DummyMutex dummy(&mutex);
 
-    if (!newSlabsAllocated) return 0;
+    if (cacheShrunk && newSlabsAllocated) {
+        newSlabsAllocated = false;
+        return 0;
+    }
 
+    cacheShrunk = true;
     newSlabsAllocated = false;
+
     Slab *slab;
 
     int i = 0;
@@ -155,9 +163,8 @@ void Cache::addEmptySlab(Slab *slab) {
         return;
     }
 
-    initEmptySlab(slab);
-
-    numberOfSlabs++;
+    if (initEmptySlab(slab) == 0)
+        numberOfSlabs++;
 }
 
 Cache::Slot *Cache::Slab::getSlot() {
@@ -227,11 +234,12 @@ void Cache::Slot::destroy() {
     if (dtor) dtor(slotSpace);
 }
 
-void Cache::initEmptySlab(Slab *slab) {
+int Cache::initEmptySlab(Slab *slab) {
     uint8 *space = (uint8 *) SlabAllocator::balloc(BLOCK_SIZE * (1 << optimalBucket));
     if (!space) {
         errorCode = NO_SLAB_SPACE;
-        return;
+        SlabAllocator::returnSlab(slab);
+        return -1;
     }
 
     slab->parentCache = this;
@@ -240,6 +248,8 @@ void Cache::initEmptySlab(Slab *slab) {
     populateSlab(slab, space);
 
     slabList[EMPTY].put(slab);
+
+    return 0;
 }
 
 void Cache::populateSlab(Slab *slab, uint8 *space) {
@@ -296,7 +306,7 @@ void Cache::printCacheInfo() const {
     kprint("\t");
     kprint(slotsPerSlab);
     kprint("\t");
-    kprint(100 * allocatedSlots / (slotsPerSlab * numberOfSlabs));
+    kprint(numberOfSlabs == 0 ? 100 : 100 * allocatedSlots / (slotsPerSlab * numberOfSlabs));
     kprint("%\n");
 }
 

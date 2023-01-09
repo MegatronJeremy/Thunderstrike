@@ -73,7 +73,6 @@ void myUserMain() {
     thread_create(&t8, &ProducerConsumer::consumeWrapper, obj);
     thread_create(&t9, &ProducerConsumer::consumeWrapper, obj);
 
-
     time_sleep(50);
 
     printString("Periodic thread 2 started:\n");

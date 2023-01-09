@@ -184,7 +184,11 @@ void *SlabAllocator::allocateBuffer(size_t bufferSize) {
     const char *name = bufferCacheNames[ind];
     bufferCache[ind] = createCache(name, size);
 
-    return bufferCache[ind]->allocate();
+    void *ret = bufferCache[ind]->allocate();
+    if (ret == nullptr) {
+        bufferCache[ind]->printCacheError();
+    }
+    return ret;
 }
 
 void SlabAllocator::deallocateBuffer(const void *obj) {

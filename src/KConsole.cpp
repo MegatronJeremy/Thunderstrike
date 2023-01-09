@@ -99,6 +99,7 @@ void KConsole::writeToConsole() {
 
 void KConsole::flush() {
     while (outputItemsAvailable->tryWait()) {
+        while (!(*status & CONSOLE_TX_STATUS_BIT));
         *outputData = outputBuffer->removeFirst();
     }
 }

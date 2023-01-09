@@ -18,7 +18,6 @@ static constexpr size_t
 DEFAULT_HASH_SIZE = 1499;
 
 // Base apstract class for kernel objects - contains necessary memory allocation / deallocation templates
-
 template<typename T>
 class KObject {
 public:
@@ -78,12 +77,18 @@ T *KObject<T>::createObj() {
 
     T *obj = (T *) kmem_cache_alloc(objCache);
 
+    if (!obj) {
+        kmem_cache_error(objCache);
+        return nullptr;
+    }
+
     return obj;
 }
 
 template<typename T>
 void KObject<T>::deleteObj() {
     kmem_cache_free(objCache, this);
+    kmem_cache_shrink(objCache);
 }
 
 template<typename T>

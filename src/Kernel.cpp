@@ -91,11 +91,11 @@ void Kernel::handleSystemCall() {
 }
 
 void *Kernel::mem_alloc(size_t size) {
-    return mmalloc(size);
+    return MemoryAllocator::malloc(size);
 }
 
 int Kernel::mem_free(void *addr) {
-    return mfree(addr);
+    return MemoryAllocator::mfree(addr);
 }
 
 int Kernel::thread_create(uint64 *args) {

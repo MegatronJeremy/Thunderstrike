@@ -15,7 +15,7 @@ public:
 
     static void *malloc(size_t size);
 
-    static int free(void *addr);
+    static int mfree(void *addr);
 
     void *operator new(size_t);
 
@@ -32,7 +32,7 @@ private:
 
     void *mmalloc(size_t size);
 
-    int mfree(void *addr);
+    int mmfree(void *addr);
 
     static int tryToJoin(BlockHeader *curr);
 

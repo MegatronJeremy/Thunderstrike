@@ -4,6 +4,7 @@
 #include "../h/Scheduler.hpp"
 #include "../h/IdleThread.hpp"
 #include "../h/syscall_c.h"
+#include "../h/MemoryAllocator.hpp"
 
 TCB *TCB::running = nullptr;
 
@@ -45,7 +46,7 @@ int TCB::initTCB(TCB::Body b, void *a, uint64 *tS, bool priv, Type t) {
 }
 
 TCB *TCB::createObj(TCB::Body body, void *args, Type type, bool start) {
-    auto *threadStack = (uint64 *) mmalloc(byteToMemBlocks(stackByteSize));
+    auto *threadStack = (uint64 *) kmalloc(stackByteSize);
 
     TCB *tcb = createObj(body, args, threadStack, type, start);
 
@@ -67,7 +68,7 @@ TCB *TCB::createObj(TCB::Body body, void *args, uint64 *threadStack, Type type, 
 
     TCB *tcb = createObj();
     if (!tcb) {
-        mfree(threadStack);
+        MemoryAllocator::mfree(threadStack);
         return nullptr;
     }
 
@@ -85,7 +86,11 @@ void TCB::deleteObj() {
     body = nullptr;
     args = nullptr;
 
-    mfree(threadStack);
+    if (type == USER) {
+        MemoryAllocator::mfree(threadStack);
+    } else {
+        kfree(threadStack);
+    }
     threadStack = nullptr;
 
     privileged = true;

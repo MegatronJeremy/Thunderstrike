@@ -40,8 +40,8 @@ void *MemoryAllocator::malloc(size_t size) {
     return getInstance()->mmalloc(size);
 }
 
-int MemoryAllocator::free(void *addr) {
-    return getInstance()->mfree(addr);
+int MemoryAllocator::mfree(void *addr) {
+    return getInstance()->mmfree(addr);
 }
 
 void *MemoryAllocator::mmalloc(size_t size) {
@@ -87,7 +87,7 @@ void *MemoryAllocator::mmalloc(size_t size) {
     return addr;
 }
 
-int MemoryAllocator::mfree(void *addr) {
+int MemoryAllocator::mmfree(void *addr) {
     if (!addr
         || (uint8 *) addr < (uint8 *) USER_HEAP_START_ADDR + sizeof(MemoryAllocator) + sizeof(BlockHeader)
         || addr >= USER_HEAP_END_ADDR) {

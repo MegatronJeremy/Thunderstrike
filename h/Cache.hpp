@@ -138,6 +138,12 @@ protected:
 
     size_t slotsPerSlab;
 
+    Constructor ctor;
+
+    Destructor dtor;
+
+    ErrorCode errorCode = NO_ERROR;
+
 private:
     void destroySlots(Slab *slab);
 
@@ -149,17 +155,11 @@ private:
 
     char cacheName[CACHE_NAME_SIZE + 1];
 
-    Constructor ctor;
-
-    Destructor dtor;
-
     ushort optimalBucket;
 
     size_t allocatedSlots = 0;
 
     size_t numberOfSlabs = 0;
-
-    ErrorCode errorCode = NO_ERROR;
 
     Cache *next = nullptr, *prev = nullptr;
 

@@ -5,12 +5,6 @@
 #include "slab.h"
 #include "String.h"
 
-void *mmalloc(size_t);
-
-int mfree(void *);
-
-size_t byteToMemBlocks(size_t size);
-
 static constexpr size_t
 DEFAULT_BUFFER_SIZE = 2048;
 

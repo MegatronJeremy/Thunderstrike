@@ -4,9 +4,6 @@
 #include "../h/Math.h"
 
 using namespace Math;
-using namespace String;
-
-size_t BuddyAllocator::maxAdr = 0;
 
 BuddyAllocator::BuddyAllocator(void *space, int blockNum) :
         numOfBuckets(ceilLogBase2(blockNum) + 1),
@@ -69,8 +66,6 @@ void *BuddyAllocator::balloc(size_t sz) {
     size_t block = getFreeBlock(bucket);
 
     void *adr = blockToPtr(bucket, block);
-
-    if ((size_t) adr > maxAdr) maxAdr = (size_t) adr;
 
     return adr;
 }

@@ -12,6 +12,8 @@ int String::strcmp(const char *s1, const char *s2) {
 }
 
 void String::memset(const void *mem, int c, size_t n) {
+    if (!mem) return;
+
     char *str = (char *) mem;
     for (size_t i = 0; i < n; i++) {
         *str++ = c;
@@ -19,7 +21,7 @@ void String::memset(const void *mem, int c, size_t n) {
 }
 
 char *String::strcpy(char *dst, const char *src) {
-    if (dst == nullptr) return nullptr;
+    if (!dst || !src) return nullptr;
 
     char *start = dst;
 
@@ -32,7 +34,7 @@ char *String::strcpy(char *dst, const char *src) {
 
 
 char *String::strncpy(char *dst, const char *src, size_t num, char fill) {
-    if (dst == nullptr) return nullptr;
+    if (!dst || !src) return nullptr;
 
     char *start = dst;
 

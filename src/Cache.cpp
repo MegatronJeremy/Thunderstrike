@@ -53,6 +53,10 @@ void *Cache::allocate() {
 
     // select a free slot
     Slot *slot = slab->getSlot();
+    if (!slot) {
+        errorCode = NO_SLOT_AVAIL;
+        return nullptr;
+    }
 
     slot->setSlotAllocated();
 
@@ -204,7 +208,8 @@ void Cache::destroySlots(Slab *slab) {
         curr = curr->next;
         old->destroy();
     }
-    SlabAllocator::bfree(slab->startSpace);
+    if (SlabAllocator::bfree(slab->startSpace) < 0)
+        errorCode = SLAB_FREE_FAILURE;
 
     slab->slotHead = slab->slotTail = nullptr;
     slab->slotNum = 0;
@@ -340,6 +345,9 @@ void Cache::printCacheError() const {
             break;
         case NO_SLOT_AVAIL:
             kprint("No slot descriptor available.\n");
+            break;
+        case SLAB_FREE_FAILURE:
+            kprint("Buddy allocator failed to free slab.\n");
             break;
     }
 }

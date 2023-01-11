@@ -2,8 +2,8 @@
 .extern _ZN3TCB7runningE
 .extern _ZN3TCB7offsSSPE
 
-.align 4
 .global _ZN5Riscv14supervisorTrapEv
+.align 4
 .type _ZN5Riscv14supervisorTrapEv, @function
 _ZN5Riscv14supervisorTrapEv:
 

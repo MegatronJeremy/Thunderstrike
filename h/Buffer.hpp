@@ -47,6 +47,8 @@ template<typename T>
 Buffer<T> *Buffer<T>::createObj(uint64 sz) {
     Buffer *obj = KObject<Buffer<T>>::createObj();
 
+    if (!obj) return nullptr;
+
     obj->size = sz;
     obj->buffer = (T *) kmalloc(sz * sizeof(T));
 

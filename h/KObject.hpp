@@ -6,10 +6,10 @@
 #include "String.h"
 
 static constexpr size_t
-DEFAULT_BUFFER_SIZE = 2048;
+        DEFAULT_BUFFER_SIZE = 2048;
 
 static constexpr size_t
-DEFAULT_HASH_SIZE = 1499;
+        DEFAULT_HASH_SIZE = 1499;
 
 // Base apstract class for kernel objects - contains necessary memory allocation / deallocation templates
 template<typename T>
@@ -70,11 +70,6 @@ T *KObject<T>::createObj() {
     if (!objCache) initCache();
 
     T *obj = (T *) kmem_cache_alloc(objCache);
-
-    if (!obj) {
-        kmem_cache_error(objCache);
-        return nullptr;
-    }
 
     return obj;
 }

@@ -18,6 +18,8 @@ public:
 
     size_t getSize() const;
 
+    static size_t maxAdr;
+
 private:
     /**
     * 00 - block is part of a bigger block
@@ -46,7 +48,7 @@ private:
 
     void *blockToPtr(uint bucket, size_t block);
 
-    size_t ptrToBlock(void *ptr);
+    size_t ptrToBlock(uint bucket, void *ptr);
 
     Bitmap *blockMap;
 

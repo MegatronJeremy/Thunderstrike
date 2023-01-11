@@ -30,6 +30,8 @@ public:
         return entry;
     }
 
+    ~KSemaphore() override;
+
 protected:
     void block();
 

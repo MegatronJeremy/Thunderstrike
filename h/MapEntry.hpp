@@ -52,6 +52,8 @@ private:
 template<typename E, typename T>
 MapEntry<E, T> *MapEntry<E, T>::createObj(E k, T v, MapEntry<E, T> *n) {
     MapEntry<E, T> *obj = KObject<MapEntry<E, T>>::createObj();
+    if (!obj) return nullptr;
+
     obj->key = k;
     obj->value = v;
     obj->next = n;

@@ -19,9 +19,7 @@ public:
 
     using Body = void (*)(void *);
 
-    TCB() {
-        String::memset(context, 0, sizeof(*context) * REG_NUM);
-    }
+    TCB();
 
     TCB(const TCB &) = delete;
 

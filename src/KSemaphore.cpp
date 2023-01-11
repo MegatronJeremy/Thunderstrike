@@ -6,11 +6,13 @@
 int KSemaphore::ID = 0;
 
 KSemaphore *KSemaphore::createObj(int v) {
-    KSemaphore *kSemaphore = KObject<KSemaphore>::createObj();
+    KSemaphore *obj = KObject<KSemaphore>::createObj();
 
-    kSemaphore->val = v;
+    if (!obj) return nullptr;
 
-    return kSemaphore;
+    obj->val = v;
+
+    return obj;
 }
 
 void KSemaphore::deleteObj() {
@@ -73,5 +75,10 @@ void KSemaphore::deblock() {
     TCB *tcb = blockedThreadQueue->removeFirst();
     tcb->setReady();
     Scheduler::put(tcb);
+}
+
+KSemaphore::~KSemaphore() {
+    if (blockedThreadQueue) blockedThreadQueue->deleteObj();
+    if (entry) entry->deleteObj();
 }
 

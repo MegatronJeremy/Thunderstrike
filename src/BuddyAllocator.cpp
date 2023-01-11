@@ -4,15 +4,18 @@
 #include "../h/Math.h"
 
 using namespace Math;
+using namespace String;
+
+size_t BuddyAllocator::maxAdr = 0;
 
 BuddyAllocator::BuddyAllocator(void *space, int blockNum) :
-        numOfBuckets(ceilLogBase2(blockNum)),
+        numOfBuckets(ceilLogBase2(blockNum) + 1),
         space((uint8 *) space) {
     uint8 *buddySpace = this->space + sizeof(BuddyAllocator);
 
     numOfBlocks = (size_t *) buddySpace;
 
-    for (uint i = 1; i < numOfBuckets; i++) {
+    for (uint i = 1; i <= numOfBuckets; i++) {
         numOfBlocks[i] = 0;
     }
     numOfBlocks[0] = 1;
@@ -65,28 +68,29 @@ void *BuddyAllocator::balloc(size_t sz) {
 
     size_t block = getFreeBlock(bucket);
 
-    return blockToPtr(bucket, block);
+    void *adr = blockToPtr(bucket, block);
+
+    if ((size_t) adr > maxAdr) maxAdr = (size_t) adr;
+
+    return adr;
 }
 
 int BuddyAllocator::bfree(void *obj) {
-    size_t i = ptrToBlock(obj);
-
     DummyMutex dummy(&mutex);
-
-    // block is out of range
-    if (i == 0 || i >= blockMap->size())
-        return -1;
 
     // find the bucket of the block
     int bucket = (int) numOfBuckets - 1;
-
     int ret = 0;
 
+    size_t i = ptrToBlock(bucket, obj);
     while (bucket > 0 && (ret = containsAllocatedBlock(bucket, i)) == -1) {
         bucket--;
+        i = ptrToBlock(bucket, obj);
     }
 
-    if (ret < 0 || bucket < 0) return -2;
+    if (ret < 0 || bucket < 0) {
+        return -2;
+    }
 
     // bucket found, node in bitmap found
     size_t nodes = 1ULL << bucket;
@@ -187,8 +191,6 @@ size_t BuddyAllocator::getFreeBlock(uint bucket) {
 
 int BuddyAllocator::containsAllocatedBlock(uint bucket, size_t i) {
     size_t nodes = (1ULL << bucket);
-    if (i > nodes) return -2;
-
     size_t startBlock = 2 * (nodes - 1);
 
     if (!testBlock(2 * i + startBlock, ALLOCATED)) return -1;
@@ -200,9 +202,9 @@ void *BuddyAllocator::blockToPtr(uint bucket, size_t block) {
     return (void *) (space + (1ULL << (numOfBuckets - bucket - 1)) * block * BLOCK_SIZE);
 }
 
-size_t BuddyAllocator::ptrToBlock(void *ptr) {
+size_t BuddyAllocator::ptrToBlock(uint bucket, void *ptr) {
     if ((size_t) ptr < (size_t) space) return 0;
-    return ((size_t) ptr - (size_t) space) / BLOCK_SIZE;
+    return ((size_t) ptr - (size_t) space) / ((1ULL << (numOfBuckets - bucket - 1)) * BLOCK_SIZE);
 }
 
 size_t BuddyAllocator::getSize() const {

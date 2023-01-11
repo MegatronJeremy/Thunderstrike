@@ -18,6 +18,10 @@ uint64 TCB::timeSliceCounter = 0;
 
 size_t TCB::stackByteSize = DEFAULT_STACK_SIZE * sizeof(uint64);
 
+TCB::TCB() {
+    String::memset(context, 0, sizeof(*context) * REG_NUM);
+}
+
 int TCB::initTCB(TCB::Body b, void *a, uint64 *tS, bool priv, Type t) {
     body = b;
 
@@ -182,8 +186,9 @@ int TCB::join() const {
 
 TCB::~TCB() {
     kfree(context);
-    listNode->deleteObj();
-    entry->deleteObj();
-    waitingToJoin->deleteObj();
-    mutex->deleteObj();
+    if (listNode) listNode->deleteObj();
+    if (entry) entry->deleteObj();
+    if (waitingToJoin) waitingToJoin->deleteObj();
+    if (mutex) mutex->deleteObj();
 }
+

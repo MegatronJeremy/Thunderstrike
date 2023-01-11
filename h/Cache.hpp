@@ -113,7 +113,7 @@ protected:
     friend class SlabAllocator;
 
     enum ErrorCode {
-        NO_ERROR, NO_SLAB_AVAIL, NO_SLAB_SPACE, INVALID_FREE_OBJ, NO_SLOT_SPACE, NO_SLOT_AVAIL
+        NO_ERROR, NO_SLAB_AVAIL, NO_SLAB_SPACE, INVALID_FREE_OBJ, NO_SLOT_SPACE, NO_SLOT_AVAIL, SLAB_FREE_FAILURE
     };
 
     class SlabList {
@@ -149,7 +149,7 @@ protected:
     ErrorCode errorCode = NO_ERROR;
 
 private:
-    static void destroySlots(Slab *slab);
+    void destroySlots(Slab *slab);
 
     int initEmptySlab(Slab *slab);
 

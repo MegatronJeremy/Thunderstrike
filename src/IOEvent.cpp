@@ -5,6 +5,8 @@
 IOEvent *IOEvent::createObj(int val) {
     IOEvent *obj = KObject<IOEvent>::createObj();
 
+    if (!obj) return nullptr;
+
     if (val < 0) val = 0;
     if (val > 1) val = 1;
     obj->val = val;

@@ -1,11 +1,12 @@
 #include "../h/SlabAllocator.hpp"
 
 #include "../h/BuddyAllocator.hpp"
-#include "../h/Math.h"
 #include "../h/HashMap.hpp"
+#include "../h/Math.h"
 #include "../h/Riscv.hpp"
 
 using namespace String;
+using namespace Math;
 
 bool SlabAllocator::initialised = false;
 
@@ -154,30 +155,31 @@ void SlabAllocator::returnCache(Cache *cache) {
 
     cache->destroyCache();
     cacheCache->free((void *) cache);
+    cacheCache->shrinkCache();
 }
 
 void SlabAllocator::returnSlab(Slab *slab) {
     if (!slab || !slabCache) return;
 
     slabCache->free((void *) slab);
+    slabCache->shrinkCache();
 }
 
 void SlabAllocator::returnSlot(Slot *slot) {
     if (!slot || !slotCache) return;
 
     slotCache->free((void *) slot);
+    slotCache->shrinkCache();
 }
 
 void *SlabAllocator::allocateBuffer(size_t bufferSize) {
-    ushort bucket = MIN_BUFFER_BUCKET;
-    size_t size = (1 << MIN_BUFFER_BUCKET);
+    ushort bucket = ceilLogBase2(bufferSize);
 
-    while (size < bufferSize && bucket < MAX_BUFFER_BUCKET) {
-        size <<= 1;
-        bucket++;
-    }
+    if (bucket > MAX_BUFFER_BUCKET || !mutex) return nullptr;
 
-    if (bufferSize > size || !mutex) return nullptr;
+    if (bucket < MIN_BUFFER_BUCKET) bucket = MIN_BUFFER_BUCKET;
+
+    size_t size = (1 << bucket);
 
     ushort ind = bucket - MIN_BUFFER_BUCKET;
 
@@ -185,9 +187,6 @@ void *SlabAllocator::allocateBuffer(size_t bufferSize) {
     bufferCache[ind] = createCache(name, size);
 
     void *ret = bufferCache[ind]->allocate();
-    if (ret == nullptr) {
-        bufferCache[ind]->printCacheError();
-    }
     return ret;
 }
 

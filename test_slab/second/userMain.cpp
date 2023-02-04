@@ -1,5 +1,5 @@
-#include "../../../h/slab.h"
-#include "../../../h/String.h"
+#include "../../h/slab.h"
+#include "../../h/String.h"
 
 #define RUN_NUM (5)
 #define ITERATIONS (1000)
@@ -27,7 +27,6 @@ void memset(const void *data, int size, int value) {
 
 void construct(void *data) {
     static int i = 1;
-//	printf("%d Shared object constructed.\n", i++);
     String::kprint(i++);
     String::kprint(" Shared object constructed.\n");
     memset(data, shared_size, MASK);
@@ -62,7 +61,6 @@ void work(void *pdata) {
             objs[size].data = kmem_cache_alloc(data.shared);
             objs[size].cache = data.shared;
             if (!check(objs[size].data, shared_size)) {
-//                printf("Value not correct!");
                 String::kprint(CACHE_NAMES[data.id]);
                 String::kprint(" Value not correct 1!\n");
             }
@@ -79,7 +77,6 @@ void work(void *pdata) {
 
     for (int i = 0; i < size; i++) {
         if (!check(objs[i].data, (cache == objs[i].cache) ? object_size : shared_size)) {
-//            printf("Value not correct!");
             String::kprint(CACHE_NAMES[data.id]);
             String::kprint(" Value not correct 2!\n");
         }

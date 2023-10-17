@@ -8,9 +8,9 @@ put toggether to work on a RISC-V 64-bit processor using a host XV6 system, with
 - **C user interface**
 - **C++ user interface**
 - **Periodic thread support**
-- **Round-robin scheduling algorithm**
+- **Multi-level queue scheduling algorithm**
 - **First Fit memory allocation for heap**
-- **Many system threads**
+- **System threads**
 - **O(1) Slab allocator, with minimal internal fragmentation, for efficient kernel data structure allocation**
 - **O(1) Buddy alloactor, bitmap tree representation, with one bit per block**
 - **And much more**
